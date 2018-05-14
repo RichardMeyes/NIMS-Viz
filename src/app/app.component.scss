@@ -1,14 +1,18 @@
-.example-h2 {
-    margin: 10px;
-}
+.toolbar-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
 
-.example-section {
     display: flex;
-    align-content: center;
-    align-items: center;
-    height: 60px;
+    flex-direction: column;
 }
 
-.example-margin {
-    margin: 10px;
+.toolbar {
+    position: fixed;
+}
+
+h1.app-name {
+    margin-left: 8px;
 }
