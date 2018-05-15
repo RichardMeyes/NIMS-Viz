@@ -3,8 +3,13 @@ import { CommonModule } from '@angular/common';
 
 import {
   MatButtonModule,
+  MatExpansionModule,
   MatIconModule,
+  MatInputModule,
+  MatSelectModule,
   MatSidenavModule,
+  MatSliderModule,
+  MatSlideToggleModule,
   MatToolbarModule
 } from '@angular/material';
 
@@ -12,14 +17,24 @@ import {
   imports: [
     CommonModule,
     MatButtonModule,
+    MatExpansionModule,
     MatIconModule,
+    MatInputModule,
+    MatSelectModule,
     MatSidenavModule,
+    MatSliderModule,
+    MatSlideToggleModule,
     MatToolbarModule
   ],
   exports: [
     MatButtonModule,
+    MatExpansionModule,
     MatIconModule,
+    MatInputModule,
+    MatSelectModule,
     MatSidenavModule,
+    MatSliderModule,
+    MatSlideToggleModule,
     MatToolbarModule
   ],
   declarations: []

@@ -1,1 +1,65 @@
-<p>controls works!</p>
+<mat-accordion>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                Setup
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <mat-form-field>
+            <mat-select placeholder="File">
+                <mat-option *ngFor="let file of files" [value]="file.value">
+                    {{ file.viewValue }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-action-row>
+            <button mat-button color="accent">Start the Calculation</button>
+            <button mat-button color="accent">Create Network</button>
+        </mat-action-row>
+    </mat-expansion-panel>
+</mat-accordion>
+
+<div fxLayout="column wrap" style="padding-left: 1.5rem;">
+    <mat-slide-toggle class="setting-item first-item">Neural Netowrk</mat-slide-toggle>
+    <mat-slide-toggle class="setting-item last-item">ANN</mat-slide-toggle>
+</div>
+
+<mat-accordion>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                Heatmap Config
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+    </mat-expansion-panel>
+</mat-accordion>
+
+<mat-accordion>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                Demo Layer
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div fxLayout="column wrap">
+            <div fxLayout="row">
+                <div class="setting-label">Layer Count</div>
+                <div fxFlex="grow"></div>
+                <div>{{layerCount}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [(ngModel)]="layerCount"></mat-slider>
+            <div fxLayout="row">
+                <div class="setting-label">Node Count</div>
+                <div fxFlex="grow"></div>
+                <div>{{nodeCount}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [(ngModel)]="nodeCount"></mat-slider>
+            <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle>
+            <mat-action-row>
+                <button mat-button color="accent">Create Network</button>
+            </mat-action-row>
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>

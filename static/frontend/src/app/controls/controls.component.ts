@@ -6,8 +6,17 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./controls.component.scss']
 })
 export class ControlsComponent implements OnInit {
+  files = [
+    { value: 'model1.h5', viewValue: 'File 1' },
+    { value: 'model2.h5', viewValue: 'File 2' },
+    { value: 'model3.h5', viewValue: 'File 3' }
+  ];
 
-  constructor() { }
+  layerCount: number = 15;
+  nodeCount: number = 15;
+
+  constructor() {
+  }
 
   ngOnInit() {
   }
