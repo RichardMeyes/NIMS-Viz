@@ -13,6 +13,9 @@ import {
   MatToolbarModule
 } from '@angular/material';
 
+import { NouisliderModule } from 'ng2-nouislider';
+import { MccColorPickerModule } from '../../node_modules/material-community-components';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -24,7 +27,9 @@ import {
     MatSidenavModule,
     MatSliderModule,
     MatSlideToggleModule,
-    MatToolbarModule
+    MatToolbarModule,
+    NouisliderModule,
+    MccColorPickerModule
   ],
   exports: [
     MatButtonModule,
@@ -35,7 +40,9 @@ import {
     MatSidenavModule,
     MatSliderModule,
     MatSlideToggleModule,
-    MatToolbarModule
+    MatToolbarModule,
+    NouisliderModule,
+    MccColorPickerModule
   ],
   declarations: []
 })

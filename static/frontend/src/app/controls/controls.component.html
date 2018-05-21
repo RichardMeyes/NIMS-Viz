@@ -2,7 +2,7 @@
     <mat-expansion-panel>
         <mat-expansion-panel-header>
             <mat-panel-title>
-                Setup
+                <h3>Setup</h3>
             </mat-panel-title>
         </mat-expansion-panel-header>
 
@@ -20,8 +20,16 @@
     </mat-expansion-panel>
 </mat-accordion>
 
-<div fxLayout="column wrap" style="padding-left: 1.5rem;">
-    <mat-slide-toggle class="setting-item first-item">Neural Netowrk</mat-slide-toggle>
+<div fxLayout="column wrap" style="padding-left: 1.5rem; padding-right: 1.5rem;">
+    <div fxLayout="row" class="first-item">
+        <div>{{epochRange[0]}}</div>
+        <div fxFlex="grow"></div>
+        <div class="setting-label">Epoch</div>
+        <div fxFlex="grow"></div>
+        <div>{{epochRange[1]}}</div>
+    </div>
+    <nouislider [connect]="true" [min]="1" [max]="100" [step]="1" [(ngModel)]="epochRange"></nouislider>
+    <mat-slide-toggle class="setting-item">Neural Netowrk</mat-slide-toggle>
     <mat-slide-toggle class="setting-item last-item">ANN</mat-slide-toggle>
 </div>
 
@@ -29,9 +37,30 @@
     <mat-expansion-panel>
         <mat-expansion-panel-header>
             <mat-panel-title>
-                Heatmap Config
+                <h3>Heatmap Config</h3>
             </mat-panel-title>
         </mat-expansion-panel-header>
+
+        <mat-form-field>
+            <input matInput placeholder="Radius" value="4" type="number">
+        </mat-form-field>
+        <br>
+        <mat-form-field>
+            <input matInput placeholder="Blur" value="2" type="number">
+        </mat-form-field>
+
+        <div fxLayout="column wrap">
+            <div fxLayout="row">
+                <div class="setting-label">Minimum Opacity</div>
+                <div fxFlex="grow"></div>
+                <div>{{(minOpac/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="minOpac" (input)="minOpac=$event.value;"></mat-slider>
+        </div>
+        <span [style.color]="changeColor">Change color on change</span>
+        <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="changeColor=$event" (selected)="changeColor=$event">
+            <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+        </mcc-color-picker>
     </mat-expansion-panel>
 </mat-accordion>
 
@@ -39,7 +68,7 @@
     <mat-expansion-panel>
         <mat-expansion-panel-header>
             <mat-panel-title>
-                Demo Layer
+                <h3>Demo Layer</h3>
             </mat-panel-title>
         </mat-expansion-panel-header>
 
@@ -49,17 +78,18 @@
                 <div fxFlex="grow"></div>
                 <div>{{layerCount}}</div>
             </div>
-            <mat-slider min="1" max="100" step="1" [(ngModel)]="layerCount"></mat-slider>
+            <mat-slider min="1" max="100" step="1" [value]="layerCount" (input)="layerCount=$event.value;"></mat-slider>
             <div fxLayout="row">
                 <div class="setting-label">Node Count</div>
                 <div fxFlex="grow"></div>
                 <div>{{nodeCount}}</div>
             </div>
-            <mat-slider min="1" max="100" step="1" [(ngModel)]="nodeCount"></mat-slider>
+            <mat-slider min="1" max="100" step="1" [value]="nodeCount" (input)="nodeCount=$event.value;"></mat-slider>
             <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle>
             <mat-action-row>
                 <button mat-button color="accent">Create Network</button>
             </mat-action-row>
+
         </div>
     </mat-expansion-panel>
 </mat-accordion>
