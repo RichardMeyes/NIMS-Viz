@@ -36,7 +36,13 @@ export class ControlsComponent implements OnInit {
     '#66991A',
     '#FF99E6',
   ];
-  changeColor: string;
+  color1: string;
+  color2: string;
+  color3: string;
+
+  col1Trigger: number = 40;
+  col2Trigger: number = 65;
+  col3Trigger: number = 100;
 
   constructor() {
   }

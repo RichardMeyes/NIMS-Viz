@@ -41,26 +41,59 @@
             </mat-panel-title>
         </mat-expansion-panel-header>
 
-        <mat-form-field>
-            <input matInput placeholder="Radius" value="4" type="number">
-        </mat-form-field>
-        <br>
-        <mat-form-field>
-            <input matInput placeholder="Blur" value="2" type="number">
-        </mat-form-field>
-
         <div fxLayout="column wrap">
+            <mat-form-field>
+                <input matInput placeholder="Radius" value="4" type="number">
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput placeholder="Blur" value="2" type="number">
+            </mat-form-field>
             <div fxLayout="row">
                 <div class="setting-label">Minimum Opacity</div>
                 <div fxFlex="grow"></div>
                 <div>{{(minOpac/100)}}</div>
             </div>
             <mat-slider min="1" max="100" step="1" [value]="minOpac" (input)="minOpac=$event.value;"></mat-slider>
+            <label for="">Color 1</label>
+            <div fxLayout="row">
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="color1=$event" (selected)="color1=$event"
+                    fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div fxLayout="row">
+                <div class="setting-label">Color 1 Trigger</div>
+                <div fxFlex="grow"></div>
+                <div>{{(col1Trigger/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="col1Trigger" (input)="col1Trigger=$event.value;"></mat-slider>
+            <label for="">Color 2</label>
+            <div fxLayout="row">
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="color2=$event" (selected)="color2=$event"
+                    fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div fxLayout="row">
+                <div class="setting-label">Color 2 Trigger</div>
+                <div fxFlex="grow"></div>
+                <div>{{(col2Trigger/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="col2Trigger" (input)="col2Trigger=$event.value;"></mat-slider>
+            <label for="">Color 3</label>
+            <div fxLayout="row">
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="color3=$event" (selected)="color3=$event"
+                    fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div fxLayout="row">
+                <div class="setting-label">Color 3 Trigger</div>
+                <div fxFlex="grow"></div>
+                <div>{{(col3Trigger/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="col3Trigger" (input)="col3Trigger=$event.value;"></mat-slider>
         </div>
-        <span [style.color]="changeColor">Change color on change</span>
-        <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="changeColor=$event" (selected)="changeColor=$event">
-            <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
-        </mcc-color-picker>
     </mat-expansion-panel>
 </mat-accordion>
 
