@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
+import { NetworkService } from '../network.service';
+
 @Component({
   selector: 'app-controls',
   templateUrl: './controls.component.html',
@@ -44,8 +46,7 @@ export class ControlsComponent implements OnInit {
   col2Trigger: number = 65;
   col3Trigger: number = 100;
 
-  constructor() {
-  }
+  constructor(private networkService: NetworkService) { }
 
   ngOnInit() {
   }

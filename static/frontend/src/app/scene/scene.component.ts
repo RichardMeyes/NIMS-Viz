@@ -1,6 +1,8 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
+
 
 @Component({
   selector: 'app-scene',
@@ -18,13 +20,19 @@ export class SceneComponent implements OnInit, AfterViewInit {
   private nearClippingPane: number = 0.1;
   private farClippingPane: number = 1000;
 
+  private weights: any;
+
   @ViewChild('canvas') private canvasRef;
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
   }
 
-  constructor() { }
+  constructor(private networkService: NetworkService) {
+    this.networkService.loadFromJson().subscribe(
+      (weights) => { this.weights = weights; }
+    );
+  }
 
   ngOnInit() { }
 
