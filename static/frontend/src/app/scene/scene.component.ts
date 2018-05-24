@@ -1,7 +1,13 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2 } from '@angular/core';
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
+import * as Stats from 'stats.js/build/stats.min.js';
+import * as simpleheat from "simpleheat/simpleheat.js";
+
+import '../../customs/enable-three-examples.js';
+import 'three/examples/js/loaders/OBJLoader.js';
+import 'three/examples/js/controls/OrbitControls';
 
 
 @Component({
@@ -13,12 +19,15 @@ export class SceneComponent implements OnInit, AfterViewInit {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
+  private controls: THREE.OrbitControls;
 
   private cube: THREE.Mesh;
 
-  private fieldOfView: number = 75;
-  private nearClippingPane: number = 0.1;
-  private farClippingPane: number = 1000;
+  private windowWidth: number;
+  private windowHeight: number;
+  private fieldOfView: number = 45;
+  private nearClippingPane: number = 1;
+  private farClippingPane: number = 2000;
 
   private weights: any;
 
@@ -28,9 +37,23 @@ export class SceneComponent implements OnInit, AfterViewInit {
     return this.canvasRef.nativeElement;
   }
 
-  constructor(private networkService: NetworkService) {
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    this.windowWidth = window.innerWidth;
+    this.windowHeight = window.innerHeight;
+
+    this.camera.aspect = this.windowWidth / this.windowHeight;
+    this.camera.updateProjectionMatrix();
+
+    this.renderer.setSize(this.windowWidth, this.windowHeight);
+  }
+
+  constructor(private networkService: NetworkService, private renderer2: Renderer2) {
     this.networkService.loadFromJson().subscribe(
-      (weights) => { this.weights = weights; }
+      (weights) => {
+        this.weights = weights;
+        console.log(this.weights);
+      }
     );
   }
 
@@ -40,15 +63,28 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.setupScene();
     this.setupCamera();
     this.setupRenderer();
+    this.setupUtilities();
   }
 
   private setupScene() {
     this.scene = new THREE.Scene();
 
-    let geometry = new THREE.BoxGeometry(1, 1, 1);
-    let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    this.cube = new THREE.Mesh(geometry, material);
-    this.scene.add(this.cube);
+    let objectLoader = new THREE.OBJLoader();
+    objectLoader.load("../../assets/models/obj/Brain_Model.obj",
+      (obj) => {
+        obj.traverse(function (child) {
+          if (child instanceof THREE.Mesh) {
+            // child.material = brainMaterial;
+          }
+        });
+
+        obj.position.y = -0.5;
+        obj.rotation.y = Math.PI / 2;
+        this.scene.add(obj);
+      },
+      (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
+      (err) => { console.error('An error happened'); }
+    );
   }
 
   private setupCamera() {
@@ -59,8 +95,14 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.nearClippingPane,
       this.farClippingPane
     );
+    this.camera.position.z = 3;
+    this.scene.add(this.camera);
 
-    this.camera.position.z = 5;
+    let ambientLight = new THREE.AmbientLight(0x444444);
+    this.scene.add(ambientLight);
+
+    let directionalLight = new THREE.DirectionalLight(0xffeedd);
+    this.camera.add(directionalLight);
   }
 
   private setupRenderer() {
@@ -73,19 +115,20 @@ export class SceneComponent implements OnInit, AfterViewInit {
     let component: SceneComponent = this;
     (function render() {
       requestAnimationFrame(render);
-
-      component.cube.rotation.x += 0.1;
-      component.cube.rotation.y += 0.1;
-
       component.renderer.render(component.scene, component.camera);
     }());
   }
 
+  private setupUtilities() {
+    // ==================================================
+    // controls
+    // ==================================================
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.rotateSpeed = 1.0;
+    this.controls.zoomSpeed = 1.2;
+  }
+
   private getAspectRatio(): number {
-    let height = this.canvas.clientHeight;
-    if (height === 0) {
-      return 0;
-    }
-    return this.canvas.clientWidth / this.canvas.clientHeight;
+    return window.innerWidth / window.innerHeight;
   }
 }

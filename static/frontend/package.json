@@ -29,6 +29,8 @@
     "ng2-nouislider": "^1.7.11",
     "nouislider": "^11.1.0",
     "rxjs": "^6.0.0",
+    "simpleheat": "^0.4.0",
+    "stats.js": "^0.17.0",
     "three": "^0.92.0",
     "zone.js": "^0.8.26"
   },
