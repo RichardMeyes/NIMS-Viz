@@ -1,13 +1,15 @@
-import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2 } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input } from '@angular/core';
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
 import * as Stats from 'stats.js/build/stats.min.js';
-import * as simpleheat from "simpleheat/simpleheat.js";
+import * as simpleheat from 'simpleheat/simpleheat.js';
 
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/loaders/OBJLoader.js';
 import 'three/examples/js/controls/OrbitControls';
+
+import { BrainComponent } from './brain/brain.component';
 
 
 @Component({
@@ -16,6 +18,12 @@ import 'three/examples/js/controls/OrbitControls';
   styleUrls: ['./scene.component.scss']
 })
 export class SceneComponent implements OnInit, AfterViewInit {
+
+  @ViewChild('snav') snav;
+  @ViewChild('canvas') private canvasRef;
+  @ViewChild('brainComponent') brainComponent;
+  @ViewChild('moleculeComponent') moleculeComponent;
+  @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
@@ -25,17 +33,57 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private windowWidth: number;
   private windowHeight: number;
-  private fieldOfView: number = 45;
-  private nearClippingPane: number = 1;
-  private farClippingPane: number = 2000;
+  private fieldOfView = 45;
+  private nearClippingPane = 1;
+  private farClippingPane = 2000;
 
   private weights: any;
 
-  @ViewChild('canvas') private canvasRef;
+  private showBrainView = true;
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
   }
+
+  files = [
+    { value: 'model1.h5', viewValue: 'File 1' },
+    { value: 'model2.h5', viewValue: 'File 2' },
+    { value: 'model3.h5', viewValue: 'File 3' }
+  ];
+
+  private selectedFile;
+
+  layerCount = 15;
+  nodeCount = 15;
+  minOpac = 40;
+
+  epochRange = [25, 60];
+
+  colors: string[] = [
+    '#FF6633',
+    '#FFB399',
+    '#FF33FF',
+    '#FFFF99',
+    '#00B3E6',
+    '#E6B333',
+    '#3366E6',
+    '#999966',
+    '#99FF99',
+    '#B34D4D',
+    '#80B300',
+    '#809900',
+    '#E6B3B3',
+    '#6680B3',
+    '#66991A',
+    '#FF99E6',
+  ];
+  color1: string;
+  color2: string;
+  color3: string;
+
+  col1Trigger = 40;
+  col2Trigger = 65;
+  col3Trigger = 100;
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
@@ -53,23 +101,50 @@ export class SceneComponent implements OnInit, AfterViewInit {
       (weights) => {
         this.weights = weights;
         console.log(this.weights);
+        this.networkService.createNetworkFromWeights(this.weights);
       }
     );
   }
 
-  ngOnInit() { }
-
-  ngAfterViewInit() {
+  ngOnInit() {
+    this.selectedFile = this.files[0].value;
+    console.log('ngOnInit');
     this.setupScene();
     this.setupCamera();
     this.setupRenderer();
     this.setupUtilities();
   }
 
+  private startCalc() {
+    console.log('quick test', this.selectedFile);
+
+  }
+
+  private testFunction() {
+    this.brainComponent.createConnectionsBetweenLayers(this.weights,
+      this.networkService.getLayerObj,
+      this.networkService.getNetworkReductionFactor);
+
+  }
+
+  public toggle() {
+    this.snav.toggle();
+  }
+
+  ngAfterViewInit() {
+
+  }
+
   private setupScene() {
     this.scene = new THREE.Scene();
 
-    let objectLoader = new THREE.OBJLoader();
+    if (this.showBrainView) {
+      // this.brainComponent.ngOnInit();
+    } else {
+      // this.moleculeComponent.ngOnInit();
+    }
+
+    /*let objectLoader = new THREE.OBJLoader();
     objectLoader.load("../../assets/models/obj/Brain_Model.obj",
       (obj) => {
         obj.traverse(function (child) {
@@ -84,11 +159,11 @@ export class SceneComponent implements OnInit, AfterViewInit {
       },
       (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
       (err) => { console.error('An error happened'); }
-    );
+    );*/
   }
 
   private setupCamera() {
-    let aspectRatio = this.getAspectRatio();
+    const aspectRatio = this.getAspectRatio();
     this.camera = new THREE.PerspectiveCamera(
       this.fieldOfView,
       aspectRatio,
@@ -98,10 +173,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.camera.position.z = 3;
     this.scene.add(this.camera);
 
-    let ambientLight = new THREE.AmbientLight(0x444444);
+    const ambientLight = new THREE.AmbientLight(0x444444);
     this.scene.add(ambientLight);
 
-    let directionalLight = new THREE.DirectionalLight(0xffeedd);
+    const directionalLight = new THREE.DirectionalLight(0xffeedd);
     this.camera.add(directionalLight);
   }
 
@@ -112,7 +187,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     });
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
-    let component: SceneComponent = this;
+    const component: SceneComponent = this;
     (function render() {
       requestAnimationFrame(render);
       component.renderer.render(component.scene, component.camera);
