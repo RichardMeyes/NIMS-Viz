@@ -1,1 +1,137 @@
+<mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap">
+<mat-accordion>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                <h3>Setup</h3>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <mat-form-field>
+            <mat-select placeholder="File">
+                <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFile=file.value">
+                    {{ file.viewValue }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-action-row>
+            <button mat-button color="accent" (click)="startCalc()">Start the Calculation</button>
+            <button mat-button color="accent" (click)="testFunction()">Test</button>
+        </mat-action-row>
+    </mat-expansion-panel>
+</mat-accordion>
+
+<div fxLayout="column wrap" style="padding-left: 1.5rem; padding-right: 1.5rem;">
+    <div fxLayout="row" class="first-item">
+        <div>{{epochRange[0]}}</div>
+        <div fxFlex="grow"></div>
+        <div class="setting-label">Epoch</div>
+        <div fxFlex="grow"></div>
+        <div>{{epochRange[1]}}</div>
+    </div>
+    <nouislider [connect]="true" [min]="1" [max]="100" [step]="1" [(ngModel)]="epochRange"></nouislider>
+    <mat-slide-toggle class="setting-item">Neural Netowrk</mat-slide-toggle>
+    <mat-slide-toggle class="setting-item last-item">ANN</mat-slide-toggle>
+</div>
+
+<mat-accordion>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                <h3>Heatmap Config</h3>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div fxLayout="column wrap">
+            <mat-form-field>
+                <input matInput placeholder="Radius" value="4" type="number">
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput placeholder="Blur" value="2" type="number">
+            </mat-form-field>
+            <div fxLayout="row">
+                <div class="setting-label">Minimum Opacity</div>
+                <div fxFlex="grow"></div>
+                <div>{{(minOpac/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="minOpac" (input)="minOpac=$event.value;"></mat-slider>
+            <label for="">Color 1</label>
+            <div fxLayout="row">
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="color1=$event" (selected)="color1=$event"
+                    fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div fxLayout="row">
+                <div class="setting-label">Color 1 Trigger</div>
+                <div fxFlex="grow"></div>
+                <div>{{(col1Trigger/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="col1Trigger" (input)="col1Trigger=$event.value;"></mat-slider>
+            <label for="">Color 2</label>
+            <div fxLayout="row">
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="color2=$event" (selected)="color2=$event"
+                    fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div fxLayout="row">
+                <div class="setting-label">Color 2 Trigger</div>
+                <div fxFlex="grow"></div>
+                <div>{{(col2Trigger/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="col2Trigger" (input)="col2Trigger=$event.value;"></mat-slider>
+            <label for="">Color 3</label>
+            <div fxLayout="row">
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="color3=$event" (selected)="color3=$event"
+                    fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div fxLayout="row">
+                <div class="setting-label">Color 3 Trigger</div>
+                <div fxFlex="grow"></div>
+                <div>{{(col3Trigger/100)}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="col3Trigger" (input)="col3Trigger=$event.value;"></mat-slider>
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>
+
+<mat-accordion>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                <h3>Demo Layer</h3>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <div fxLayout="column wrap">
+            <div fxLayout="row">
+                <div class="setting-label">Layer Count</div>
+                <div fxFlex="grow"></div>
+                <div>{{layerCount}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="layerCount" (input)="layerCount=$event.value;"></mat-slider>
+            <div fxLayout="row">
+                <div class="setting-label">Node Count</div>
+                <div fxFlex="grow"></div>
+                <div>{{nodeCount}}</div>
+            </div>
+            <mat-slider min="1" max="100" step="1" [value]="nodeCount" (input)="nodeCount=$event.value;"></mat-slider>
+            <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle>
+            <mat-action-row>
+                <button mat-button color="accent">Create Network</button>
+            </mat-action-row>
+
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>
+
+</mat-sidenav>
+
+<mat-sidenav-content>
 <canvas #canvas></canvas>
+<app-brain #brainComponent [sceneInput]="scene"></app-brain>
+<!--<app-molecule></app-molecule>-->
+</mat-sidenav-content>
