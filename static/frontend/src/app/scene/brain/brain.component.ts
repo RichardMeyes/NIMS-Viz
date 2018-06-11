@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 
 import * as THREE from 'three';
 // import * as simpleheat from "simpleheat/simpleheat.js";
@@ -19,7 +19,7 @@ export class BrainComponent implements OnInit {
     private traversePolygonsForGeometries;
     private windowWidth;
     private windowHeight;
-    @Input() sceneInput: THREE.Scene;
+    private scene: THREE.Scene;
     private perspectiveCamera;
     private renderer;
 
@@ -27,6 +27,7 @@ export class BrainComponent implements OnInit {
     private directionalLight;
     private objectLoader;
     private heatmapCanvasTexture;
+    @Output() updatedHeatmapCanvasTexture = new EventEmitter<THREE.CanvasTexture>();
     private heat;
     private heatData;
     // private testData;
@@ -36,6 +37,7 @@ export class BrainComponent implements OnInit {
     // private myAtomLayers = [];
     private stepperCnt = 0;
     private heatmapSteppingData = [];
+    @Output() updatedHeatmapData = new EventEmitter<any>();
     private heatmapBasicData = [];
 // amount (-1) of points that should be drawn per connection / between nodes
 private density = 5; // -> 4 points
@@ -107,7 +109,10 @@ private guiConfig = {
   };
 
     ngOnInit() {
-        console.log('sceneInput', this.sceneInput);
+    }
+
+    public setupBrain() {
+        this.scene = new THREE.Scene();
         this.loadTexture();
         this.loadObject();
         // Recursively traverse through the model.
@@ -151,6 +156,8 @@ private guiConfig = {
                 }
             }
         };
+
+        return this.scene;
     }
 
 
@@ -201,7 +208,8 @@ private guiConfig = {
         // texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         const htmlCanvas: any = document.getElementById('canvHeatmap');
         this.heatmapCanvasTexture = new THREE.CanvasTexture(htmlCanvas, THREE.UVMapping);
-        // heatmapCanvasTexture.needsUpdate = true;
+        // this.heatmapCanvasTexture.needsUpdate = true;
+        this.updatedHeatmapCanvasTexture.emit(this.heatmapCanvasTexture);
         this.brainTexture = THREE.ImageUtils.loadTexture('/assets/textures/brain_tex.jpg');
         // brainTexture.needsUpdate = true;
         this.alphaTexture = THREE.ImageUtils.loadTexture('/assets/textures/heatmap_alphamap.jpg');
@@ -228,7 +236,7 @@ private guiConfig = {
         this.brainMaterial.name = 'brainmaterial';
 
         // draw heatmap
-        this.heat = simpleheat(document.getElementById('canvHeatmap'));
+        // this.heat = simpleheat(document.getElementById('canvHeatmap'));
 
         // heatmapMaterial = new THREE.MeshStandardMaterial({
         //  map: heatmapCanvasTexture,
@@ -256,14 +264,14 @@ private guiConfig = {
             obj.name = 'brainobject';
             obj.position.y = -0.5;
             obj.rotation.y = Math.PI / 2;
-            this.sceneInput.add(obj);
+            this.scene.add(obj);
             },
             (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
             (err) => { console.error('An error happened'); }
         );
     }
 
-    private animate() {
+    /*private animate() {
         requestAnimationFrame(this.animate);
 
         // =======================================================
@@ -305,7 +313,7 @@ private guiConfig = {
         // =======================================================
         this.stats.update();
         // =======================================================
-    }
+    }*/
 
     private animateNextStep(convertedLayerObjs, layerID) {
         // add heatmapdata from layerID to alrdy existing data
@@ -336,44 +344,46 @@ private guiConfig = {
                 currLN[currLN.length - 1], nextLN[nextLN.length - 1],
                 temp2D[temp2D.length - 1][temp2D[0].length - 1]);
             this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapEdge2);
+            this.updatedHeatmapData.emit(this.heatmapSteppingData);
             // console.log("heatmapSteppingData",heatmapSteppingData);
             } else {
-            // repeat connectionCount times -> amount of connections per layer
-            for (let j = 0; j < currLN.length; j++) {
-                console.log('Progress: ' + (j * 100.0 / currLN.length) + '%');
-                for (let k = 0; k < nextLN.length; k++) {
-                if (demothis) {
-                    // console.log("highlighting connection and adding it to heatmapdata");
-                    try {
-                    const heatmapConnections = this.highlightConnection(
-                        currLN[j], nextLN[k],
-                        layers[i * 2]['weights'][0][j / networkReductionFactor][k / networkReductionFactor]);
-                    this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapConnections);
-                    } catch (err) {
-                    console.log('i: ', i);
-                    console.log('j: ', j);
-                    console.log('k: ', k);
-                    console.log('layers[i][\'weights\'][0][j/networkReductionFactor][k/networkReductionFactor]',
-                    layers[i]['weights'][0][j / networkReductionFactor][k / networkReductionFactor]);
-                    console.log('err: ', err);
-                    break;
+                // repeat connectionCount times -> amount of connections per layer
+                for (let j = 0; j < currLN.length; j++) {
+                    console.log('Progress: ' + (j * 100.0 / currLN.length) + '%');
+                    for (let k = 0; k < nextLN.length; k++) {
+                        if (demothis) {
+                            // console.log("highlighting connection and adding it to heatmapdata");
+                            try {
+                                const heatmapConnections = this.highlightConnection(
+                                    currLN[j], nextLN[k],
+                                    layers[i * 2]['weights'][0][j / networkReductionFactor][k / networkReductionFactor]);
+                                this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapConnections);
+                                this.updatedHeatmapData.emit(this.heatmapSteppingData);
+                            } catch (err) {
+                                console.log('i: ', i);
+                                console.log('j: ', j);
+                                console.log('k: ', k);
+                                console.log('layers[i][\'weights\'][0][j/networkReductionFactor][k/networkReductionFactor]',
+                                layers[i]['weights'][0][j / networkReductionFactor][k / networkReductionFactor]);
+                                console.log('err: ', err);
+                                break;
+                            }
+                            // connections.push([currLN[j],nextLN[k]]);
+                        } else {
+                            connections.push([currLN[j], nextLN[k]]);
+                        }
                     }
-                    // connections.push([currLN[j],nextLN[k]]);
-                } else {
-                    connections.push([currLN[j], nextLN[k]]);
+                    // let randomNode1 = Math.round(Math.random() * (currLayer.heatmapNodes.length-1));
+                    // let randomNode2 = Math.round(Math.random() * (nextLayer.heatmapNodes.length - 1));
+                    // let randomNode1 = i;
+                    // connectionCheat = randomNode2
+                    // connections.push([randomNode1, randomNode2]);
+                    // let coordN1 = currLayer.heatmapNodes[randomNode1];
+                    // let coordN2 = nextLayer.heatmapNodes[randomNode2];
+                    // let value = Math.abs(nextLayer.heatmapNodes[randomNode2][2] - currLayer.heatmapNodes[randomNode1][2]);
+                    // let heatmapValue = currLayer.layerID / layerObjs.length;
+                    // connections.push(highlightConnection(coordN1, coordN2, heatmapValue));
                 }
-                }
-                // let randomNode1 = Math.round(Math.random() * (currLayer.heatmapNodes.length-1));
-                // let randomNode2 = Math.round(Math.random() * (nextLayer.heatmapNodes.length - 1));
-                // let randomNode1 = i;
-                // connectionCheat = randomNode2
-                // connections.push([randomNode1, randomNode2]);
-                // let coordN1 = currLayer.heatmapNodes[randomNode1];
-                // let coordN2 = nextLayer.heatmapNodes[randomNode2];
-                // let value = Math.abs(nextLayer.heatmapNodes[randomNode2][2] - currLayer.heatmapNodes[randomNode1][2]);
-                // let heatmapValue = currLayer.layerID / layerObjs.length;
-                // connections.push(highlightConnection(coordN1, coordN2, heatmapValue));
-            }
             }
             // console.log("connections",connections);
             layerObjs[i]['connections'] = connections;
@@ -409,6 +419,7 @@ private guiConfig = {
                 // let combRealVal = conn[j].concat(layers[i*2]["weights"][0][i][j])
                 const heatmapConnections = this.highlightConnection(combination[0], combination[1], combination[2]);
                 this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapConnections);
+                this.updatedHeatmapData.emit(this.heatmapSteppingData);
                 }
 
                 alrdyCnt += conn.length;

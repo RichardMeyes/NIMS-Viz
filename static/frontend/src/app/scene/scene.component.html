@@ -132,6 +132,6 @@
 
 <mat-sidenav-content>
 <canvas #canvas></canvas>
-<app-brain #brainComponent [sceneInput]="scene"></app-brain>
+<app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain>
 <!--<app-molecule></app-molecule>-->
 </mat-sidenav-content>
