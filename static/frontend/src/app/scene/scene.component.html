@@ -141,6 +141,20 @@
 
             <div fxLayout="column wrap">
                 <mat-form-field>
+                    <mat-select placeholder="Problem to solve" [(ngModel)]="selectedProblem">
+                        <mat-option *ngFor="let problem of problems" [value]="problem.value">
+                            {{ problem.viewValue }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Learning Rate" value="1" type="number" [(ngModel)]="learningRate">
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Number of Iteration" value="1" type="number" [(ngModel)]="numIterations">
+                </mat-form-field>
+
+                <!-- <mat-form-field>
                     <input matInput placeholder="Layers" value="1" type="number" [(ngModel)]="layerCount">
                 </mat-form-field>
                 <div *ngFor="let layer of playgroundService.arrayOne(layerCount); let i = index">
@@ -148,15 +162,11 @@
                     <mat-form-field>
                         <input matInput placeholder="Nodes" value="1" type="number" [(ngModel)]="nodeCount">
                     </mat-form-field>
-                    <!-- <mat-select placeholder="File">
-                        <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFile=file.value">
-                            {{ file.viewValue }}
-                        </mat-option>
-                    </mat-select> -->
-                </div>
+                </div> -->
                 <!-- <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle> -->
                 <mat-action-row>
-                    <button mat-button color="accent" (click)="generateData()">Create Network</button>
+                    <button mat-button color="accent" (click)="reset()">Reset</button>
+                    <button mat-button color="accent" (click)="train()">Train Network</button>
                 </mat-action-row>
 
             </div>
@@ -184,7 +194,9 @@
             </div>
         </div>
         <div id="random" class="plot-item">
-            <div class="caption">Fit curve with random coefficients (before training)</div>
+            <div class="caption">Fit curve with random coefficients
+                <strong>(before training)</strong>
+            </div>
             <div class="caption">Random coefficients:
                 <span class='coeff' #randomCoeff></span>
             </div>
@@ -193,11 +205,15 @@
             </div>
         </div>
         <div id="trained" class="plot-item">
-            <div class="caption">Fit curve with learned coefficients (after training)</div>
+            <div class="caption">Fit curve with learned coefficients
+                <strong>(after training)</strong>
+            </div>
             <div class="caption">Learned coefficients:
                 <span class='coeff' #trainedCoeff></span>
             </div>
-            <div class="plot"></div>
+            <div class="chart-container">
+                <canvas #trainedCanvas class="plot"></canvas>
+            </div>
         </div>
     </div>
 </mat-sidenav-content>

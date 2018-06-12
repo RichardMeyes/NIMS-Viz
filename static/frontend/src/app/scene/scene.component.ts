@@ -14,6 +14,7 @@ import 'three/examples/js/controls/OrbitControls';
 import { BrainComponent } from './brain/brain.component';
 import { PlaygroundService } from '../playground.service';
 import { generate } from 'rxjs';
+import { update } from '@tensorflow/tfjs-layers/dist/variables';
 
 
 @Component({
@@ -218,8 +219,15 @@ export class SceneComponent implements OnInit, AfterViewInit {
   // ==================================================
   // playground
   // ==================================================
+  problems = [
+    { value: 'polynomial-regression', viewValue: 'Polynomial Regression' },
+    { value: 'mnist', viewValue: 'MNIST' }
+  ];
+  selectedProblem = "polynomial-regression";
+
   trueCoefficients; trainingData;
   randomCoefficients;
+  trainingPredictions;
   a; b; c; d;
 
   numIterations = 75;
@@ -229,12 +237,14 @@ export class SceneComponent implements OnInit, AfterViewInit {
   layerCount = 1;
   nodeCount = 1;
 
+  predictionChart;
   @ViewChild('dataCoeff') private dataCoeffRef;
   @ViewChild('randomCoeff') private randomCoeffRef;
-  @ViewChild('trainedCoeff') private trainedCoeddRef;
+  @ViewChild('trainedCoeff') private trainedCoeffRef;
 
   @ViewChild('dataCanvas') private dataCanvasRef;
   @ViewChild('randomCanvas') private randomCanvasRef;
+  @ViewChild('trainedCanvas') private trainedCanvasRef;
 
   renderCoefficients(container, coeff) {
     container.nativeElement.innerHTML =
@@ -265,8 +275,41 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     this.renderCoefficients(this.randomCoeffRef, randomCoefficientsData);
     const predictionsBefore = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
-    // this.plotDataAndPredictions('#random .plot', this.trainingData.xs, this.trainingData.ys, predictionsBefore);
     this.plotDataAndPredictions(this.randomCanvasRef, this.trainingData, predictionsBefore);
+
+    predictionsBefore.dispose();
+  }
+
+  train() {
+    this.trainingPredictions = [];
+
+    for (let iter = 0; iter < this.numIterations; iter++) {
+      this.optimizer.minimize(() => {
+        const pred = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
+        this.trainingPredictions.push(tf.variable(pred));
+        return this.playgroundService.loss(pred, this.trainingData.ys);
+      });
+
+      tf.nextFrame();
+    }
+
+    let trainedCoefficientsData = {
+      a: this.a.dataSync()[0],
+      b: this.b.dataSync()[0],
+      c: this.c.dataSync()[0],
+      d: this.d.dataSync()[0],
+    };
+
+    this.renderCoefficients(this.trainedCoeffRef, trainedCoefficientsData);
+
+    for (let iter = 0; iter < this.numIterations; iter++) {
+      if (iter == 0) { this.plotDataAndPredictions(this.trainedCanvasRef, this.trainingData, this.trainingPredictions[iter]); }
+      else {
+        setTimeout(() => {
+          this.updatePrediction(this.trainingData, this.trainingPredictions[iter], iter);
+        }, 150 * iter);
+      }
+    }
   }
 
   plotData(container, trainingData) {
@@ -309,7 +352,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     let ctx = container.nativeElement.getContext('2d');
 
-    new Chart(ctx, {
+    this.predictionChart = new Chart(ctx, {
       type: "scatter",
       data: {
         datasets: [{
@@ -338,6 +381,22 @@ export class SceneComponent implements OnInit, AfterViewInit {
         }
       }
     });
+  }
+
+  updatePrediction(trainingData, prediction, iter: number) {
+    let xvals = trainingData.xs.dataSync();
+    let yvals = trainingData.ys.dataSync();
+    let predVals = prediction.dataSync();
+
+    let predValues = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': predVals[i] }; });
+
+    this.predictionChart.data.datasets[1].data = predValues;
+    this.predictionChart.update();
+  }
+
+  reset() {
+    this.predictionChart.destroy();
+    this.beforeTraining();
   }
 
   // ==================================================

@@ -47,6 +47,11 @@ export class PlaygroundService {
     });
   }
 
+  loss(prediction, labels) {
+    const error = prediction.sub(labels).square().mean();
+    return error;
+  }
+
   arrayOne(n: number): any[] {
     return Array(n);
   }
