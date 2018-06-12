@@ -173,22 +173,22 @@
 <app-brain #brainComponent [sceneInput]="scene"></app-brain> -->
     <!--<app-molecule></app-molecule>-->
 
-    <div class="plots">
-        <div id="data">
+    <div class="plots" fxLayout="row wrap">
+        <div id="data" class="plot-item">
             <div class="caption">Original Data (Synthetic)</div>
             <div class="caption">True coefficients:
                 <span class='coeff' #dataCoeff></span>
             </div>
             <div class="plot"></div>
         </div>
-        <div id="random">
+        <div id="random" class="plot-item">
             <div class="caption">Fit curve with random coefficients (before training)</div>
             <div class="caption">Random coefficients:
                 <span class='coeff' #randomCoeff></span>
             </div>
             <div class="plot"></div>
         </div>
-        <div id="trained">
+        <div id="trained" class="plot-item">
             <div class="caption">Fit curve with learned coefficients (after training)</div>
             <div class="caption">Learned coefficients:
                 <span class='coeff' #trainedCoeff></span>

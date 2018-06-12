@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import * as Stats from 'stats.js/build/stats.min.js';
 import * as simpleheat from 'simpleheat/simpleheat.js';
 import * as tf from '@tensorflow/tfjs';
-import renderChart from 'vega-embed';
+// import renderChart from 'vega-embed';
 
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/loaders/OBJLoader.js';
@@ -139,6 +139,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.generateData();
+    this.beforeTraining();
   }
 
   private setupScene() {
@@ -218,6 +219,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   // playground
   // ==================================================
   trueCoefficients; trainingData;
+  randomCoefficients;
   a; b; c; d;
 
   numIterations = 75;
@@ -237,51 +239,89 @@ export class SceneComponent implements OnInit, AfterViewInit {
       coeff.c.toFixed(3)},  d=${coeff.d.toFixed(3)}</span>`;
   }
 
-  plotData(container, xs, ys) {
-    let xvals = xs.dataSync();
-    let yvals = ys.dataSync();
+  // plotData(container, xs, ys) {
+  //   let xvals = xs.dataSync();
+  //   let yvals = ys.dataSync();
 
-    let values = Array.from(yvals).map((y, i) => {
-      return { 'x': xvals[i], 'y': yvals[i] };
-    });
+  //   let values = Array.from(yvals).map((y, i) => {
+  //     return { 'x': xvals[i], 'y': yvals[i] };
+  //   });
 
-    let spec: any = {
-      '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
-      'width': 300,
-      'height': 300,
-      'data': { 'values': values },
-      'mark': 'point',
-      'encoding': {
-        'x': { 'field': 'x', 'type': 'quantitative' },
-        'y': { 'field': 'y', 'type': 'quantitative' }
-      }
-    };
+  //   let spec: any = {
+  //     '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
+  //     'width': 300,
+  //     'height': 300,
+  //     'data': { 'values': values },
+  //     'mark': 'point',
+  //     'encoding': {
+  //       'x': { 'field': 'x', 'type': 'quantitative' },
+  //       'y': { 'field': 'y', 'type': 'quantitative' }
+  //     }
+  //   };
 
-    return renderChart(container, spec, { actions: false });
-  }
+  //   return renderChart(container, spec, { actions: false });
+  // }
+
+  // plotDataAndPredictions(container, xs, ys, preds) {
+  //   const xvals = xs.dataSync();
+  //   const yvals = ys.dataSync();
+  //   const predVals = preds.dataSync();
+
+  //   const values = Array.from(yvals).map((y, i) => {
+  //     return { 'x': xvals[i], 'y': yvals[i], pred: predVals[i] };
+  //   });
+
+  //   const spec: any = {
+  //     '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
+  //     'width': 300,
+  //     'height': 300,
+  //     'data': { 'values': values },
+  //     'layer': [
+  //       {
+  //         'mark': 'point',
+  //         'encoding': {
+  //           'x': { 'field': 'x', 'type': 'quantitative' },
+  //           'y': { 'field': 'y', 'type': 'quantitative' }
+  //         }
+  //       },
+  //       {
+  //         'mark': 'line',
+  //         'encoding': {
+  //           'x': { 'field': 'x', 'type': 'quantitative' },
+  //           'y': { 'field': 'pred', 'type': 'quantitative' },
+  //           'color': { 'value': 'tomato' }
+  //         },
+  //       }
+  //     ]
+  //   };
+
+  //   return renderChart(container, spec, { actions: false });
+  // }
 
   generateData() {
     this.trueCoefficients = { a: -.8, b: -.2, c: .9, d: .5 };
     this.trainingData = this.playgroundService.generateData(100, this.trueCoefficients);
     this.renderCoefficients(this.dataCoeffRef, this.trueCoefficients);
-    this.plotData('#data .plot', this.trainingData.xs, this.trainingData.ys);
+    // this.plotData('#data .plot', this.trainingData.xs, this.trainingData.ys);
   }
 
-  // beforeTraining() {
-  //   a = tf.variable(tf.scalar(Math.random()));
-  //   b = tf.variable(tf.scalar(Math.random()));
-  //   c = tf.variable(tf.scalar(Math.random()));
-  //   d = tf.variable(tf.scalar(Math.random()));
+  beforeTraining() {
+    this.a = tf.variable(tf.scalar(Math.random()));
+    this.b = tf.variable(tf.scalar(Math.random()));
+    this.c = tf.variable(tf.scalar(Math.random()));
+    this.d = tf.variable(tf.scalar(Math.random()));
 
-  //   this.renderCoefficients(this.randomCoeffRef, {
-  //     a: a.dataSync()[0],
-  //     b: b.dataSync()[0],
-  //     c: c.dataSync()[0],
-  //     d: d.dataSync()[0],
-  //   });
-  //   const predictionsBefore = predict(trainingData.xs);
-  //   await plotDataAndPredictions(
-  //     '#random .plot', trainingData.xs, trainingData.ys, predictionsBefore);
-  // }
+    this.randomCoefficients = { a: this.a, b: this.b, c: this.c, d: this.d };
+    let randomCoefficientsData = {
+      a: this.a.dataSync()[0],
+      b: this.b.dataSync()[0],
+      c: this.c.dataSync()[0],
+      d: this.d.dataSync()[0],
+    };
+
+    this.renderCoefficients(this.randomCoeffRef, randomCoefficientsData);
+    const predictionsBefore = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
+    // this.plotDataAndPredictions('#random .plot', this.trainingData.xs, this.trainingData.ys, predictionsBefore);
+  }
   // ==================================================
 }

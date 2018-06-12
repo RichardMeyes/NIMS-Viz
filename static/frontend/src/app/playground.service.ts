@@ -37,6 +37,15 @@ export class PlaygroundService {
     });
   }
 
+  predict(x, randomCoefficients) {
+    // y = a * x ^ 3 + b * x ^ 2 + c * x + d
+    return tf.tidy(() => {
+      return randomCoefficients.a.mul(x.pow(tf.scalar(3, 'int32')))
+        .add(randomCoefficients.b.mul(x.square()))
+        .add(randomCoefficients.c.mul(x))
+        .add(randomCoefficients.d);
+    });
+  }
 
   arrayOne(n: number): any[] {
     return Array(n);
