@@ -14,13 +14,15 @@ import { BrainComponent } from './scene/brain/brain.component';
 import { MoleculeComponent } from './scene/molecule/molecule.component';
 
 import { AppComponent } from './app.component';
+import { OrdinalPipe } from './ordinal.pipe';
 
 @NgModule({
   declarations: [
     AppComponent,
     SceneComponent,
     BrainComponent,
-    MoleculeComponent
+    MoleculeComponent,
+    OrdinalPipe
   ],
   imports: [
     BrowserModule,
