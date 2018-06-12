@@ -179,14 +179,18 @@
             <div class="caption">True coefficients:
                 <span class='coeff' #dataCoeff></span>
             </div>
-            <div class="plot"></div>
+            <div class="chart-container">
+                <canvas #dataCanvas class="plot"></canvas>
+            </div>
         </div>
         <div id="random" class="plot-item">
             <div class="caption">Fit curve with random coefficients (before training)</div>
             <div class="caption">Random coefficients:
                 <span class='coeff' #randomCoeff></span>
             </div>
-            <div class="plot"></div>
+            <div class="chart-container">
+                <canvas #randomCanvas class="plot"></canvas>
+            </div>
         </div>
         <div id="trained" class="plot-item">
             <div class="caption">Fit curve with learned coefficients (after training)</div>

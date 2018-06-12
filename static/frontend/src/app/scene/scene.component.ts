@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import * as Stats from 'stats.js/build/stats.min.js';
 import * as simpleheat from 'simpleheat/simpleheat.js';
 import * as tf from '@tensorflow/tfjs';
-// import renderChart from 'vega-embed';
+import { Chart } from "chart.js";
 
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/loaders/OBJLoader.js';
@@ -233,76 +233,20 @@ export class SceneComponent implements OnInit, AfterViewInit {
   @ViewChild('randomCoeff') private randomCoeffRef;
   @ViewChild('trainedCoeff') private trainedCoeddRef;
 
+  @ViewChild('dataCanvas') private dataCanvasRef;
+  @ViewChild('randomCanvas') private randomCanvasRef;
+
   renderCoefficients(container, coeff) {
     container.nativeElement.innerHTML =
       `<span>a=${coeff.a.toFixed(3)}, b=${coeff.b.toFixed(3)}, c=${
       coeff.c.toFixed(3)},  d=${coeff.d.toFixed(3)}</span>`;
   }
 
-  // plotData(container, xs, ys) {
-  //   let xvals = xs.dataSync();
-  //   let yvals = ys.dataSync();
-
-  //   let values = Array.from(yvals).map((y, i) => {
-  //     return { 'x': xvals[i], 'y': yvals[i] };
-  //   });
-
-  //   let spec: any = {
-  //     '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
-  //     'width': 300,
-  //     'height': 300,
-  //     'data': { 'values': values },
-  //     'mark': 'point',
-  //     'encoding': {
-  //       'x': { 'field': 'x', 'type': 'quantitative' },
-  //       'y': { 'field': 'y', 'type': 'quantitative' }
-  //     }
-  //   };
-
-  //   return renderChart(container, spec, { actions: false });
-  // }
-
-  // plotDataAndPredictions(container, xs, ys, preds) {
-  //   const xvals = xs.dataSync();
-  //   const yvals = ys.dataSync();
-  //   const predVals = preds.dataSync();
-
-  //   const values = Array.from(yvals).map((y, i) => {
-  //     return { 'x': xvals[i], 'y': yvals[i], pred: predVals[i] };
-  //   });
-
-  //   const spec: any = {
-  //     '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
-  //     'width': 300,
-  //     'height': 300,
-  //     'data': { 'values': values },
-  //     'layer': [
-  //       {
-  //         'mark': 'point',
-  //         'encoding': {
-  //           'x': { 'field': 'x', 'type': 'quantitative' },
-  //           'y': { 'field': 'y', 'type': 'quantitative' }
-  //         }
-  //       },
-  //       {
-  //         'mark': 'line',
-  //         'encoding': {
-  //           'x': { 'field': 'x', 'type': 'quantitative' },
-  //           'y': { 'field': 'pred', 'type': 'quantitative' },
-  //           'color': { 'value': 'tomato' }
-  //         },
-  //       }
-  //     ]
-  //   };
-
-  //   return renderChart(container, spec, { actions: false });
-  // }
-
   generateData() {
     this.trueCoefficients = { a: -.8, b: -.2, c: .9, d: .5 };
     this.trainingData = this.playgroundService.generateData(100, this.trueCoefficients);
     this.renderCoefficients(this.dataCoeffRef, this.trueCoefficients);
-    // this.plotData('#data .plot', this.trainingData.xs, this.trainingData.ys);
+    this.plotData(this.dataCanvasRef, this.trainingData);
   }
 
   beforeTraining() {
@@ -322,6 +266,79 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.renderCoefficients(this.randomCoeffRef, randomCoefficientsData);
     const predictionsBefore = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
     // this.plotDataAndPredictions('#random .plot', this.trainingData.xs, this.trainingData.ys, predictionsBefore);
+    this.plotDataAndPredictions(this.randomCanvasRef, this.trainingData, predictionsBefore);
   }
+
+  plotData(container, trainingData) {
+    let xvals = trainingData.xs.dataSync();
+    let yvals = trainingData.ys.dataSync();
+    let values = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': yvals[i] }; });
+
+    let ctx = container.nativeElement.getContext('2d');
+
+    new Chart(ctx, {
+      type: "scatter",
+      data: {
+        datasets: [{
+          type: 'scatter',
+          label: 'Generated Data',
+          backgroundColor: "#3F51B5",
+          data: values
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            type: 'linear',
+            position: 'bottom'
+          }]
+        }
+      }
+    });
+  }
+
+  plotDataAndPredictions(container, trainingData, prediction) {
+    let xvals = trainingData.xs.dataSync();
+    let yvals = trainingData.ys.dataSync();
+    let predVals = prediction.dataSync();
+
+    let values = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': yvals[i], pred: predVals[i] }; });
+    let predValues = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': predVals[i] }; });
+
+    let ctx = container.nativeElement.getContext('2d');
+
+    new Chart(ctx, {
+      type: "scatter",
+      data: {
+        datasets: [{
+          type: 'scatter',
+          label: 'Generated Data',
+          backgroundColor: "#3F51B5",
+          data: values
+        },
+        {
+          type: "line",
+          label: "Prediction",
+          data: predValues,
+          showLine: false,
+          fill: false,
+          backgroundColor: "#E91E63"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            type: 'linear',
+            position: 'bottom'
+          }]
+        }
+      }
+    });
+  }
+
   // ==================================================
 }
