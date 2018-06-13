@@ -1,4 +1,4 @@
-<mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap">
+<mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap" style="max-width: 313.948px !important;">
     <mat-accordion>
         <mat-expansion-panel>
             <mat-expansion-panel-header>
@@ -141,18 +141,21 @@
 
             <div fxLayout="column wrap">
                 <mat-form-field>
-                    <mat-select placeholder="Problem to solve" [(ngModel)]="selectedProblem">
+                    <mat-select placeholder="Problem to solve" (selectionChange)="problemChange($event.value)" [value]="selectedProblem">
                         <mat-option *ngFor="let problem of problems" [value]="problem.value">
                             {{ problem.viewValue }}
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Learning Rate" value="1" type="number" [(ngModel)]="learningRate">
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Number of Iteration" value="1" type="number" [(ngModel)]="numIterations">
-                </mat-form-field>
+                <div  *ngIf="selectedProblem=='polynomial-regression';else mnist">
+                    <mat-form-field>
+                        <input matInput placeholder="Learning Rate" value="1" type="number" [(ngModel)]="learningRate">
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Number of Iteration" value="1" type="number" [(ngModel)]="numIterations">
+                    </mat-form-field>
+                </div>
+                <ng-template #mnist>content here...</ng-template>
 
                 <!-- <mat-form-field>
                     <input matInput placeholder="Layers" value="1" type="number" [(ngModel)]="layerCount">
@@ -183,7 +186,7 @@
 <app-brain #brainComponent [sceneInput]="scene"></app-brain> -->
     <!--<app-molecule></app-molecule>-->
 
-    <div class="plots" fxLayout="row wrap">
+    <div class="plots" fxLayout="row wrap" *ngIf="selectedProblem=='polynomial-regression';else mnistPlot">
         <div id="data" class="plot-item">
             <div class="caption">Original Data (Synthetic)</div>
             <div class="caption">True coefficients:
@@ -216,4 +219,5 @@
             </div>
         </div>
     </div>
+    <ng-template #mnistPlot>content here...</ng-template>
 </mat-sidenav-content>

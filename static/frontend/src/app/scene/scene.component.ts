@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
@@ -103,7 +103,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // this.renderer.setSize(this.windowWidth, this.windowHeight);
   }
 
-  constructor(private networkService: NetworkService, private renderer2: Renderer2, private playgroundService: PlaygroundService) {
+  constructor(private networkService: NetworkService, private renderer2: Renderer2, private playgroundService: PlaygroundService, private changeDetector: ChangeDetectorRef) {
     // this.networkService.loadFromJson().subscribe(
     //   (weights) => {
     //     this.weights = weights;
@@ -283,33 +283,35 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   train() {
-    this.trainingPredictions = [];
+    if (this.selectedProblem == "polynomial-regression") {
+      this.trainingPredictions = [];
 
-    for (let iter = 0; iter < this.numIterations; iter++) {
-      this.optimizer.minimize(() => {
-        const pred = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
-        this.trainingPredictions.push(tf.variable(pred));
-        return this.playgroundService.loss(pred, this.trainingData.ys);
-      });
+      for (let iter = 0; iter < this.numIterations; iter++) {
+        this.optimizer.minimize(() => {
+          const pred = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
+          this.trainingPredictions.push(tf.variable(pred));
+          return this.playgroundService.loss(pred, this.trainingData.ys);
+        });
 
-      tf.nextFrame();
-    }
+        tf.nextFrame();
+      }
 
-    let trainedCoefficientsData = {
-      a: this.a.dataSync()[0],
-      b: this.b.dataSync()[0],
-      c: this.c.dataSync()[0],
-      d: this.d.dataSync()[0],
-    };
+      let trainedCoefficientsData = {
+        a: this.a.dataSync()[0],
+        b: this.b.dataSync()[0],
+        c: this.c.dataSync()[0],
+        d: this.d.dataSync()[0],
+      };
 
-    this.renderCoefficients(this.trainedCoeffRef, trainedCoefficientsData);
+      this.renderCoefficients(this.trainedCoeffRef, trainedCoefficientsData);
 
-    for (let iter = 0; iter < this.numIterations; iter++) {
-      if (iter == 0) { this.plotDataAndPredictions(this.trainedCanvasRef, this.trainingData, this.trainingPredictions[iter], false); }
-      else {
-        setTimeout(() => {
-          this.updatePrediction(this.trainingData, this.trainingPredictions[iter], false);
-        }, 150 * iter);
+      for (let iter = 0; iter < this.numIterations; iter++) {
+        if (iter == 0) { this.plotDataAndPredictions(this.trainedCanvasRef, this.trainingData, this.trainingPredictions[iter], false); }
+        else {
+          setTimeout(() => {
+            this.updatePrediction(this.trainingData, this.trainingPredictions[iter], false);
+          }, 150 * iter);
+        }
       }
     }
   }
@@ -435,8 +437,20 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   reset() {
-    if (this.predictionChart) { this.predictionChart.destroy(); }
-    this.beforeTraining(true);
+    if (this.selectedProblem == "polynomial-regression") {
+      if (this.predictionChart) { this.predictionChart.destroy(); }
+      this.beforeTraining(true);
+    }
+  }
+
+  problemChange(val: string) {
+    this.selectedProblem = val;
+    this.changeDetector.detectChanges();
+
+    if (val == "polynomial-regression") {
+      this.generateData();
+      this.beforeTraining(false);
+    }
   }
 
   // ==================================================
