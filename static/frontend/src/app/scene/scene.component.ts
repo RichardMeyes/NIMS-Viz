@@ -140,7 +140,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.generateData();
-    this.beforeTraining();
+    this.beforeTraining(false);
   }
 
   private setupScene() {
@@ -237,7 +237,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
   layerCount = 1;
   nodeCount = 1;
 
-  predictionChart;
+  beforeChart; predictionChart;
+
   @ViewChild('dataCoeff') private dataCoeffRef;
   @ViewChild('randomCoeff') private randomCoeffRef;
   @ViewChild('trainedCoeff') private trainedCoeffRef;
@@ -259,7 +260,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.plotData(this.dataCanvasRef, this.trainingData);
   }
 
-  beforeTraining() {
+  beforeTraining(reset: boolean) {
     this.a = tf.variable(tf.scalar(Math.random()));
     this.b = tf.variable(tf.scalar(Math.random()));
     this.c = tf.variable(tf.scalar(Math.random()));
@@ -275,7 +276,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     this.renderCoefficients(this.randomCoeffRef, randomCoefficientsData);
     const predictionsBefore = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
-    this.plotDataAndPredictions(this.randomCanvasRef, this.trainingData, predictionsBefore);
+    if (reset) { this.updatePrediction(this.trainingData, predictionsBefore, true); }
+    else { this.plotDataAndPredictions(this.randomCanvasRef, this.trainingData, predictionsBefore, true); }
 
     predictionsBefore.dispose();
   }
@@ -303,10 +305,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.renderCoefficients(this.trainedCoeffRef, trainedCoefficientsData);
 
     for (let iter = 0; iter < this.numIterations; iter++) {
-      if (iter == 0) { this.plotDataAndPredictions(this.trainedCanvasRef, this.trainingData, this.trainingPredictions[iter]); }
+      if (iter == 0) { this.plotDataAndPredictions(this.trainedCanvasRef, this.trainingData, this.trainingPredictions[iter], false); }
       else {
         setTimeout(() => {
-          this.updatePrediction(this.trainingData, this.trainingPredictions[iter], iter);
+          this.updatePrediction(this.trainingData, this.trainingPredictions[iter], false);
         }, 150 * iter);
       }
     }
@@ -342,7 +344,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     });
   }
 
-  plotDataAndPredictions(container, trainingData, prediction) {
+  plotDataAndPredictions(container, trainingData, prediction, before: boolean) {
     let xvals = trainingData.xs.dataSync();
     let yvals = trainingData.ys.dataSync();
     let predVals = prediction.dataSync();
@@ -351,52 +353,90 @@ export class SceneComponent implements OnInit, AfterViewInit {
     let predValues = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': predVals[i] }; });
 
     let ctx = container.nativeElement.getContext('2d');
-
-    this.predictionChart = new Chart(ctx, {
-      type: "scatter",
-      data: {
-        datasets: [{
-          type: 'scatter',
-          label: 'Generated Data',
-          backgroundColor: "#3F51B5",
-          data: values
-        },
-        {
-          type: "line",
-          label: "Prediction",
-          data: predValues,
-          showLine: false,
-          fill: false,
-          backgroundColor: "#E91E63"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          xAxes: [{
-            type: 'linear',
-            position: 'bottom'
+    if (before) {
+      this.beforeChart = new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [{
+            type: 'scatter',
+            label: 'Generated Data',
+            backgroundColor: "#3F51B5",
+            data: values
+          },
+          {
+            type: "line",
+            label: "Prediction",
+            data: predValues,
+            showLine: false,
+            fill: false,
+            backgroundColor: "#E91E63"
           }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            xAxes: [{
+              type: 'linear',
+              position: 'bottom'
+            }]
+          }
         }
-      }
-    });
+      });
+    }
+    else {
+      this.predictionChart = new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [{
+            type: 'scatter',
+            label: 'Generated Data',
+            backgroundColor: "#3F51B5",
+            data: values
+          },
+          {
+            type: "line",
+            label: "Prediction",
+            data: predValues,
+            showLine: false,
+            fill: false,
+            backgroundColor: "#E91E63"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            xAxes: [{
+              type: 'linear',
+              position: 'bottom'
+            }]
+          }
+        }
+      });
+    }
   }
 
-  updatePrediction(trainingData, prediction, iter: number) {
+  updatePrediction(trainingData, prediction, before: boolean) {
     let xvals = trainingData.xs.dataSync();
     let yvals = trainingData.ys.dataSync();
     let predVals = prediction.dataSync();
 
     let predValues = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': predVals[i] }; });
 
-    this.predictionChart.data.datasets[1].data = predValues;
-    this.predictionChart.update();
+    if (before) {
+      this.beforeChart.data.datasets[1].data = predValues;
+      this.beforeChart.update();
+    }
+    else {
+      this.predictionChart.data.datasets[1].data = predValues;
+      this.predictionChart.update();
+    }
   }
 
   reset() {
-    this.predictionChart.destroy();
-    this.beforeTraining();
+    if (this.predictionChart) { this.predictionChart.destroy(); }
+    this.beforeTraining(true);
   }
 
   // ==================================================
