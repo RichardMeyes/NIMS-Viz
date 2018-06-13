@@ -239,6 +239,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   beforeChart; predictionChart;
 
+
   @ViewChild('dataCoeff') private dataCoeffRef;
   @ViewChild('randomCoeff') private randomCoeffRef;
   @ViewChild('trainedCoeff') private trainedCoeffRef;
@@ -246,6 +247,20 @@ export class SceneComponent implements OnInit, AfterViewInit {
   @ViewChild('dataCanvas') private dataCanvasRef;
   @ViewChild('randomCanvas') private randomCanvasRef;
   @ViewChild('trainedCanvas') private trainedCanvasRef;
+
+
+  // mnist  
+  model;
+  batchSize = 64;
+  trainBatches = 10;
+  testBatchSize = 1000;
+  testIterationFrequency = 5;
+  data;
+  @ViewChild('divStatus') private divStatusRef;
+  @ViewChild('trainNetwork') private trainNetworkRef;
+  trainNetworkDisabled = false;
+  modelWeightsEveryBatch;
+
 
   renderCoefficients(container, coeff) {
     container.nativeElement.innerHTML =
@@ -282,7 +297,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     predictionsBefore.dispose();
   }
 
-  train() {
+  trainNetworkClicked() {
     if (this.selectedProblem == "polynomial-regression") {
       this.trainingPredictions = [];
 
@@ -314,6 +329,72 @@ export class SceneComponent implements OnInit, AfterViewInit {
         }
       }
     }
+    else if (this.selectedProblem == "mnist") {
+      this.setupModel();
+      this.trainModel();
+    }
+  }
+
+  async trainModel() {
+    this.SetStatus("Training...");
+
+    // We'll keep a buffer of loss and accuracy values over time.
+    const lossValues = [];
+    const accuracyValues = [];
+
+    // Iteratively train our model on mini-batches of data.
+    for (let i = 0; i < this.trainBatches; i++) {
+      // const [batch, validationData] = tf.tidy(() => {
+      const batch = this.playgroundService.nextTrainBatch(this.batchSize);
+      // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
+
+      let validationData;
+      // Every few batches test the accuracy of the model.
+      if (i % this.testIterationFrequency === 0) {
+        const testBatch = this.playgroundService.nextTestBatch(this.testBatchSize);
+        validationData = [
+          // Reshape the training data from [64, 28x28] to [64, 28, 28, 1] so
+          // that we can feed it to our convolutional neural net.
+          testBatch.xs.reshape([this.testBatchSize, 28, 28, 1]), testBatch.labels
+        ];
+      }
+
+      //   return [batch, validationData];
+      // });
+
+      // The entire dataset doesn't fit into memory so we call train repeatedly
+      // with batches using the fit() method.
+      const history = await this.model.fit(
+        batch.xs.reshape([this.batchSize, 28, 28, 1]), batch.labels,
+        { batchSize: this.batchSize, validationData, epochs: 1 });
+
+      const loss = history.history.loss[0];
+      const accuracy = history.history.acc[0];
+
+      let weights = this.playgroundService.extractWeights(this.model);
+
+      // Plot loss / accuracy.
+      lossValues.push({ 'batch': i, 'loss': loss, 'set': 'train' });
+      // ui.plotLosses(lossValues);      
+
+      if (validationData != null) {
+        accuracyValues.push({ 'batch': i, 'accuracy': accuracy, 'set': 'train' });
+        // ui.plotAccuracies(accuracyValues);
+      }
+
+      // Call dispose on the training/test tensors to free their GPU memory.
+      tf.dispose([batch, validationData]);
+      
+      this.modelWeightsEveryBatch.push(weights);
+
+      // tf.nextFrame() returns a promise that resolves at the next call to
+      // requestAnimationFrame(). By awaiting this promise we keep our model
+      // training from blocking the main UI thread and freezing the browser.
+      await tf.nextFrame();
+    }
+
+    this.SetStatus("Training done!");
+    console.log(this.modelWeightsEveryBatch);
   }
 
   plotData(container, trainingData) {
@@ -443,7 +524,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
   }
 
-  problemChange(val: string) {
+  async problemChange(val: string) {
     this.selectedProblem = val;
     this.changeDetector.detectChanges();
 
@@ -451,6 +532,54 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.generateData();
       this.beforeTraining(false);
     }
+    else if (val == "mnist") {
+      this.trainNetworkDisabled = true;
+      this.changeDetector.detectChanges();
+
+      await this.playgroundService.loadMnist();
+      this.SetStatus("Data loaded!");
+
+      this.trainNetworkDisabled = false;
+      this.changeDetector.detectChanges();
+
+      this.modelWeightsEveryBatch = [];
+    }
+  }
+
+  setupModel() {
+    this.model = tf.sequential();
+    this.model.add(tf.layers.conv2d({
+      inputShape: [28, 28, 1],
+      kernelSize: 5,
+      filters: 8,
+      strides: 1,
+      activation: 'relu',
+      kernelInitializer: 'varianceScaling'
+    }));
+    this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
+    this.model.add(tf.layers.conv2d({
+      kernelSize: 5,
+      filters: 16,
+      strides: 1,
+      activation: 'relu',
+      kernelInitializer: 'varianceScaling'
+    }));
+    this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
+    this.model.add(tf.layers.flatten());
+    this.model.add(tf.layers.dense(
+      { units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax' }));
+
+    this.learningRate = 0.15;
+    this.optimizer = tf.train.sgd(this.learningRate);
+    this.model.compile({
+      optimizer: this.optimizer,
+      loss: 'categoricalCrossentropy',
+      metrics: ['accuracy'],
+    });
+  }
+
+  SetStatus(msg: string) {
+    this.divStatusRef.nativeElement.innerText = msg;
   }
 
   // ==================================================

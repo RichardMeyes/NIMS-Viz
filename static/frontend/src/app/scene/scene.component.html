@@ -147,7 +147,7 @@
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
-                <div  *ngIf="selectedProblem=='polynomial-regression';else mnist">
+                <div *ngIf="selectedProblem=='polynomial-regression';else mnist">
                     <mat-form-field>
                         <input matInput placeholder="Learning Rate" value="1" type="number" [(ngModel)]="learningRate">
                     </mat-form-field>
@@ -169,7 +169,7 @@
                 <!-- <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle> -->
                 <mat-action-row>
                     <button mat-button color="accent" (click)="reset()">Reset</button>
-                    <button mat-button color="accent" (click)="train()">Train Network</button>
+                    <button mat-button color="accent" (click)="trainNetworkClicked()" [disabled]="trainNetworkDisabled">Train Network</button>
                 </mat-action-row>
 
             </div>
@@ -219,5 +219,25 @@
             </div>
         </div>
     </div>
-    <ng-template #mnistPlot>content here...</ng-template>
+    <ng-template #mnistPlot>
+        <div id="content">
+            <h3>TensorFlow.js: Train MNIST with the Layers API</h3>
+
+            <div id="status" #divStatus>Loading data...</div>
+            <div id="message"></div>
+
+            <div id="stats">
+                <div class="canvases">
+                    <div class="label" id="loss-label"></div>
+                    <div id="lossCanvas"></div>
+                </div>
+                <div class="canvases">
+                    <div class="label" id="accuracy-label"></div>
+                    <div id="accuracyCanvas"></div>
+                </div>
+            </div>
+
+            <div id="images"></div>
+        </div>
+    </ng-template>
 </mat-sidenav-content>
