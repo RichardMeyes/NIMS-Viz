@@ -12,6 +12,7 @@ export class NetworkService {
   private layers;
   private networkReductionFactor = 0.1;
   private convertedLayerObjs;
+  private moleculeStruct = [];
   private heatmapCanvasResolution = 1.0; // 8.0;
   private heatmapCanvasHeight = 1024 * this.heatmapCanvasResolution;
   private heatmapCanvasWidth = 1024 * this.heatmapCanvasResolution;
@@ -36,6 +37,9 @@ export class NetworkService {
   }
   public get getNetworkReductionFactor(): Number {
     return this.networkReductionFactor;
+  }
+  public get getMoleculeStruct(): any {
+    return this.moleculeStruct;
   }
 
   constructor() { }
@@ -76,25 +80,26 @@ export class NetworkService {
   }
 
   public createNetworkFromWeights(weightsParam) {
-      console.log('received layers', weightsParam);
-      this.layers = weightsParam;
-      const convertedNetwork = [];
-      for (let i = 0; i < this.layers.length; i += 2) {
-        const tempNodes = [];
-        for (let j = 0; j < this.layers[i]['weights'][0].length * this.networkReductionFactor; j++) {
-          const tempNode = j;
-          tempNodes.push(tempNode);
-        }
-        convertedNetwork.push(tempNodes);
-        // console.log("pushed "+(i*1.0/layers.length));
+    console.log('received layers', weightsParam);
+    this.layers = weightsParam;
+    const convertedNetwork = [];
+    for (let i = 0; i < this.layers.length; i += 2) {
+      const tempNodes = [];
+      for (let j = 0; j < this.layers[i]['weights'][0].length * this.networkReductionFactor; j++) {
+        const tempNode = j;
+        tempNodes.push(tempNode);
       }
-      this.useNetwork(convertedNetwork);
+      convertedNetwork.push(tempNodes);
+      // console.log("pushed "+(i*1.0/layers.length));
+    }
+    this.useNetwork(convertedNetwork);
   }
 
   private useNetwork(newNetwork) {
     this.convertedLayerObjs = this.divideIntoLayerAreas(newNetwork, this.angleSpan);
 
     this.findFittingVerticesInUVMap(this.convertedLayerObjs);
+    this.buildMoleculeStruct();
     // this.createConnectionsBetweenLayers(this.convertedLayerObjs);
   }
 
@@ -106,27 +111,27 @@ export class NetworkService {
     const areaPartAngle = angleSpan / layercount;
     const layerObjs = [];
     for (let i = 0; i < layercount; i++) {
-        const layerObj = {
+      const layerObj = {
         layerID: i,
         size: 1.0 / (layersparam[i].length * 2 + 1), // nodes + free spaces in between + one freespace
         nodeCount: layersparam[i].length,
         layerAngle: 180 - (areaPartAngle * i), // angle of the entire layer
         nodesAngle: 180 - ((areaPartAngle * i) - 0.5 * areaPartAngle) // angle bisector from layerpart
-        };
-        layerObjs.push(layerObj);
+      };
+      layerObjs.push(layerObj);
     }
     return layerObjs;
-}
+  }
 
-private findFittingVerticesInUVMap(layerObjs) {
+  private findFittingVerticesInUVMap(layerObjs) {
     console.log('get center point of each node in layer');
     layerObjs.forEach(layer => {
-        // definiere einen kreis mit mittelpunkt des knotens und radius % der gesamtlänge des alphamap zwischenraumes
-        const diameterOfNodes = this.radiusRange * layer.size;
-        const radiusOfNodes = diameterOfNodes / 2.0;
-        const tempHeatmapNodes = [];
-        const layerOffset = this.calcOffsetBasedOnAngle(layer.nodesAngle);
-        for (let i = 1; i <= layer.nodeCount; i++) {
+      // definiere einen kreis mit mittelpunkt des knotens und radius % der gesamtlänge des alphamap zwischenraumes
+      const diameterOfNodes = this.radiusRange * layer.size;
+      const radiusOfNodes = diameterOfNodes / 2.0;
+      const tempHeatmapNodes = [];
+      const layerOffset = this.calcOffsetBasedOnAngle(layer.nodesAngle);
+      for (let i = 1; i <= layer.nodeCount; i++) {
         // radiusInner as minimum offset + nodesizes * i + radius to get to the center of the current node
         const radiusToCenterOfNode = this.radiusInner + diameterOfNodes * i + radiusOfNodes;
         const randomOffsetX = (Math.random() * 20) - 10;
@@ -138,21 +143,51 @@ private findFittingVerticesInUVMap(layerObjs) {
         const centerOfNode = [xCenter + this.pointcenter[0] - layerOffset, this.heatmapCanvasHeight - (yCenter + this.pointcenter[1])];
         // expand around point. this will be the reference to
         tempHeatmapNodes.push(centerOfNode);
-        }
-        // add nodes converted to heatmap coordinates to each layer
-        layer['heatmapNodes'] = tempHeatmapNodes;
+      }
+      // add nodes converted to heatmap coordinates to each layer
+      layer['heatmapNodes'] = tempHeatmapNodes;
     });
-}
-
-private calcOffsetBasedOnAngle(angle: Number) {
-  // console.log("angle",angle);
-  let offset = 0;
-  if (angle > 170) {
-      offset = 20;
-  } else {
-      offset = 0;
   }
-  return offset;
-}
+
+  private calcOffsetBasedOnAngle(angle: Number) {
+    // console.log("angle",angle);
+    let offset = 0;
+    if (angle > 170) {
+      offset = 20;
+    } else {
+      offset = 0;
+    }
+    return offset;
+  }
+
+  private buildMoleculeStruct() {
+    for (let i = 0; i < this.convertedLayerObjs.length; i++) {
+      const tempLayerObj = {
+        atoms: [],
+        bonds: []
+      };
+      // nodes [x,y]
+      for (let j = 0; j < this.convertedLayerObjs[i]['heatmapNodes'].length; j++) {
+        const tempAtom = {
+          x: this.convertedLayerObjs[i]['heatmapNodes'][j][0],
+          y: this.convertedLayerObjs[i]['heatmapNodes'][j][1],
+          z: 0 // j
+        };
+        tempLayerObj.atoms.push(tempAtom);
+
+        if (this.convertedLayerObjs[i + 1] !== undefined) {
+          for (let k = 0; k < this.convertedLayerObjs[i + 1]['heatmapNodes'].length; k++) {
+            const tempBond = {
+              source: j,
+              target: k
+            };
+            tempLayerObj.bonds.push(tempBond);
+          }
+        }
+      }
+      this.moleculeStruct.push(tempLayerObj);
+
+    }
+  }
 
 }

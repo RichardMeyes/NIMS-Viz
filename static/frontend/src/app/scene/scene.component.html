@@ -30,7 +30,7 @@
         <div>{{epochRange[1]}}</div>
     </div>
     <nouislider [connect]="true" [min]="1" [max]="100" [step]="1" [(ngModel)]="epochRange"></nouislider>
-    <mat-slide-toggle class="setting-item">Neural Netowrk</mat-slide-toggle>
+    <mat-slide-toggle [checked]="!showBrainView" (change)="testingToggler($event)" class="setting-item">Neural Netowrk</mat-slide-toggle>
     <mat-slide-toggle class="setting-item last-item">ANN</mat-slide-toggle>
 </div>
 
@@ -133,5 +133,5 @@
 <mat-sidenav-content>
 <canvas #canvas></canvas>
 <app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain>
-<!--<app-molecule></app-molecule>-->
+<app-molecule #moleculeComponent></app-molecule>
 </mat-sidenav-content>
