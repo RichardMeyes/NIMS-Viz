@@ -250,11 +250,27 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
 
   // mnist  
+
+  modelTypes = [
+    { value: 'sequential', viewValue: 'Sequential' },
+    { value: 'model', viewValue: 'Model (currently not supported)' }
+  ];
+  selectedModelType = "sequential";
+
+  layerTypes = [
+    { value: 'basic', viewValue: 'Basic' },
+    { value: 'convolutional', viewValue: 'Convolutional' },
+    { value: 'pooling', viewValue: 'Pooling' }
+  ];
+  selectedLayerType: string[] = [];
+
+
   model;
   batchSize = 64;
-  trainBatches = 10;
+  trainBatches = 150;
   testBatchSize = 1000;
   testIterationFrequency = 5;
+  epochs = 1;
   data;
   @ViewChild('divStatus') private divStatusRef;
   @ViewChild('trainNetwork') private trainNetworkRef;
@@ -366,7 +382,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // with batches using the fit() method.
       const history = await this.model.fit(
         batch.xs.reshape([this.batchSize, 28, 28, 1]), batch.labels,
-        { batchSize: this.batchSize, validationData, epochs: 1 });
+        { batchSize: this.batchSize, validationData, epochs: this.epochs });
 
       const loss = history.history.loss[0];
       const accuracy = history.history.acc[0];
@@ -384,7 +400,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
       // Call dispose on the training/test tensors to free their GPU memory.
       tf.dispose([batch, validationData]);
-      
+
       this.modelWeightsEveryBatch.push(weights);
 
       // tf.nextFrame() returns a promise that resolves at the next call to
@@ -394,6 +410,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
 
     this.SetStatus("Training done!");
+
+    console.log("===Loss===");
+    console.log(lossValues);
+    console.log("===Accuracies===");
+    console.log(accuracyValues);
+    console.log("===Weights===");
     console.log(this.modelWeightsEveryBatch);
   }
 
@@ -582,5 +604,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.divStatusRef.nativeElement.innerText = msg;
   }
 
+  openSetupModelDialog() {
+    console.log("will open dialog for model setup");
+  }
   // ==================================================
 }
