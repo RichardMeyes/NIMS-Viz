@@ -1,10 +1,6 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 
 import * as THREE from 'three';
-// import * as simpleheat from "simpleheat/simpleheat.js";
-// import {simpleheat} from "simpleheat";
-declare var simpleheat: any;
-// import simpleheat = require('simpleheat');
 import 'three/examples/js/loaders/OBJLoader.js';
 import 'three/examples/js/controls/OrbitControls.js';
 
@@ -13,100 +9,31 @@ import 'three/examples/js/controls/OrbitControls.js';
     selector: 'app-brain',
     templateUrl: './brain.component.html',
     styleUrls: ['./brain.component.scss']
-  })
+})
 export class BrainComponent implements OnInit {
-
     private traversePolygonsForGeometries;
-    private windowWidth;
-    private windowHeight;
     private scene: THREE.Scene;
-    private perspectiveCamera;
-    private renderer;
-
-    private ambientLight;
-    private directionalLight;
     private objectLoader;
     private heatmapCanvasTexture;
     @Output() updatedHeatmapCanvasTexture = new EventEmitter<THREE.CanvasTexture>();
-    private heat;
-    private heatData;
-    // private testData;
-    // private convertedLayerObjs;
-    // private networkReductionFactor = 1.0;
-    // private layers;
-    // private myAtomLayers = [];
-    private stepperCnt = 0;
     private heatmapSteppingData = [];
     @Output() updatedHeatmapData = new EventEmitter<any>();
-    private heatmapBasicData = [];
-// amount (-1) of points that should be drawn per connection / between nodes
-private density = 5; // -> 4 points
+    // amount (-1) of points that should be drawn per connection / between nodes
+    private density = 5; // -> 4 points
 
-private stats;
-private controls;
+    private heatmapCanvasResolution = 1.0; // 8.0;
 
-private redraw = true;
-private fpsHack = 0;
+    private brainTexture;
+    private brainMaterial;
+    private alphaTexture;
+    private uniforms;
+    // gui configs
 
-private heatmapCanvasResolution = 1.0; // 8.0;
-private heatmapCanvasHeight = 1024 * this.heatmapCanvasResolution;
-private heatmapCanvasWidth = 1024 * this.heatmapCanvasResolution;
-
-// angle which defines possible heatmaparea
-// private angleSpan = 130.0;
-// center point in UV texture coordinates:
-// private pointcenter = [438.669, 650.677];
-// point consisting of furthest point to the right and furthest point to the bottom.
-// Resulting in a point that can span the area between 0-90°
-// private point90 = [515.674, 594.35];
-
-/* old values
-let radiusInner = 75;
-let radiusOuter = 201.953;*/
-// private radiusInner = 100;
-// private radiusOuter = 230;
-// private radiusRange = this.radiusOuter - this.radiusInner;
-
-private brainTexture;
-private brainMaterial;
-private heatmapMaterial;
-private brainMaterialAlpha;
-private alphaTexture;
-private uniforms;
-private attributes;
-// gui configs
-private guiConfig = {
-    filePath: 'path1',
-    switchToMoleculeView: false,
-    enableANN: false,
-    epoch: 1
-  };
-
-  private demoConfig = {
-    layerCount: 2,
-    nodeCount: 3,
-    activateEdgeCase: false
-  };
-
-  private heatmapConfig = {
-    radius: 4,
-    blur: 2,
-    minOpacity: 0.05,
-    color1: '#0000ff',
-    color1Trigger: 0.4,
-    color2: '#00ff00',
-    color2Trigger: 0.65,
-    color3: '#ff0000',
-    color3Trigger: 1.0,
-    colorGradient: function() {
-      const tempobj = {};
-      tempobj[0.0] = 'blue';
-      tempobj[this.color1Trigger] = this.color1;
-      tempobj[this.color2Trigger] = this.color2;
-      tempobj[this.color3Trigger] = this.color3;
-      return tempobj;
-    }
-  };
+    private demoConfig = {
+        layerCount: 2,
+        nodeCount: 3,
+        activateEdgeCase: false
+    };
 
     ngOnInit() {
     }
@@ -123,14 +50,14 @@ private guiConfig = {
             // console.dir(node);
             // console.debug(node);
             if (node.geometry) {
-            console.log('node.geometry', node.geometry);
+                console.log('node.geometry', node.geometry);
                 // Return a list of triangles that have the point within them.
                 // The returned objects will have the x,y,z barycentric coordinates of the point inside the respective triangle
                 const baryData = this.annotationTest(uvx, uvy, node.geometry.faceVertexUvs);
                 if (baryData.length) {
-                console.log('barydata is not empty!');
+                    console.log('barydata is not empty!');
                     for (let j = 0; j < baryData.length; j++) {
-                    console.log('node.geometry.faces[baryData[j][0]]', node.geometry.faces[baryData[j][0]]);
+                        console.log('node.geometry.faces[baryData[j][0]]', node.geometry.faces[baryData[j][0]]);
                         // In my case I only want to return materials with certain names.
                         if (node.geometry.faces[baryData[j][0]].daeMaterial === 'brainmaterial') {
                             // Find the vertices corresponding to the triangle in the model
@@ -255,72 +182,28 @@ private guiConfig = {
         this.objectLoader = new THREE.OBJLoader();
         this.objectLoader.load('./assets/models/obj/Brain_Model_2.obj',
             (obj) => {
-            obj.traverse((child) => {
-                if (child instanceof THREE.Mesh) {
-                child.material = this.brainMaterial;
-                }
-            });
+                obj.traverse((child) => {
+                    if (child instanceof THREE.Mesh) {
+                        child.material = this.brainMaterial;
+                    }
+                });
 
-            obj.name = 'brainobject';
-            obj.position.y = -0.5;
-            obj.rotation.y = Math.PI / 2;
-            this.scene.add(obj);
+                obj.name = 'brainobject';
+                obj.position.y = -0.5;
+                obj.rotation.y = Math.PI / 2;
+                this.scene.add(obj);
             },
             (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
             (err) => { console.error('An error happened'); }
         );
     }
 
-    /*private animate() {
-        requestAnimationFrame(this.animate);
-
-        // =======================================================
-        // update heatmap
-        // =======================================================
-        // let x, y, val;
-
-        if (this.redraw && !this.guiConfig.switchToMoleculeView) {
-            // last layer has no connections to "next" layer
-            // if (stepperCnt < convertedLayerObjs.length - 1) {
-            this.heat.clear();
-            // set radius and blur radius
-            this.heat.radius(this.heatmapConfig.radius, this.heatmapConfig.blur);
-            this.heat.gradient(this.heatmapConfig.colorGradient());
-            this.heat.data(this.heatmapSteppingData);
-            this.heat.draw(this.heatmapConfig.minOpacity);
-            this.heatmapCanvasTexture.needsUpdate = true;
-
-            this.redraw = false;
-            this.stepperCnt++;
-            // }
-        } else if (this.fpsHack >= 60) {
-            this.fpsHack = 0;
-            this.redraw = true;
-        }
-        this.fpsHack++;
-        // =======================================================
-
-
-        // =======================================================
-        // render the scene
-        // =======================================================
-        this.renderer.render(this.sceneInput, this.perspectiveCamera);
-        // =======================================================
-
-
-        // =======================================================
-        // update stats
-        // =======================================================
-        this.stats.update();
-        // =======================================================
-    }*/
-
     private animateNextStep(convertedLayerObjs, layerID) {
         // add heatmapdata from layerID to alrdy existing data
         const connections = convertedLayerObjs[layerID].connections;
         for (let i = 0; i < connections.length; i++) {
             for (let j = 0; j < connections[i].length; j++) {
-            this.heatmapSteppingData.push(connections[i][j]);
+                this.heatmapSteppingData.push(connections[i][j]);
             }
         }
     }
@@ -337,15 +220,15 @@ private guiConfig = {
             const connections = [];
             const edgeCase = false;
             if (edgeCase) {
-            const temp2D = layers[i * 2]['weights'][0];
-            const heatmapEdge1 = this.highlightConnection(currLN[0], nextLN[0], temp2D[0][0]);
-            this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapEdge1);
-            const heatmapEdge2 = this.highlightConnection(
-                currLN[currLN.length - 1], nextLN[nextLN.length - 1],
-                temp2D[temp2D.length - 1][temp2D[0].length - 1]);
-            this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapEdge2);
-            this.updatedHeatmapData.emit(this.heatmapSteppingData);
-            // console.log("heatmapSteppingData",heatmapSteppingData);
+                const temp2D = layers[i * 2]['weights'][0];
+                const heatmapEdge1 = this.highlightConnection(currLN[0], nextLN[0], temp2D[0][0]);
+                this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapEdge1);
+                const heatmapEdge2 = this.highlightConnection(
+                    currLN[currLN.length - 1], nextLN[nextLN.length - 1],
+                    temp2D[temp2D.length - 1][temp2D[0].length - 1]);
+                this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapEdge2);
+                this.updatedHeatmapData.emit(this.heatmapSteppingData);
+                // console.log("heatmapSteppingData",heatmapSteppingData);
             } else {
                 // repeat connectionCount times -> amount of connections per layer
                 for (let j = 0; j < currLN.length; j++) {
@@ -364,7 +247,7 @@ private guiConfig = {
                                 console.log('j: ', j);
                                 console.log('k: ', k);
                                 console.log('layers[i][\'weights\'][0][j/networkReductionFactor][k/networkReductionFactor]',
-                                layers[i]['weights'][0][j / networkReductionFactor][k / networkReductionFactor]);
+                                    layers[i]['weights'][0][j / networkReductionFactor][k / networkReductionFactor]);
                                 console.log('err: ', err);
                                 break;
                             }
@@ -415,11 +298,11 @@ private guiConfig = {
             if (typeof conn !== 'undefined') {
 
                 for (let j = 0; j < conn.length; j++) {
-                const combination = conn[j].concat(epochValues[j + alrdyCnt]);
-                // let combRealVal = conn[j].concat(layers[i*2]["weights"][0][i][j])
-                const heatmapConnections = this.highlightConnection(combination[0], combination[1], combination[2]);
-                this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapConnections);
-                this.updatedHeatmapData.emit(this.heatmapSteppingData);
+                    const combination = conn[j].concat(epochValues[j + alrdyCnt]);
+                    // let combRealVal = conn[j].concat(layers[i*2]["weights"][0][i][j])
+                    const heatmapConnections = this.highlightConnection(combination[0], combination[1], combination[2]);
+                    this.heatmapSteppingData = this.heatmapSteppingData.concat(heatmapConnections);
+                    this.updatedHeatmapData.emit(this.heatmapSteppingData);
                 }
 
                 alrdyCnt += conn.length;
