@@ -72,7 +72,7 @@ export class PlaygroundService {
   }
 
   arrayOne(n: number): any[] {
-    return Array(n);
+    return Array.apply(null, Array(n)).map(Number.prototype.valueOf, 0);
   }
 
   async loadMnist() {
@@ -143,6 +143,8 @@ export class PlaygroundService {
 
     this.trainLabels = this.datasetLabels.slice(0, this.numClasses * this.numTrainElements);
     this.testLabels = this.datasetLabels.slice(this.numClasses * this.numTrainElements);
+
+    return new Promise(function (resolve, reject) { resolve("done"); });
   }
 
   nextTrainBatch(batchSize) {

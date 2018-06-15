@@ -16,7 +16,7 @@ import { PlaygroundService } from '../playground.service';
 import { generate } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
 import { Playground } from '../playground.model';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 
 
 @Component({
@@ -231,21 +231,58 @@ export class SceneComponent implements OnInit, AfterViewInit {
   playgroundForm: FormGroup;
   playgroundData: Playground = new Playground();
 
+  get layers(): FormArray {
+    return this.playgroundForm.get('layers') as FormArray;
+  };
+
   createForm() {
     this.playgroundForm = this.fb.group({
       problem: ["", Validators.required],
       learningRate: ["", Validators.required],
+
       numOfIteration: [0, Validators.required],
       optimizer: ["", Validators.required],
+
+      layerCount: [0, Validators.required],
+      layers: this.fb.array([])
     });
 
 
-    this.playgroundForm.setValue({
+    this.playgroundForm.patchValue({
       problem: this.playgroundData.problems[0].value,
       learningRate: this.playgroundData.learningRates[0].value,
+
       numOfIteration: this.playgroundData.numOfIteration,
-      optimizer: this.playgroundData.optimizers[0].value
+      optimizer: this.playgroundData.optimizers[0].value,
+
+      layerCount: this.playgroundData.layerCount
     });
+
+    this.playgroundForm.setControl('layers', this.fb.array(
+      this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
+        layerType: ["", Validators.required],
+        isInput: [false, Validators.required],
+        inputShape: [[], Validators.required],
+        kernelSize: [0, Validators.required],
+        filters: [0, Validators.required],
+        strides: [0, Validators.required],
+        poolSize: [0, Validators.required]
+      }))
+    ));
+
+    for (let i = 0; i < this.playgroundData.layerCount; i++) {
+      let currLayer = this.playgroundData.mnistLayers[i].layerItem[0];
+
+      this.layers.controls[i].setValue({
+        layerType: currLayer.layerType.value,
+        isInput: currLayer.isInput,
+        inputShape: (currLayer.layerItemConfiguration.hasOwnProperty("inputShape")) ? currLayer.layerItemConfiguration.inputShape : -23895,
+        kernelSize: (currLayer.layerItemConfiguration.hasOwnProperty("kernelSize")) ? currLayer.layerItemConfiguration.kernelSize : -23895,
+        filters: (currLayer.layerItemConfiguration.hasOwnProperty("filters")) ? currLayer.layerItemConfiguration.filters : -23895,
+        strides: (currLayer.layerItemConfiguration.hasOwnProperty("strides")) ? currLayer.layerItemConfiguration.strides : -23895,
+        poolSize: (currLayer.layerItemConfiguration.hasOwnProperty("poolSize")) ? currLayer.layerItemConfiguration.poolSize : -23895,
+      });
+    }
   }
 
   optimizer;
@@ -254,7 +291,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   // numIterations = 75;
   // learningRate = 0.5;
   // optimizer = tf.train.sgd(this.learningRate);
-
+  // layerCount = 1;
 
 
 
@@ -265,7 +302,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
 
 
-  layerCount = 1;
+
   nodeCount = 1;
 
   beforeChart; predictionChart;
@@ -575,27 +612,24 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // async problemChange(val: string) {
-  //   this.playgroundForm.get('problem').value = val;
-  //   this.changeDetector.detectChanges();
+  problemChange() {
+    this.changeDetector.detectChanges();
 
-  //   if (val == "polynomial-regression") {
-  //     this.generateData();
-  //     this.beforeTraining(false);
-  //   }
-  //   else if (val == "mnist") {
-  //     this.trainNetworkDisabled = true;
-  //     this.changeDetector.detectChanges();
+    if (this.playgroundForm.get('problem').value == "polynomial-regression") {
+      this.generateData();
+      this.beforeTraining(false);
+    }
+    else if (this.playgroundForm.get('problem').value == "mnist") {
+      this.trainNetworkDisabled = true;
 
-  //     await this.playgroundService.loadMnist();
-  //     this.SetStatus("Data loaded!");
+      // this.playgroundService.loadMnist().then(() => {
+      //   this.SetStatus("Data loaded!");
+      //   this.trainNetworkDisabled = false;
 
-  //     this.trainNetworkDisabled = false;
-  //     this.changeDetector.detectChanges();
-
-  //     this.modelWeightsEveryBatch = [];
-  //   }
-  // }
+      //   this.modelWeightsEveryBatch = [];
+      // });
+    }
+  }
 
   setupModel() {
     this.model = tf.sequential();
@@ -620,8 +654,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.model.add(tf.layers.dense(
       { units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax' }));
 
-    // this.learningRate = 0.15;
-    // this.optimizer = tf.train.sgd(this.learningRate);
     this.optimizer = tf.train.sgd(0.15);
     this.model.compile({
       optimizer: this.optimizer,
@@ -632,10 +664,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   SetStatus(msg: string) {
     this.divStatusRef.nativeElement.innerText = msg;
-  }
-
-  openSetupModelDialog() {
-    console.log("will open dialog for model setup");
   }
   // ==================================================
 }

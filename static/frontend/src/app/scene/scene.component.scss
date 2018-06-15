@@ -2,7 +2,7 @@ mat-expansion-panel {
     width: 100vw;
 }
 
-mat-form-field {
+mat-form-field, .form-field {
     margin-right: 16px;
 }
 
@@ -27,16 +27,12 @@ mat-action-row {
 
 
 
-
 canvas {
     width: 100vw;
     height: 100vh;
     z-index: -1;
 }
 
-.setting-label {
-    white-space: nowrap;
-}
 
 .setting-item {
     margin-top: 0.5rem;

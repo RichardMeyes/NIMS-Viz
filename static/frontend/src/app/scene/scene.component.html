@@ -11,8 +11,7 @@
 
         <form [formGroup]="playgroundForm" fxLayout="row wrap">
             <mat-form-field>
-                <mat-select placeholder="Problem Type" formControlName="problem">
-                    <!-- (selectionChange)="problemChange($event.value)" [value]="selectedProblem" -->
+                <mat-select placeholder="Problem Type" formControlName="problem" (selectionChange)="problemChange()">
                     <mat-option *ngFor="let problem of playgroundData.problems" [value]="problem.value">
                         {{ problem.viewValue }}
                     </mat-option>
@@ -37,11 +36,71 @@
                     <input matInput placeholder="Number of Iteration" type="number" formControlName="numOfIteration">
                 </mat-form-field>
             </div>
+            <ng-template #mnist>
+                <!-- <mat-form-field>
+                        <mat-select placeholder="Model Type" [(ngModel)]="selectedModelType">
+                            <mat-option *ngFor="let modelType of modelTypes" [value]="modelType.value">
+                                {{ modelType.viewValue }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field> -->
+                <mat-form-field>
+                    <input matInput placeholder="Number of Layers" type="number" formControlName="layerCount">
+                </mat-form-field>
+                <div formArrayName="layers">
+                    <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
+                        <div style="margin-top: 0.5rem;">{{ i+1 | ordinal }} Layer</div>
+                        <div fxLayout="column wrap">
+                            <div>
+                                <mat-form-field>
+                                    <mat-select placeholder="Layer Type" formControlName="layerType">
+                                        <mat-optgroup *ngFor="let layer of playgroundData.layers" [label]="layer.layerGroup.viewValue">
+                                            <mat-option *ngFor="let layerItem of layer.layerItem" [value]="layerItem.layerType.value">
+                                                {{ layerItem.layerType.viewValue }}
+                                            </mat-option>
+                                        </mat-optgroup>
+                                    </mat-select>
+                                </mat-form-field>
+                                <div fxFlex="grow"></div>
+                            </div>
+                            <div>
+                                <mat-checkbox formControlName="isInput" class="form-field">Input Layer</mat-checkbox>
+                                <div *ngIf="layer.get('isInput').value" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Input Shape" type="text" formControlName="inputShape">
+                                    </mat-form-field>
+                                </div>
+                            </div>
+                        </div>
+
+                        <mat-divider></mat-divider>
+                    </div>
+                </div>
+
+                <!-- above=model setup -->
+                <!-- <mat-form-field>
+                        <input matInput placeholder="Train Batches" value="1" type="number" [(ngModel)]="trainBatches">
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Train Batch Size" value="1" type="number" [(ngModel)]="batchSize">
+                    </mat-form-field>
+                    <mat-form-field>
+                        <input matInput placeholder="Test Batch Size" value="1" type="number" [(ngModel)]="testBatchSize">
+                    </mat-form-field> -->
+            </ng-template>
+
+            <!-- <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle> -->
+
+
+
+
+
             <mat-action-row>
                 <button mat-button color="accent" (click)="reset()">Reset</button>
                 <button mat-button color="accent" (click)="trainNetwork()" [disabled]="trainNetworkDisabled">Train Network</button>
             </mat-action-row>
         </form>
+        <p>Form value: {{ playgroundForm.value | json }}</p>
     </mat-expansion-panel>
 
 
@@ -55,64 +114,6 @@
             </mat-panel-description>
         </mat-expansion-panel-header>
         <p>I'm visible because I am open</p>
-    </mat-expansion-panel>
-</mat-accordion>
-
-
-<mat-accordion>
-    <mat-expansion-panel>
-        <mat-expansion-panel-header>
-            <mat-panel-title>
-                <strong>Old Playground</strong>
-            </mat-panel-title>
-            <mat-panel-description>
-                Build your own network!!
-            </mat-panel-description>
-        </mat-expansion-panel-header>
-
-        <div fxLayout="column wrap">
-            <ng-template #mnist>
-                <div>
-                    <button mat-button color="accent" (click)="openSetupModelDialog()" id="btnSetupModel">Setup Model</button>
-                </div>
-                <mat-form-field>
-                    <mat-select placeholder="Model Type" [(ngModel)]="selectedModelType">
-                        <mat-option *ngFor="let modelType of modelTypes" [value]="modelType.value">
-                            {{ modelType.viewValue }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Layers" value="1" type="number" [(ngModel)]="layerCount">
-                </mat-form-field>
-                <div *ngFor="let layer of playgroundService.arrayOne(layerCount); let i = index">
-                    <div class="setting-label">{{ i+1 | ordinal }} Layer</div>
-                    <mat-form-field>
-                        <mat-select placeholder="Layer Type" [(ngModel)]="selectedLayerType[i]">
-                            <mat-option *ngFor="let layerType of layerTypes" [value]="layerType.value">
-                                {{ layerType.viewValue }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-form-field>
-                        <input matInput placeholder="Nodes" value="1" type="number" [(ngModel)]="nodeCount">
-                    </mat-form-field>
-                </div>
-                <!-- above=model setup -->
-                <mat-form-field>
-                    <input matInput placeholder="Train Batches" value="1" type="number" [(ngModel)]="trainBatches">
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Train Batch Size" value="1" type="number" [(ngModel)]="batchSize">
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Test Batch Size" value="1" type="number" [(ngModel)]="testBatchSize">
-                </mat-form-field>
-            </ng-template>
-
-            <!-- <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle> -->
-
-        </div>
     </mat-expansion-panel>
 </mat-accordion>
 
