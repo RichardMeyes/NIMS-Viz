@@ -2,6 +2,32 @@ mat-expansion-panel {
     width: 100vw;
 }
 
+mat-form-field {
+    margin-right: 16px;
+}
+
+mat-action-row {
+    width: 100vw;
+}
+
+.plot-item {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.chart-container {
+    position: relative;
+    margin: 0 auto;
+    height:300px;
+    width:300px
+}
+
+
+
+
+
+
+
 canvas {
     width: 100vw;
     height: 100vh;
@@ -27,23 +53,6 @@ canvas {
 
 mat-form-field.slider-value {
     width: 2.5rem;
-}
-
-// playground
-.plots {
-    max-width: 66vw;
-}
-
-.plot-item {
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-}
-
-.chart-container {
-    position: relative;
-    margin: 0 auto;
-    height:300px;
-    width:300px
 }
 
 #btnSetupModel {

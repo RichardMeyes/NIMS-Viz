@@ -9,26 +9,39 @@
             </mat-panel-description>
         </mat-expansion-panel-header>
 
-        <form [formGroup]="playgroundForm">
+        <form [formGroup]="playgroundForm" fxLayout="row wrap">
             <mat-form-field>
                 <mat-select placeholder="Problem Type" formControlName="problem">
-                        <!-- (selectionChange)="problemChange($event.value)" [value]="selectedProblem" -->
+                    <!-- (selectionChange)="problemChange($event.value)" [value]="selectedProblem" -->
                     <mat-option *ngFor="let problem of playgroundData.problems" [value]="problem.value">
                         {{ problem.viewValue }}
                     </mat-option>
                 </mat-select>
             </mat-form-field>
+            <div *ngIf="playgroundForm.get('problem').value == 'polynomial-regression'; else mnist">
+                <!-- <mat-form-field>
+                    <mat-select placeholder="Optimizer" formControlName="optimizer">
+                        <mat-option *ngFor="let optimizer of playgroundData.optimizers" [value]="optimizer.value">
+                            {{ optimizer.viewValue }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field> -->
+                <mat-form-field>
+                    <mat-select placeholder="Learning Rate" formControlName="learningRate">
+                        <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
+                            {{ learningRate.viewValue }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Number of Iteration" type="number" formControlName="numOfIteration">
+                </mat-form-field>
+            </div>
+            <mat-action-row>
+                <button mat-button color="accent" (click)="reset()">Reset</button>
+                <button mat-button color="accent" (click)="trainNetwork()" [disabled]="trainNetworkDisabled">Train Network</button>
+            </mat-action-row>
         </form>
-        <p>Form value: {{ playgroundForm.value | json }}</p>
-        <p>Form status: {{ playgroundForm.status | json }}</p>
-        <mat-form-field>
-            <input matInput placeholder="First name">
-        </mat-form-field>
-
-        <mat-form-field>
-            <input matInput placeholder="Age">
-        </mat-form-field>
-
     </mat-expansion-panel>
 
 
@@ -58,14 +71,6 @@
         </mat-expansion-panel-header>
 
         <div fxLayout="column wrap">
-            <div *ngIf="selectedProblem=='polynomial-regression';else mnist">
-                <mat-form-field>
-                    <input matInput placeholder="Learning Rate" value="1" type="number" [(ngModel)]="learningRate">
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Number of Iteration" value="1" type="number" [(ngModel)]="numIterations">
-                </mat-form-field>
-            </div>
             <ng-template #mnist>
                 <div>
                     <button mat-button color="accent" (click)="openSetupModelDialog()" id="btnSetupModel">Setup Model</button>
@@ -106,16 +111,45 @@
             </ng-template>
 
             <!-- <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle> -->
-            <mat-action-row>
-                <button mat-button color="accent" (click)="reset()">Reset</button>
-                <button mat-button color="accent" (click)="trainNetworkClicked()" [disabled]="trainNetworkDisabled">Train Network</button>
-            </mat-action-row>
 
         </div>
     </mat-expansion-panel>
 </mat-accordion>
 
 
+<div class="plots" fxLayout="row wrap" *ngIf="playgroundForm.get('problem').value=='polynomial-regression';else mnistPlot">
+    <div id="data" class="plot-item">
+        <div class="caption">Original Data (Synthetic)</div>
+        <div class="caption">True coefficients:
+            <span class='coeff' #dataCoeff></span>
+        </div>
+        <div class="chart-container">
+            <canvas #dataCanvas class="plot"></canvas>
+        </div>
+    </div>
+    <div id="random" class="plot-item">
+        <div class="caption">Fit curve with random coefficients
+            <strong>(before training)</strong>
+        </div>
+        <div class="caption">Random coefficients:
+            <span class='coeff' #randomCoeff></span>
+        </div>
+        <div class="chart-container">
+            <canvas #randomCanvas class="plot"></canvas>
+        </div>
+    </div>
+    <div id="trained" class="plot-item">
+        <div class="caption">Fit curve with learned coefficients
+            <strong>(after training)</strong>
+        </div>
+        <div class="caption">Learned coefficients:
+            <span class='coeff' #trainedCoeff></span>
+        </div>
+        <div class="chart-container">
+            <canvas #trainedCanvas class="plot"></canvas>
+        </div>
+    </div>
+</div>
 
 
 <!-- <mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap" style="max-width: 313.948px !important;"> -->
@@ -267,39 +301,6 @@
 <app-brain #brainComponent [sceneInput]="scene"></app-brain> -->
 <!--<app-molecule></app-molecule>-->
 
-<div class="plots" fxLayout="row wrap" *ngIf="selectedProblem=='polynomial-regression';else mnistPlot">
-    <div id="data" class="plot-item">
-        <div class="caption">Original Data (Synthetic)</div>
-        <div class="caption">True coefficients:
-            <span class='coeff' #dataCoeff></span>
-        </div>
-        <div class="chart-container">
-            <canvas #dataCanvas class="plot"></canvas>
-        </div>
-    </div>
-    <div id="random" class="plot-item">
-        <div class="caption">Fit curve with random coefficients
-            <strong>(before training)</strong>
-        </div>
-        <div class="caption">Random coefficients:
-            <span class='coeff' #randomCoeff></span>
-        </div>
-        <div class="chart-container">
-            <canvas #randomCanvas class="plot"></canvas>
-        </div>
-    </div>
-    <div id="trained" class="plot-item">
-        <div class="caption">Fit curve with learned coefficients
-            <strong>(after training)</strong>
-        </div>
-        <div class="caption">Learned coefficients:
-            <span class='coeff' #trainedCoeff></span>
-        </div>
-        <div class="chart-container">
-            <canvas #trainedCanvas class="plot"></canvas>
-        </div>
-    </div>
-</div>
 <ng-template #mnistPlot>
     <div id="content">
         <h3>TensorFlow.js: Train MNIST with the Layers API</h3>

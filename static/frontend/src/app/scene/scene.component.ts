@@ -233,22 +233,37 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   createForm() {
     this.playgroundForm = this.fb.group({
-      problem: ["", Validators.required]
+      problem: ["", Validators.required],
+      learningRate: ["", Validators.required],
+      numOfIteration: [0, Validators.required],
+      optimizer: ["", Validators.required],
+    });
+
+
+    this.playgroundForm.setValue({
+      problem: this.playgroundData.problems[0].value,
+      learningRate: this.playgroundData.learningRates[0].value,
+      numOfIteration: this.playgroundData.numOfIteration,
+      optimizer: this.playgroundData.optimizers[0].value
     });
   }
 
+  optimizer;
+
+  // selectedProblem = "polynomial-regression";
+  // numIterations = 75;
+  // learningRate = 0.5;
+  // optimizer = tf.train.sgd(this.learningRate);
 
 
-  selectedProblem = "polynomial-regression";
+
 
   trueCoefficients; trainingData;
   randomCoefficients;
   trainingPredictions;
   a; b; c; d;
 
-  numIterations = 75;
-  learningRate = 0.5;
-  optimizer = tf.train.sgd(this.learningRate);
+
 
   layerCount = 1;
   nodeCount = 1;
@@ -323,23 +338,27 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     this.renderCoefficients(this.randomCoeffRef, randomCoefficientsData);
     const predictionsBefore = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
-    if (reset) { this.updatePrediction(this.trainingData, predictionsBefore, true); }
+    if (reset) { this.updatePrediction(this.trainingData, predictionsBefore, this.beforeChart); }
     else { this.plotDataAndPredictions(this.randomCanvasRef, this.trainingData, predictionsBefore, true); }
 
     predictionsBefore.dispose();
   }
 
-  trainNetworkClicked() {
-    if (this.selectedProblem == "polynomial-regression") {
+  trainNetwork() {
+    let numOfIteration = this.playgroundForm.get('numOfIteration').value;
+    this.optimizer = tf.train.sgd(+this.playgroundForm.get('learningRate').value);
+
+    if (this.playgroundForm.get('problem').value == "polynomial-regression") {
+      if (this.predictionChart) { this.predictionChart.destroy(); }
+
       this.trainingPredictions = [];
 
-      for (let iter = 0; iter < this.numIterations; iter++) {
+      for (let iter = 0; iter < numOfIteration; iter++) {
         this.optimizer.minimize(() => {
           const pred = this.playgroundService.predict(this.trainingData.xs, this.randomCoefficients);
           this.trainingPredictions.push(tf.variable(pred));
           return this.playgroundService.loss(pred, this.trainingData.ys);
         });
-
         tf.nextFrame();
       }
 
@@ -352,16 +371,16 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
       this.renderCoefficients(this.trainedCoeffRef, trainedCoefficientsData);
 
-      for (let iter = 0; iter < this.numIterations; iter++) {
+      for (let iter = 0; iter < numOfIteration; iter++) {
         if (iter == 0) { this.plotDataAndPredictions(this.trainedCanvasRef, this.trainingData, this.trainingPredictions[iter], false); }
         else {
           setTimeout(() => {
-            this.updatePrediction(this.trainingData, this.trainingPredictions[iter], false);
+            this.updatePrediction(this.trainingData, this.trainingPredictions[iter], this.predictionChart);
           }, 150 * iter);
         }
       }
     }
-    else if (this.selectedProblem == "mnist") {
+    else if (this.playgroundForm.get('problem').value == "mnist") {
       this.setupModel();
       this.trainModel();
     }
@@ -465,7 +484,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     });
   }
 
-  plotDataAndPredictions(container, trainingData, prediction, before: boolean) {
+  plotDataAndPredictions(container, trainingData, prediction, beforeTraining: boolean) {
     let xvals = trainingData.xs.dataSync();
     let yvals = trainingData.ys.dataSync();
     let predVals = prediction.dataSync();
@@ -474,7 +493,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     let predValues = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': predVals[i] }; });
 
     let ctx = container.nativeElement.getContext('2d');
-    if (before) {
+    if (beforeTraining) {
       this.beforeChart = new Chart(ctx, {
         type: "scatter",
         data: {
@@ -538,51 +557,45 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
   }
 
-  updatePrediction(trainingData, prediction, before: boolean) {
+  updatePrediction(trainingData, prediction, chart) {
     let xvals = trainingData.xs.dataSync();
     let yvals = trainingData.ys.dataSync();
     let predVals = prediction.dataSync();
 
     let predValues = Array.from(yvals).map((y, i) => { return { 'x': xvals[i], 'y': predVals[i] }; });
 
-    if (before) {
-      this.beforeChart.data.datasets[1].data = predValues;
-      this.beforeChart.update();
-    }
-    else {
-      this.predictionChart.data.datasets[1].data = predValues;
-      this.predictionChart.update();
-    }
+    chart.data.datasets[1].data = predValues;
+    chart.update();
   }
 
   reset() {
-    if (this.selectedProblem == "polynomial-regression") {
+    if (this.playgroundForm.get('problem').value == "polynomial-regression") {
       if (this.predictionChart) { this.predictionChart.destroy(); }
       this.beforeTraining(true);
     }
   }
 
-  async problemChange(val: string) {
-    this.selectedProblem = val;
-    this.changeDetector.detectChanges();
+  // async problemChange(val: string) {
+  //   this.playgroundForm.get('problem').value = val;
+  //   this.changeDetector.detectChanges();
 
-    if (val == "polynomial-regression") {
-      this.generateData();
-      this.beforeTraining(false);
-    }
-    else if (val == "mnist") {
-      this.trainNetworkDisabled = true;
-      this.changeDetector.detectChanges();
+  //   if (val == "polynomial-regression") {
+  //     this.generateData();
+  //     this.beforeTraining(false);
+  //   }
+  //   else if (val == "mnist") {
+  //     this.trainNetworkDisabled = true;
+  //     this.changeDetector.detectChanges();
 
-      await this.playgroundService.loadMnist();
-      this.SetStatus("Data loaded!");
+  //     await this.playgroundService.loadMnist();
+  //     this.SetStatus("Data loaded!");
 
-      this.trainNetworkDisabled = false;
-      this.changeDetector.detectChanges();
+  //     this.trainNetworkDisabled = false;
+  //     this.changeDetector.detectChanges();
 
-      this.modelWeightsEveryBatch = [];
-    }
-  }
+  //     this.modelWeightsEveryBatch = [];
+  //   }
+  // }
 
   setupModel() {
     this.model = tf.sequential();
@@ -607,8 +620,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.model.add(tf.layers.dense(
       { units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax' }));
 
-    this.learningRate = 0.15;
-    this.optimizer = tf.train.sgd(this.learningRate);
+    // this.learningRate = 0.15;
+    // this.optimizer = tf.train.sgd(this.learningRate);
+    this.optimizer = tf.train.sgd(0.15);
     this.model.compile({
       optimizer: this.optimizer,
       loss: 'categoricalCrossentropy',
