@@ -15,6 +15,8 @@ import { BrainComponent } from './brain/brain.component';
 import { PlaygroundService } from '../playground.service';
 import { generate } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
+import { Playground } from '../playground.model';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 
 
 @Component({
@@ -103,7 +105,13 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // this.renderer.setSize(this.windowWidth, this.windowHeight);
   }
 
-  constructor(private networkService: NetworkService, private renderer2: Renderer2, private playgroundService: PlaygroundService, private changeDetector: ChangeDetectorRef) {
+  constructor(
+    private networkService: NetworkService,
+    private renderer2: Renderer2,
+    private playgroundService: PlaygroundService,
+    private changeDetector: ChangeDetectorRef,
+    private fb: FormBuilder
+  ) {
     // this.networkService.loadFromJson().subscribe(
     //   (weights) => {
     //     this.weights = weights;
@@ -111,6 +119,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     //     this.networkService.createNetworkFromWeights(this.weights);
     //   }
     // );
+    this.createForm();
   }
 
   ngOnInit() {
@@ -219,10 +228,17 @@ export class SceneComponent implements OnInit, AfterViewInit {
   // ==================================================
   // playground
   // ==================================================
-  problems = [
-    { value: 'polynomial-regression', viewValue: 'Polynomial Regression' },
-    { value: 'mnist', viewValue: 'MNIST' }
-  ];
+  playgroundForm: FormGroup;
+  playgroundData: Playground = new Playground();
+
+  createForm() {
+    this.playgroundForm = this.fb.group({
+      problem: ["", Validators.required]
+    });
+  }
+
+
+
   selectedProblem = "polynomial-regression";
 
   trueCoefficients; trainingData;

@@ -1,4 +1,11 @@
-<div class="toolbar-container">
+<mat-toolbar color="primary" class="toolbar">
+    <h1 class="app-name">CNN Visualization</h1>
+</mat-toolbar>
+<app-scene #appScene [style.top.px]="mobileQuery.matches ? 56 : 64"></app-scene>
+
+<router-outlet></router-outlet>
+
+<!-- <div class="toolbar-container">
     <mat-toolbar color="primary" class="toolbar">
         <h1 class="app-name">CNN Visualization</h1>
         <div fxFlex="grow"></div>
@@ -7,15 +14,13 @@
         </button>
     </mat-toolbar>
 
-    <mat-sidenav-container [style.marginTop.px]="mobileQuery.matches ? 56 : 64">
-        <!--<mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="mobileQuery.matches ? 56 : 64">
+    <mat-sidenav-container [style.marginTop.px]="mobileQuery.matches ? 56 : 64"> -->
+<!--<mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="mobileQuery.matches ? 56 : 64">
             <app-controls></app-controls>
         </mat-sidenav>
         <mat-sidenav-content>
             <app-scene></app-scene>
         </mat-sidenav-content>-->
-        <app-scene #appScene [fixedTopGap]="mobileQuery.matches ? 56 : 64"></app-scene>
+<!-- <app-scene #appScene [fixedTopGap]="mobileQuery.matches ? 56 : 64"></app-scene>
     </mat-sidenav-container>
-</div>
-
-<router-outlet></router-outlet>
+</div> -->
