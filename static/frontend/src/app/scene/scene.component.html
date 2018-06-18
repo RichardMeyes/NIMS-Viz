@@ -17,6 +17,34 @@
                     </mat-option>
                 </mat-select>
             </mat-form-field>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" style="margin-top: 0.5rem;">
+                <strong>Mnist Data</strong>
+            </div>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'">
+                <mat-form-field>
+                    <input matInput placeholder="Batch Size" type="text" formControlName="batchSize">
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Train Batches" type="text" formControlName="trainBatches">
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Test Batch Size" type="text" formControlName="testBatchSize">
+                </mat-form-field>
+            </div>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" style="margin-top: 0.5rem;">
+                <strong>Model</strong>
+            </div>
+            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
+            <mat-form-field>
+                <mat-select placeholder="Learning Rate" formControlName="learningRate">
+                    <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
+                        {{ learningRate.viewValue }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
             <div *ngIf="playgroundForm.get('problem').value == 'polynomial-regression'; else mnist">
                 <!-- <mat-form-field>
                     <mat-select placeholder="Optimizer" formControlName="optimizer">
@@ -25,13 +53,6 @@
                         </mat-option>
                     </mat-select>
                 </mat-form-field> -->
-                <mat-form-field>
-                    <mat-select placeholder="Learning Rate" formControlName="learningRate">
-                        <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
-                            {{ learningRate.viewValue }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
                 <mat-form-field>
                     <input matInput placeholder="Number of Iteration" type="number" formControlName="numOfIteration">
                 </mat-form-field>
@@ -47,9 +68,18 @@
                 <mat-form-field>
                     <input matInput placeholder="Number of Layers" type="number" formControlName="layerCount">
                 </mat-form-field>
+                <mat-form-field>
+                    <mat-select placeholder="Loss" formControlName="mnistLoss">
+                        <mat-option *ngFor="let loss of playgroundData.loss" [value]="loss.value">
+                            {{ loss.viewValue }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
                 <div formArrayName="layers">
                     <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
-                        <div style="margin-top: 0.5rem;">{{ i+1 | ordinal }} Layer</div>
+                        <div style="margin-top: 0.5rem;">
+                            <strong> {{ i+1 | ordinal }} {{ (i==0)? '(Input)' : ''}} Layer</strong>
+                        </div>
                         <div fxLayout="column wrap">
                             <div>
                                 <mat-form-field>
@@ -61,13 +91,62 @@
                                         </mat-optgroup>
                                     </mat-select>
                                 </mat-form-field>
-                                <div fxFlex="grow"></div>
-                            </div>
-                            <div>
-                                <mat-checkbox formControlName="isInput" class="form-field">Input Layer</mat-checkbox>
                                 <div *ngIf="layer.get('isInput').value" style="display: inline">
                                     <mat-form-field>
                                         <input matInput placeholder="Input Shape" type="text" formControlName="inputShape">
+                                    </mat-form-field>
+                                </div>
+                                <div fxFlex="grow"></div>
+                            </div>
+                            <div>
+                                <div fxLayout="row wrap">
+                                    <!-- <mat-radio-group formControlName="inputLayer" name="groupIsInput">
+                                        <mat-radio-button [value]="i">Input Layer</mat-radio-button>
+                                    </mat-radio-group> -->
+                                    <!-- <mat-checkbox formControlName="isInput" class="form-field">Input Layer</mat-checkbox> -->
+                                    <!-- <div fxFlex="grow"></div> -->
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'kernelSize')" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Kernel Size" type="text" formControlName="kernelSize">
+                                    </mat-form-field>
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'filters')" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Filters" type="text" formControlName="filters">
+                                    </mat-form-field>
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'strides')" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Strides" type="text" formControlName="strides">
+                                    </mat-form-field>
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'poolSize')" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Pool Size" type="text" formControlName="poolSize">
+                                    </mat-form-field>
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'units')" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Number of Unit" type="text" formControlName="units">
+                                    </mat-form-field>
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'activation')" style="display: inline">
+                                    <mat-form-field>
+                                        <mat-select placeholder="Activation" formControlName="activation">
+                                            <mat-option *ngFor="let activation of playgroundData.activation" [value]="activation.value">
+                                                {{ activation.viewValue }}
+                                            </mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </div>
+                                <div *ngIf="isConfigAvailable(i, 'kernelInitializer')" style="display: inline">
+                                    <mat-form-field>
+                                        <mat-select placeholder="Kernel Initializer" formControlName="kernelInitializer">
+                                            <mat-option *ngFor="let kernelInitializer of playgroundData.kernelInitializer" [value]="kernelInitializer.value">
+                                                {{ kernelInitializer.viewValue }}
+                                            </mat-option>
+                                        </mat-select>
                                     </mat-form-field>
                                 </div>
                             </div>
@@ -76,45 +155,14 @@
                         <mat-divider></mat-divider>
                     </div>
                 </div>
-
-                <!-- above=model setup -->
-                <!-- <mat-form-field>
-                        <input matInput placeholder="Train Batches" value="1" type="number" [(ngModel)]="trainBatches">
-                    </mat-form-field>
-                    <mat-form-field>
-                        <input matInput placeholder="Train Batch Size" value="1" type="number" [(ngModel)]="batchSize">
-                    </mat-form-field>
-                    <mat-form-field>
-                        <input matInput placeholder="Test Batch Size" value="1" type="number" [(ngModel)]="testBatchSize">
-                    </mat-form-field> -->
             </ng-template>
-
-            <!-- <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle> -->
-
-
-
-
-
             <mat-action-row>
                 <button mat-button color="accent" (click)="reset()">Reset</button>
                 <button mat-button color="accent" (click)="trainNetwork()" [disabled]="trainNetworkDisabled">Train Network</button>
             </mat-action-row>
         </form>
-        <p>Form value: {{ playgroundForm.value | json }}</p>
     </mat-expansion-panel>
 
-
-    <mat-expansion-panel (opened)="panelOpenState = true" (closed)="panelOpenState = false">
-        <mat-expansion-panel-header>
-            <mat-panel-title>
-                Self aware panel
-            </mat-panel-title>
-            <mat-panel-description>
-                Currently I am {{panelOpenState ? 'open' : 'closed'}}
-            </mat-panel-description>
-        </mat-expansion-panel-header>
-        <p>I'm visible because I am open</p>
-    </mat-expansion-panel>
 </mat-accordion>
 
 
@@ -287,12 +335,6 @@
     </mat-expansion-panel>
 </mat-accordion> -->
 
-
-<!-- playground -->
-
-
-
-<!-- playground -->
 
 
 <!-- </mat-sidenav> -->

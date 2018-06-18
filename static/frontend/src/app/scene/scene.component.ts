@@ -15,8 +15,9 @@ import { BrainComponent } from './brain/brain.component';
 import { PlaygroundService } from '../playground.service';
 import { generate } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
-import { Playground } from '../playground.model';
+import { Playground, TfjsLayer } from '../playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
+import { debounceTime } from 'rxjs/operators';
 
 
 @Component({
@@ -244,7 +245,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
       optimizer: ["", Validators.required],
 
       layerCount: [0, Validators.required],
-      layers: this.fb.array([])
+      layers: this.fb.array([]),
+      mnistLoss: ["", Validators.required],
+
+      batchSize: [0, Validators.required],
+      trainBatches: [0, Validators.required],
+      testBatchSize: [0, Validators.required]
     });
 
 
@@ -255,7 +261,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
       numOfIteration: this.playgroundData.numOfIteration,
       optimizer: this.playgroundData.optimizers[0].value,
 
-      layerCount: this.playgroundData.layerCount
+      layerCount: this.playgroundData.layerCount,
+      mnistLoss: this.playgroundData.mnistLoss,
+
+      batchSize: this.playgroundData.batchSize,
+      trainBatches: this.playgroundData.trainBatches,
+      testBatchSize: this.playgroundData.testBatchSize
     });
 
     this.playgroundForm.setControl('layers', this.fb.array(
@@ -266,7 +277,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
         kernelSize: [0, Validators.required],
         filters: [0, Validators.required],
         strides: [0, Validators.required],
-        poolSize: [0, Validators.required]
+        poolSize: [0, Validators.required],
+        units: [0, Validators.required],
+        activation: ["", Validators.required],
+        kernelInitializer: ["", Validators.required]
       }))
     ));
 
@@ -276,24 +290,45 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.layers.controls[i].setValue({
         layerType: currLayer.layerType.value,
         isInput: currLayer.isInput,
-        inputShape: (currLayer.layerItemConfiguration.hasOwnProperty("inputShape")) ? currLayer.layerItemConfiguration.inputShape : -23895,
-        kernelSize: (currLayer.layerItemConfiguration.hasOwnProperty("kernelSize")) ? currLayer.layerItemConfiguration.kernelSize : -23895,
-        filters: (currLayer.layerItemConfiguration.hasOwnProperty("filters")) ? currLayer.layerItemConfiguration.filters : -23895,
-        strides: (currLayer.layerItemConfiguration.hasOwnProperty("strides")) ? currLayer.layerItemConfiguration.strides : -23895,
-        poolSize: (currLayer.layerItemConfiguration.hasOwnProperty("poolSize")) ? currLayer.layerItemConfiguration.poolSize : -23895,
+
+        inputShape: currLayer.layerItemConfiguration.inputShape || "",
+        kernelSize: currLayer.layerItemConfiguration.kernelSize || "",
+        filters: currLayer.layerItemConfiguration.filters || "",
+        strides: currLayer.layerItemConfiguration.strides || "",
+        poolSize: currLayer.layerItemConfiguration.poolSize || "",
+        units: currLayer.layerItemConfiguration.units || "",
+        activation: currLayer.layerItemConfiguration.activation || "",
+        kernelInitializer: currLayer.layerItemConfiguration.kernelInitializer || ""
       });
     }
+
+    this.layerCountChange();
   }
 
+
+
   optimizer;
+  model;
+  // batchSize = 64;
+  // trainBatches = 150;
+  // testBatchSize = 1000;
 
   // selectedProblem = "polynomial-regression";
   // numIterations = 75;
   // learningRate = 0.5;
   // optimizer = tf.train.sgd(this.learningRate);
   // layerCount = 1;
-
-
+  // layerTypes = [
+  //   { value: 'basic', viewValue: 'Basic' },
+  //   { value: 'convolutional', viewValue: 'Convolutional' },
+  //   { value: 'pooling', viewValue: 'Pooling' }
+  // ];
+  // selectedLayerType: string[] = [];
+  // modelTypes = [
+  //   { value: 'sequential', viewValue: 'Sequential' },
+  //   { value: 'model', viewValue: 'Model (currently not supported)' }
+  // ];
+  // selectedModelType = "sequential";
 
   trueCoefficients; trainingData;
   randomCoefficients;
@@ -319,24 +354,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   // mnist  
 
-  modelTypes = [
-    { value: 'sequential', viewValue: 'Sequential' },
-    { value: 'model', viewValue: 'Model (currently not supported)' }
-  ];
-  selectedModelType = "sequential";
-
-  layerTypes = [
-    { value: 'basic', viewValue: 'Basic' },
-    { value: 'convolutional', viewValue: 'Convolutional' },
-    { value: 'pooling', viewValue: 'Pooling' }
-  ];
-  selectedLayerType: string[] = [];
 
 
-  model;
-  batchSize = 64;
-  trainBatches = 150;
-  testBatchSize = 1000;
+
+
   testIterationFrequency = 5;
   epochs = 1;
   data;
@@ -418,9 +439,26 @@ export class SceneComponent implements OnInit, AfterViewInit {
       }
     }
     else if (this.playgroundForm.get('problem').value == "mnist") {
-      this.setupModel();
-      this.trainModel();
+      console.log(this.findInvalidControls());
+      if (this.playgroundForm.valid) {
+        this.setupModel();
+        this.trainModel();
+      }
+      else {
+        alert("Please fill the required field.");
+      }
     }
+  }
+
+  public findInvalidControls() {
+    const invalid = [];
+    const controls = this.playgroundForm.controls;
+    for (const name in controls) {
+      if (controls[name].invalid) {
+        invalid.push(name);
+      }
+    }
+    return invalid;
   }
 
   async trainModel() {
@@ -429,21 +467,23 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // We'll keep a buffer of loss and accuracy values over time.
     const lossValues = [];
     const accuracyValues = [];
+    this.modelWeightsEveryBatch = [];
 
     // Iteratively train our model on mini-batches of data.
-    for (let i = 0; i < this.trainBatches; i++) {
+    // for (let i = 0; i < this.trainBatches; i++) {
+    for (let i = 0; i < 2; i++) {
       // const [batch, validationData] = tf.tidy(() => {
-      const batch = this.playgroundService.nextTrainBatch(this.batchSize);
+      const batch = this.playgroundService.nextTrainBatch(this.playgroundForm.get('batchSize').value);
       // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
 
       let validationData;
       // Every few batches test the accuracy of the model.
       if (i % this.testIterationFrequency === 0) {
-        const testBatch = this.playgroundService.nextTestBatch(this.testBatchSize);
+        const testBatch = this.playgroundService.nextTestBatch(this.playgroundForm.get('testBatchSize').value);
         validationData = [
           // Reshape the training data from [64, 28x28] to [64, 28, 28, 1] so
           // that we can feed it to our convolutional neural net.
-          testBatch.xs.reshape([this.testBatchSize, 28, 28, 1]), testBatch.labels
+          testBatch.xs.reshape([this.playgroundForm.get('testBatchSize').value, 28, 28, 1]), testBatch.labels
         ];
       }
 
@@ -453,8 +493,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // The entire dataset doesn't fit into memory so we call train repeatedly
       // with batches using the fit() method.
       const history = await this.model.fit(
-        batch.xs.reshape([this.batchSize, 28, 28, 1]), batch.labels,
-        { batchSize: this.batchSize, validationData, epochs: this.epochs });
+        batch.xs.reshape([this.playgroundForm.get('batchSize').value, 28, 28, 1]), batch.labels,
+        { batchSize: this.playgroundForm.get('batchSize').value, validationData, epochs: this.epochs });
 
       const loss = history.history.loss[0];
       const accuracy = history.history.acc[0];
@@ -622,44 +662,157 @@ export class SceneComponent implements OnInit, AfterViewInit {
     else if (this.playgroundForm.get('problem').value == "mnist") {
       this.trainNetworkDisabled = true;
 
-      // this.playgroundService.loadMnist().then(() => {
-      //   this.SetStatus("Data loaded!");
-      //   this.trainNetworkDisabled = false;
+      this.playgroundService.loadMnist().then(() => {
+        this.SetStatus("Data loaded!");
+        this.trainNetworkDisabled = false;
 
-      //   this.modelWeightsEveryBatch = [];
-      // });
+        this.modelWeightsEveryBatch = [];
+      });
     }
   }
 
   setupModel() {
     this.model = tf.sequential();
-    this.model.add(tf.layers.conv2d({
-      inputShape: [28, 28, 1],
-      kernelSize: 5,
-      filters: 8,
-      strides: 1,
-      activation: 'relu',
-      kernelInitializer: 'varianceScaling'
-    }));
-    this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
-    this.model.add(tf.layers.conv2d({
-      kernelSize: 5,
-      filters: 16,
-      strides: 1,
-      activation: 'relu',
-      kernelInitializer: 'varianceScaling'
-    }));
-    this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
-    this.model.add(tf.layers.flatten());
-    this.model.add(tf.layers.dense(
-      { units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax' }));
+    for (let i = 0; i < +this.playgroundForm.get('layerCount').value; i++) {
+      let options = <any>this.extractOptions(i);
+      console.log(options);
+      switch (this.layers.controls[i].get('layerType').value) {
+        case "conv2d": {
+          this.model.add(tf.layers.conv2d(options));
+          break;
+        }
+        case "maxPooling2d": {
+          this.model.add(tf.layers.maxPooling2d(options));
+          break;
+        }
+        case "flatten": {
+          this.model.add(tf.layers.flatten(options));
+          break;
+        }
+        case "dense": {
+          this.model.add(tf.layers.dense(options));
+          break;
+        }
+      }
+    }
 
-    this.optimizer = tf.train.sgd(0.15);
     this.model.compile({
       optimizer: this.optimizer,
-      loss: 'categoricalCrossentropy',
+      loss: this.playgroundForm.get('mnistLoss').value,
       metrics: ['accuracy'],
     });
+
+
+    // this.model = tf.sequential();
+    // this.model.add(tf.layers.conv2d({
+    //   inputShape: [28, 28, 1],
+    //   kernelSize: 5,
+    //   filters: 8,
+    //   strides: 1,
+    //   activation: 'relu',
+    //   kernelInitializer: 'varianceScaling'
+    // }));
+    // this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
+    // this.model.add(tf.layers.conv2d({
+    //   kernelSize: 5,
+    //   filters: 16,
+    //   strides: 1,
+    //   activation: 'relu',
+    //   kernelInitializer: 'varianceScaling'
+    // }));
+    // this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
+    // this.model.add(tf.layers.flatten());
+    // this.model.add(tf.layers.dense(
+    //   { units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax' }));
+
+    // this.optimizer = tf.train.sgd(0.15);
+    // this.model.compile({
+    //   optimizer: this.optimizer,
+    //   loss: 'categoricalCrossentropy',
+    //   metrics: ['accuracy'],
+    // });
+  }
+
+  extractOptions(i: number) {
+    let options: { [key: string]: any } = {};
+
+    switch (this.layers.controls[i].get('layerType').value) {
+      case "conv2d": {
+        if (this.layers.controls[i].get('isInput').value) {
+          options.inputShape = <string>this.layers.controls[i].get('inputShape').value.split(",").map(val => +val);
+          if (options.inputShape.length == 1) options.inputShape = options.inputShape[0];
+        }
+        options.kernelSize = <string>this.layers.controls[i].get('kernelSize').value.split(",").map(val => +val);
+        options.filters = <string>this.layers.controls[i].get('filters').value.split(",").map(val => +val);
+        options.strides = <string>this.layers.controls[i].get('strides').value.split(",").map(val => +val);
+        options.activation = this.layers.controls[i].get('activation').value;
+        options.kernelInitializer = this.layers.controls[i].get('kernelInitializer').value;
+
+        if (options.kernelSize.length == 1) options.kernelSize = options.kernelSize[0];
+        if (options.filters.length == 1) options.filters = options.filters[0];
+        if (options.strides.length == 1) options.strides = options.strides[0];
+      }
+      case "maxPooling2d": {
+        options.poolSize = <string>this.layers.controls[i].get('poolSize').value.split(",").map(val => +val);
+        options.strides = <string>this.layers.controls[i].get('strides').value.split(",").map(val => +val);
+
+        if (options.poolSize.length == 1) options.poolSize = options.poolSize[0];
+        if (options.strides.length == 1) options.strides = options.strides[0];
+        break;
+      }
+      case "flatten": {
+        break;
+      }
+      case "dense": {
+        options.units = <string>this.layers.controls[i].get('units').value.split(",").map(val => +val);;
+        options.activation = this.layers.controls[i].get('activation').value;
+        options.kernelInitializer = this.layers.controls[i].get('kernelInitializer').value;
+
+        if (options.units.length == 1) options.units = options.units[0];
+        break;
+      }
+    }
+    return options;
+  }
+
+  isConfigAvailable(i: number, configProperty: string): boolean {
+    for (let index = 0; index < this.playgroundData.layers.length; index++) {
+      for (let index2 = 0; index2 < this.playgroundData.layers[index].layerItem.length; index2++) {
+        if (this.layers.controls[i].get('layerType').value == this.playgroundData.layers[index].layerItem[index2].layerType.value) {
+          return this.playgroundData.layers[index].layerItem[index2].layerItemConfiguration[configProperty] || false;
+        }
+      }
+    }
+    return false;
+  }
+
+  layerCountChange() {
+    const layerCountControl = this.playgroundForm.get('layerCount');
+    layerCountControl.valueChanges.pipe(debounceTime(500)).forEach(
+      () => {
+        if (+this.playgroundForm.get('layerCount').value > this.layers.controls.length) {
+          for (let i = this.layers.controls.length; i < +this.playgroundForm.get('layerCount').value; i++) {
+            this.layers.push(this.fb.group({
+              layerType: ["", Validators.required],
+              isInput: [false, Validators.required],
+              inputShape: [[], Validators.required],
+              kernelSize: [0, Validators.required],
+              filters: [0, Validators.required],
+              strides: [0, Validators.required],
+              poolSize: [0, Validators.required],
+              units: [0, Validators.required],
+              activation: ["", Validators.required],
+              kernelInitializer: ["", Validators.required]
+            }));
+          }
+        }
+        else {
+          for (let i = this.layers.controls.length; i > +this.playgroundForm.get('layerCount').value; i--) {
+            this.layers.removeAt(i - 1);
+          }
+        }
+      }
+    );
   }
 
   SetStatus(msg: string) {
