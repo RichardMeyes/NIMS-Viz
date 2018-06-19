@@ -150,9 +150,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     //     this.networkService.createNetworkFromWeights(this.weights);
     //     this.setup();
     //   }
-    // );
-    this.networkService.loadFromJson().subscribe(() => { console.log("done"); });
-    ;
+    // );    
     this.createForm();
   }
 
@@ -203,7 +201,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.heat = simpleheat(document.getElementById('canvHeatmap'));
       this.scene = this.brainComponent.setupBrain();
     } else {
-      this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct());
+      this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct);
     }
 
     /*let objectLoader = new THREE.OBJLoader();
@@ -528,7 +526,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // Every few batches test the accuracy of the model.
       if (i % this.testIterationFrequency === 0) {
         const testBatch = this.playgroundService.nextTestBatch(this.playgroundForm.get('testBatchSize').value);
-        console.log("nyampe sini");
         validationData = [
           // Reshape the training data from [64, 28x28] to [64, 28, 28, 1] so
           // that we can feed it to our convolutional neural net.
@@ -571,13 +568,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
 
     this.SetStatus("Training done!");
-
-    console.log("===Loss===");
-    console.log(lossValues);
-    console.log("===Accuracies===");
-    console.log(accuracyValues);
-    console.log("===Weights===");
-    console.log(this.modelWeightsEveryBatch);
   }
 
   plotData(container, trainingData) {
@@ -739,7 +729,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.model = tf.sequential();
     for (let i = 0; i < +this.playgroundForm.get('layerCount').value; i++) {
       let options = <any>this.extractOptions(i);
-      console.log(options);
       switch (this.layers.controls[i].get('layerType').value) {
         case "conv2d": {
           this.model.add(tf.layers.conv2d(options));
@@ -769,36 +758,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       loss: this.playgroundForm.get('mnistLoss').value,
       metrics: ['accuracy'],
     });
-
-
-    // this.model = tf.sequential();
-    // this.model.add(tf.layers.conv2d({
-    //   inputShape: [28, 28, 1],
-    //   kernelSize: 5,
-    //   filters: 8,
-    //   strides: 1,
-    //   activation: 'relu',
-    //   kernelInitializer: 'varianceScaling'
-    // }));
-    // this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
-    // this.model.add(tf.layers.conv2d({
-    //   kernelSize: 5,
-    //   filters: 16,
-    //   strides: 1,
-    //   activation: 'relu',
-    //   kernelInitializer: 'varianceScaling'
-    // }));
-    // this.model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
-    // this.model.add(tf.layers.flatten());
-    // this.model.add(tf.layers.dense(
-    //   { units: 10, kernelInitializer: 'varianceScaling', activation: 'softmax' }));
-
-    // this.optimizer = tf.train.sgd(0.15);
-    // this.model.compile({
-    //   optimizer: this.optimizer,
-    //   loss: 'categoricalCrossentropy',
-    //   metrics: ['accuracy'],
-    // });
   }
 
   extractOptions(i: number) {

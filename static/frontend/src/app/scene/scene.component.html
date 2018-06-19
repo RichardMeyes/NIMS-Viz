@@ -75,6 +75,7 @@
                         </mat-option>
                     </mat-select>
                 </mat-form-field>
+                <div fxFlex="grow"></div>
                 <div formArrayName="layers">
                     <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
                         <div style="margin-top: 0.5rem;">
@@ -299,30 +300,11 @@
 </div>
 
 <ng-template #mnistPlot>
-    <div id="content">
-        <h3>TensorFlow.js: Train MNIST with the Layers API</h3>
+    <h3>TensorFlow.js: Train MNIST with the Layers API</h3>
 
-        <div id="status" #divStatus>Loading data...</div>
-        <div id="message"></div>
-
-        <div id="stats">
-            <div class="canvases">
-                <div class="label" id="loss-label"></div>
-                <div id="lossCanvas"></div>
-            </div>
-            <div class="canvases">
-                <div class="label" id="accuracy-label"></div>
-                <div id="accuracyCanvas"></div>
-            </div>
-        </div>
-
-        <div id="images"></div>
-    </div>
+    <div id="status" #divStatus>Loading data...</div>
+    <app-playground-viz></app-playground-viz>
 </ng-template>
-
-
-
 <!-- <canvas #canvas></canvas>
-<app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain> -->
-<h3>Here is the molecule.</h3>
-<app-molecule #moleculeComponent></app-molecule>
+<app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain>
+<app-molecule #moleculeComponent></app-molecule> -->
