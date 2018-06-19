@@ -83,7 +83,7 @@
                         <div fxLayout="column wrap">
                             <div>
                                 <mat-form-field>
-                                    <mat-select placeholder="Layer Type" formControlName="layerType">
+                                    <mat-select placeholder="Layer Type" formControlName="layerType" (selectionChange)="layerTypeChange(i)">
                                         <mat-optgroup *ngFor="let layer of playgroundData.layers" [label]="layer.layerGroup.viewValue">
                                             <mat-option *ngFor="let layerItem of layer.layerItem" [value]="layerItem.layerType.value">
                                                 {{ layerItem.layerType.viewValue }}

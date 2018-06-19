@@ -269,39 +269,37 @@ export class SceneComponent implements OnInit, AfterViewInit {
       testBatchSize: this.playgroundData.testBatchSize
     });
 
+    // this.playgroundForm.setControl('layers', this.fb.array(
+    //   this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
+    //     layerType: ["", Validators.required],
+    //     isInput: [false, Validators.required],
+    //     inputShape: [[], Validators.required],
+    //     kernelSize: [0, Validators.required],
+    //     filters: [0, Validators.required],
+    //     strides: [0, Validators.required],
+    //     poolSize: [0, Validators.required],
+    //     units: [0, Validators.required],
+    //     activation: ["", Validators.required],
+    //     kernelInitializer: ["", Validators.required]
+    //   }))
+    // ));
+
     this.playgroundForm.setControl('layers', this.fb.array(
       this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
-        layerType: ["", Validators.required],
-        isInput: [false, Validators.required],
-        inputShape: [[], Validators.required],
-        kernelSize: [0, Validators.required],
-        filters: [0, Validators.required],
-        strides: [0, Validators.required],
-        poolSize: [0, Validators.required],
-        units: [0, Validators.required],
-        activation: ["", Validators.required],
-        kernelInitializer: ["", Validators.required]
+        layerType: "",
+        isInput: false,
+        inputShape: [],
+        kernelSize: 0,
+        filters: 0,
+        strides: 0,
+        poolSize: 0,
+        units: 0,
+        activation: "",
+        kernelInitializer: ""
       }))
     ));
 
-    for (let i = 0; i < this.playgroundData.layerCount; i++) {
-      let currLayer = this.playgroundData.mnistLayers[i].layerItem[0];
-
-      this.layers.controls[i].setValue({
-        layerType: currLayer.layerType.value,
-        isInput: currLayer.isInput,
-
-        inputShape: currLayer.layerItemConfiguration.inputShape || "",
-        kernelSize: currLayer.layerItemConfiguration.kernelSize || "",
-        filters: currLayer.layerItemConfiguration.filters || "",
-        strides: currLayer.layerItemConfiguration.strides || "",
-        poolSize: currLayer.layerItemConfiguration.poolSize || "",
-        units: currLayer.layerItemConfiguration.units || "",
-        activation: currLayer.layerItemConfiguration.activation || "",
-        kernelInitializer: currLayer.layerItemConfiguration.kernelInitializer || ""
-      });
-    }
-
+    this.resetForm();
     this.layerCountChange();
   }
 
@@ -439,7 +437,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       }
     }
     else if (this.playgroundForm.get('problem').value == "mnist") {
-      console.log(this.findInvalidControls());
       if (this.playgroundForm.valid) {
         this.setupModel();
         this.trainModel();
@@ -450,16 +447,25 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
   }
 
-  public findInvalidControls() {
-    const invalid = [];
-    const controls = this.playgroundForm.controls;
-    for (const name in controls) {
-      if (controls[name].invalid) {
-        invalid.push(name);
-      }
-    }
-    return invalid;
-  }
+  // public findInvalidControls() {
+  //   const invalid = [];
+  //   const controls = this.playgroundForm.controls;
+  //   for (const name in controls) {
+  //     if (controls[name].invalid) {
+  //       invalid.push(name);
+  //     }
+  //   }
+
+  //   for (const name in this.layers.controls) {
+  //     for (const name2 in this.layers.controls[name].controls) {
+  //       if (this.layers.controls[name].controls[name2].invalid) {
+  //         invalid.push(name2);
+  //       }
+  //     }
+  //   }
+
+  //   return invalid;
+  // }
 
   async trainModel() {
     this.SetStatus("Training...");
@@ -646,9 +652,26 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   reset() {
+    this.playgroundForm.patchValue({
+      problem: this.playgroundData.problems[1].value,
+
+      learningRate: this.playgroundData.learningRates[0].value,
+      optimizer: this.playgroundData.optimizers[0].value,
+
+      layerCount: this.playgroundData.layerCount,
+      mnistLoss: this.playgroundData.mnistLoss,
+
+      batchSize: this.playgroundData.batchSize,
+      trainBatches: this.playgroundData.trainBatches,
+      testBatchSize: this.playgroundData.testBatchSize
+    });
+
     if (this.playgroundForm.get('problem').value == "polynomial-regression") {
       if (this.predictionChart) { this.predictionChart.destroy(); }
       this.beforeTraining(true);
+    }
+    else if (this.playgroundForm.get('problem').value == "mnist") {
+      this.resetForm();
     }
   }
 
@@ -786,6 +809,28 @@ export class SceneComponent implements OnInit, AfterViewInit {
     return false;
   }
 
+  resetForm() {
+    for (let i = 0; i < this.playgroundData.layerCount; i++) {
+      let currLayer = this.playgroundData.mnistLayers[i].layerItem[0];
+
+      this.layers.controls[i].setValue({
+        layerType: currLayer.layerType.value,
+        isInput: currLayer.isInput,
+        inputShape: currLayer.layerItemConfiguration.inputShape || "",
+        kernelSize: currLayer.layerItemConfiguration.kernelSize || "",
+        filters: currLayer.layerItemConfiguration.filters || "",
+        strides: currLayer.layerItemConfiguration.strides || "",
+        poolSize: currLayer.layerItemConfiguration.poolSize || "",
+        units: currLayer.layerItemConfiguration.units || "",
+        activation: currLayer.layerItemConfiguration.activation || "",
+        kernelInitializer: currLayer.layerItemConfiguration.kernelInitializer || ""
+      });
+
+      this.removeValidators(i);
+      this.setValidators(i);
+    }
+  }
+
   layerCountChange() {
     const layerCountControl = this.playgroundForm.get('layerCount');
     layerCountControl.valueChanges.pipe(debounceTime(500)).forEach(
@@ -794,15 +839,15 @@ export class SceneComponent implements OnInit, AfterViewInit {
           for (let i = this.layers.controls.length; i < +this.playgroundForm.get('layerCount').value; i++) {
             this.layers.push(this.fb.group({
               layerType: ["", Validators.required],
-              isInput: [false, Validators.required],
-              inputShape: [[], Validators.required],
-              kernelSize: [0, Validators.required],
-              filters: [0, Validators.required],
-              strides: [0, Validators.required],
-              poolSize: [0, Validators.required],
-              units: [0, Validators.required],
-              activation: ["", Validators.required],
-              kernelInitializer: ["", Validators.required]
+              isInput: false,
+              inputShape: [],
+              kernelSize: 0,
+              filters: 0,
+              strides: 0,
+              poolSize: 0,
+              units: 0,
+              activation: "",
+              kernelInitializer: ""
             }));
           }
         }
@@ -813,6 +858,98 @@ export class SceneComponent implements OnInit, AfterViewInit {
         }
       }
     );
+  }
+
+  setValidators(i: number) {
+    if (this.isConfigAvailable(i, "layerType")) {
+      this.layers.controls[i].get("layerType").setValidators(Validators.required);
+      this.layers.controls[i].get("layerType").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "isInput")) {
+      this.layers.controls[i].get("isInput").setValidators(Validators.required);
+      this.layers.controls[i].get("isInput").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "inputShape")) {
+      this.layers.controls[i].get("inputShape").setValidators(Validators.required);
+      this.layers.controls[i].get("inputShape").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "kernelSize")) {
+      this.layers.controls[i].get("kernelSize").setValidators(Validators.required);
+      this.layers.controls[i].get("kernelSize").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "filters")) {
+      this.layers.controls[i].get("filters").setValidators(Validators.required);
+      this.layers.controls[i].get("filters").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "strides")) {
+      this.layers.controls[i].get("strides").setValidators(Validators.required);
+      this.layers.controls[i].get("strides").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "poolSize")) {
+      this.layers.controls[i].get("poolSize").setValidators(Validators.required);
+      this.layers.controls[i].get("poolSize").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "units")) {
+      this.layers.controls[i].get("units").setValidators(Validators.required);
+      this.layers.controls[i].get("units").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "activation")) {
+      this.layers.controls[i].get("activation").setValidators(Validators.required);
+      this.layers.controls[i].get("activation").updateValueAndValidity();
+    }
+    if (this.isConfigAvailable(i, "kernelInitializer")) {
+      this.layers.controls[i].get("kernelInitializer").setValidators(Validators.required);
+      this.layers.controls[i].get("kernelInitializer").updateValueAndValidity();
+    }
+  }
+
+  removeValidators(i: number) {
+    // if (this.layers.controls[i].get("layerType")) {
+    //   this.layers.controls[i].get("layerType").clearValidators();
+    //   this.layers.controls[i].get("layerType").updateValueAndValidity();
+    // }
+    if (this.layers.controls[i].get("isInput")) {
+      this.layers.controls[i].get("isInput").clearValidators();
+      this.layers.controls[i].get("isInput").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("inputShape")) {
+      this.layers.controls[i].get("inputShape").clearValidators();
+      this.layers.controls[i].get("inputShape").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("kernelSize")) {
+      this.layers.controls[i].get("kernelSize").clearValidators();
+      this.layers.controls[i].get("kernelSize").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("filters")) {
+      this.layers.controls[i].get("filters").clearValidators();
+      this.layers.controls[i].get("filters").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("strides")) {
+      this.layers.controls[i].get("strides").clearValidators();
+      this.layers.controls[i].get("strides").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("poolSize")) {
+      this.layers.controls[i].get("poolSize").clearValidators();
+      this.layers.controls[i].get("poolSize").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("units")) {
+      this.layers.controls[i].get("units").clearValidators();
+      this.layers.controls[i].get("units").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("activation")) {
+      this.layers.controls[i].get("activation").clearValidators();
+      this.layers.controls[i].get("activation").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("kernelInitializer")) {
+      this.layers.controls[i].get("kernelInitializer").clearValidators();
+      this.layers.controls[i].get("kernelInitializer").updateValueAndValidity();
+    }
+
+  }
+
+  layerTypeChange(i: number) {
+    this.removeValidators(i);
+    this.setValidators(i);
   }
 
   SetStatus(msg: string) {
