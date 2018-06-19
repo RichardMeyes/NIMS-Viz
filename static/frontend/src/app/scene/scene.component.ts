@@ -269,21 +269,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       testBatchSize: this.playgroundData.testBatchSize
     });
 
-    // this.playgroundForm.setControl('layers', this.fb.array(
-    //   this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
-    //     layerType: ["", Validators.required],
-    //     isInput: [false, Validators.required],
-    //     inputShape: [[], Validators.required],
-    //     kernelSize: [0, Validators.required],
-    //     filters: [0, Validators.required],
-    //     strides: [0, Validators.required],
-    //     poolSize: [0, Validators.required],
-    //     units: [0, Validators.required],
-    //     activation: ["", Validators.required],
-    //     kernelInitializer: ["", Validators.required]
-    //   }))
-    // ));
-
     this.playgroundForm.setControl('layers', this.fb.array(
       this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
         layerType: "",
@@ -304,29 +289,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
 
-
   optimizer;
   model;
-  // batchSize = 64;
-  // trainBatches = 150;
-  // testBatchSize = 1000;
-
-  // selectedProblem = "polynomial-regression";
-  // numIterations = 75;
-  // learningRate = 0.5;
-  // optimizer = tf.train.sgd(this.learningRate);
-  // layerCount = 1;
-  // layerTypes = [
-  //   { value: 'basic', viewValue: 'Basic' },
-  //   { value: 'convolutional', viewValue: 'Convolutional' },
-  //   { value: 'pooling', viewValue: 'Pooling' }
-  // ];
-  // selectedLayerType: string[] = [];
-  // modelTypes = [
-  //   { value: 'sequential', viewValue: 'Sequential' },
-  //   { value: 'model', viewValue: 'Model (currently not supported)' }
-  // ];
-  // selectedModelType = "sequential";
 
   trueCoefficients; trainingData;
   randomCoefficients;
@@ -350,11 +314,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   @ViewChild('trainedCanvas') private trainedCanvasRef;
 
 
-  // mnist  
-
-
-
-
+  // mnist 
 
   testIterationFrequency = 5;
   epochs = 1;
@@ -437,13 +397,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
       }
     }
     else if (this.playgroundForm.get('problem').value == "mnist") {
-      if (this.playgroundForm.valid) {
-        this.setupModel();
-        this.trainModel();
-      }
-      else {
-        alert("Please fill the required field.");
-      }
+      this.setupModel();
+      this.trainModel();
     }
   }
 
@@ -476,8 +431,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.modelWeightsEveryBatch = [];
 
     // Iteratively train our model on mini-batches of data.
-    // for (let i = 0; i < this.trainBatches; i++) {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {    
       // const [batch, validationData] = tf.tidy(() => {
       const batch = this.playgroundService.nextTrainBatch(this.playgroundForm.get('batchSize').value);
       // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
@@ -653,8 +607,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   reset() {
     this.playgroundForm.patchValue({
-      problem: this.playgroundData.problems[1].value,
-
       learningRate: this.playgroundData.learningRates[0].value,
       optimizer: this.playgroundData.optimizers[0].value,
 
