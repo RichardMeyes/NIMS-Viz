@@ -11,7 +11,7 @@ import '../../customs/enable-three-examples.js';
 import 'three/examples/js/loaders/OBJLoader.js';
 import 'three/examples/js/controls/OrbitControls';
 
-import { BrainComponent } from './brain/brain.component';
+// import { BrainComponent } from './brain/brain.component';
 import { PlaygroundService } from '../playground.service';
 import { generate } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
@@ -33,8 +33,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
   @ViewChild('moleculeComponent') moleculeComponent;
   @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
+  private scenes: THREE.Scene[] = [];
   private camera: THREE.PerspectiveCamera;
-  private renderer: THREE.WebGLRenderer;
+  private renderer: any;
   private controls: THREE.OrbitControls;
 
   private cube: THREE.Mesh;
@@ -47,7 +48,33 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private weights: any;
 
-  private showBrainView = false;
+
+  private redraw = true;
+  private fpsHack = 0;
+  private showBrainView = true;
+  private heat;
+  private heatmapData = [];
+  private heatmapCanvasTexture;
+
+  private heatmapConfig = {
+    radius: 4,
+    blur: 2,
+    minOpacity: 0.05,
+    color1: '#0000ff',
+    color1Trigger: 0.4,
+    color2: '#00ff00',
+    color2Trigger: 0.65,
+    color3: '#ff0000',
+    color3Trigger: 1.0,
+    colorGradient: function () {
+      const tempobj = {};
+      tempobj[0.0] = 'blue';
+      tempobj[this.color1Trigger] = this.color1;
+      tempobj[this.color2Trigger] = this.color2;
+      tempobj[this.color3Trigger] = this.color3;
+      return tempobj;
+    }
+  };
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
@@ -100,36 +127,37 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // this.windowWidth = window.innerWidth;
     // this.windowHeight = window.innerHeight;
 
-    // this.camera.aspect = this.windowWidth / this.windowHeight;
-    // this.camera.updateProjectionMatrix();
+    try {
+      this.camera.aspect = this.windowWidth / this.windowHeight;
+      this.camera.updateProjectionMatrix();
 
-    // this.renderer.setSize(this.windowWidth, this.windowHeight);
+      this.renderer.setSize(this.windowWidth, this.windowHeight);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   constructor(
-    private networkService: NetworkService,
+    private networkService: NetworkService, 
     private renderer2: Renderer2,
     private playgroundService: PlaygroundService,
     private changeDetector: ChangeDetectorRef,
-    private fb: FormBuilder
-  ) {
-    // this.networkService.loadFromJson().subscribe(
-    //   (weights) => {
-    //     this.weights = weights;
-    //     console.log(this.weights);
-    //     this.networkService.createNetworkFromWeights(this.weights);
-    //   }
-    // );
+    private fb: FormBuilder) {
+    this.networkService.loadFromJson().subscribe(
+      (weights) => {
+        this.weights = weights;
+        console.log(this.weights);
+        this.networkService.createNetworkFromWeights(this.weights);
+        this.setup();
+      }
+    );
     this.createForm();
   }
 
   ngOnInit() {
-    // this.selectedFile = this.files[0].value;
-    // console.log('ngOnInit');
+    this.selectedFile = this.files[0].value;
+    console.log('ngOnInit');
     this.setupScene();
-    // this.setupCamera();
-    // this.setupRenderer();
-    // this.setupUtilities();
   }
 
   private startCalc() {
@@ -141,7 +169,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.brainComponent.createConnectionsBetweenLayers(this.weights,
       this.networkService.getLayerObj,
       this.networkService.getNetworkReductionFactor);
+  }
 
+  private testingToggler(e) {
+    this.showBrainView = !e['checked'];
+    console.log('this.showBrainView', this.showBrainView);
+    this.setup();
   }
 
   public toggle() {
@@ -153,13 +186,22 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.beforeTraining(false);
   }
 
+  private setup() {
+    this.setupScene();
+    this.setupCamera();
+    this.setupRenderer();
+    this.setupUtilities();
+  }
+
   private setupScene() {
-    this.scene = new THREE.Scene();
+    // this.scene = new THREE.Scene();
 
     if (this.showBrainView) {
-      // this.brainComponent.ngOnInit();
+      // draw heatmap
+      this.heat = simpleheat(document.getElementById('canvHeatmap'));
+      this.scene = this.brainComponent.setupBrain();
     } else {
-      this.moleculeComponent.ngOnInit();
+      this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct());
     }
 
     /*let objectLoader = new THREE.OBJLoader();
@@ -199,17 +241,52 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private setupRenderer() {
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: true
-    });
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    if (this.showBrainView) {
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: true
+      });
+    } else {
+      this.renderer = new THREE.CSS3DRenderer();
+    }
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    console.log('renderer', this.renderer);
+    document.body.appendChild(this.renderer.domElement);
+    // this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
-    const component: SceneComponent = this;
+    /*const component: SceneComponent = this;
     (function render() {
       requestAnimationFrame(render);
       component.renderer.render(component.scene, component.camera);
-    }());
+    }());*/
+
+    const render = () => {
+      requestAnimationFrame(render);
+      if (this.redraw && this.showBrainView) {
+        // last layer has no connections to "next" layer
+        // if (stepperCnt < convertedLayerObjs.length - 1) {
+        this.heat.clear();
+        // set radius and blur radius
+        this.heat.radius(this.heatmapConfig.radius, this.heatmapConfig.blur);
+        this.heat.gradient(this.heatmapConfig.colorGradient());
+        this.heat.data(this.heatmapData);
+        // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
+        this.heat.draw();
+        this.heatmapCanvasTexture.needsUpdate = true;
+        // }
+        this.redraw = false;
+      } else if (this.redraw && !this.showBrainView) {
+        // render molecule
+      } else if (this.fpsHack >= 60) {
+        this.fpsHack = 0;
+        this.redraw = true;
+      }
+      this.fpsHack++;
+      this.renderer.render(this.scene, this.camera);
+      // this.renderer.dispose();
+    };
+    render();
+    console.log('render called');
   }
 
   private setupUtilities() {
@@ -219,6 +296,14 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.rotateSpeed = 1.0;
     this.controls.zoomSpeed = 1.2;
+  }
+
+  public updateHeatmapData(updatedHeatmapData) {
+    this.heatmapData = updatedHeatmapData;
+  }
+
+  public updateHeatmapCanvasTexture(updatedHeatmapCanvasTexture) {
+    this.heatmapCanvasTexture = updatedHeatmapCanvasTexture;
   }
 
   private getAspectRatio(): number {
