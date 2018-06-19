@@ -27,9 +27,28 @@ mat-form-field, .form-field {
     }
 }
 
+nouislider {
+    width: 166px;
+}
 
+mcc-color-picker {
+    width: 80%;
+    padding: 0;
+}
 
+.color-config {
+    > div:nth-child(1) {
+        width: 45vw;
+    }
 
+    > div::nth-child(2) {
+        width: 50vw;
+    }
+}
+
+.spacer {
+    width: 16px;
+}
 
 
 canvas {
