@@ -149,6 +149,11 @@
                                         </mat-select>
                                     </mat-form-field>
                                 </div>
+                                <div *ngIf="isConfigAvailable(i, 'rate')" style="display: inline">
+                                    <mat-form-field>
+                                        <input matInput placeholder="Rate" type="text" formControlName="rate">
+                                    </mat-form-field>
+                                </div>
                             </div>
                         </div>
 
@@ -315,14 +320,9 @@
     </div>
 </ng-template>
 
+
+
+<!-- <canvas #canvas></canvas>
+<app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain> -->
 <h3>Here is the molecule.</h3>
 <app-molecule #moleculeComponent></app-molecule>
-
-
-<!-- <mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap" style="max-width: 313.948px !important;">
-</mat-sidenav>
-<mat-sidenav-content>
-    <canvas #canvas></canvas>
-    <app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain>
-    <app-molecule #moleculeComponent></app-molecule>
-</mat-sidenav-content> -->

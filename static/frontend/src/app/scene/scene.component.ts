@@ -51,7 +51,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private redraw = true;
   private fpsHack = 0;
-  private showBrainView = true;
+  private showBrainView = false;
   private heat;
   private heatmapData = [];
   private heatmapCanvasTexture;
@@ -138,26 +138,28 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   constructor(
-    private networkService: NetworkService, 
+    private networkService: NetworkService,
     private renderer2: Renderer2,
     private playgroundService: PlaygroundService,
     private changeDetector: ChangeDetectorRef,
     private fb: FormBuilder) {
-    this.networkService.loadFromJson().subscribe(
-      (weights) => {
-        this.weights = weights;
-        console.log(this.weights);
-        this.networkService.createNetworkFromWeights(this.weights);
-        this.setup();
-      }
-    );
+    // this.networkService.loadFromJson().subscribe(
+    //   (weights) => {
+    //     this.weights = weights;
+    //     console.log(this.weights);
+    //     this.networkService.createNetworkFromWeights(this.weights);
+    //     this.setup();
+    //   }
+    // );
+    this.networkService.loadFromJson().subscribe(() => { console.log("done"); });
+    ;
     this.createForm();
   }
 
   ngOnInit() {
     this.selectedFile = this.files[0].value;
     console.log('ngOnInit');
-    this.setupScene();
+    // this.setupScene();
   }
 
   private startCalc() {
@@ -365,7 +367,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
         poolSize: 0,
         units: 0,
         activation: "",
-        kernelInitializer: ""
+        kernelInitializer: "",
+        rate: 0
       }))
     ));
 
@@ -516,7 +519,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.modelWeightsEveryBatch = [];
 
     // Iteratively train our model on mini-batches of data.
-    for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {    
+    for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {
       // const [batch, validationData] = tf.tidy(() => {
       const batch = this.playgroundService.nextTrainBatch(this.playgroundForm.get('batchSize').value);
       // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
@@ -525,10 +528,11 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // Every few batches test the accuracy of the model.
       if (i % this.testIterationFrequency === 0) {
         const testBatch = this.playgroundService.nextTestBatch(this.playgroundForm.get('testBatchSize').value);
+        console.log("nyampe sini");
         validationData = [
           // Reshape the training data from [64, 28x28] to [64, 28, 28, 1] so
           // that we can feed it to our convolutional neural net.
-          testBatch.xs.reshape([this.playgroundForm.get('testBatchSize').value, 28, 28, 1]), testBatch.labels
+          testBatch.xs.reshape([this.playgroundForm.get('testBatchSize').value, 784]), testBatch.labels
         ];
       }
 
@@ -538,7 +542,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // The entire dataset doesn't fit into memory so we call train repeatedly
       // with batches using the fit() method.
       const history = await this.model.fit(
-        batch.xs.reshape([this.playgroundForm.get('batchSize').value, 28, 28, 1]), batch.labels,
+        batch.xs.reshape([this.playgroundForm.get('batchSize').value, 784]), batch.labels,
         { batchSize: this.playgroundForm.get('batchSize').value, validationData, epochs: this.epochs });
 
       const loss = history.history.loss[0];
@@ -753,6 +757,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
           this.model.add(tf.layers.dense(options));
           break;
         }
+        case "dropout": {
+          this.model.add(tf.layers.dropout(options));
+          break;
+        }
       }
     }
 
@@ -796,12 +804,13 @@ export class SceneComponent implements OnInit, AfterViewInit {
   extractOptions(i: number) {
     let options: { [key: string]: any } = {};
 
+    if (this.layers.controls[i].get('isInput').value) {
+      options.inputShape = <string>this.layers.controls[i].get('inputShape').value.split(",").map(val => +val);
+      if (options.inputShape.length == 1) options.inputShape = options.inputShape[0];
+    }
+
     switch (this.layers.controls[i].get('layerType').value) {
       case "conv2d": {
-        if (this.layers.controls[i].get('isInput').value) {
-          options.inputShape = <string>this.layers.controls[i].get('inputShape').value.split(",").map(val => +val);
-          if (options.inputShape.length == 1) options.inputShape = options.inputShape[0];
-        }
         options.kernelSize = <string>this.layers.controls[i].get('kernelSize').value.split(",").map(val => +val);
         options.filters = <string>this.layers.controls[i].get('filters').value.split(",").map(val => +val);
         options.strides = <string>this.layers.controls[i].get('strides').value.split(",").map(val => +val);
@@ -829,6 +838,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
         options.kernelInitializer = this.layers.controls[i].get('kernelInitializer').value;
 
         if (options.units.length == 1) options.units = options.units[0];
+        break;
+      }
+      case "dropout": {
+        options.rate = +this.layers.controls[i].get('rate').value;
         break;
       }
     }
@@ -860,7 +873,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
         poolSize: currLayer.layerItemConfiguration.poolSize || "",
         units: currLayer.layerItemConfiguration.units || "",
         activation: currLayer.layerItemConfiguration.activation || "",
-        kernelInitializer: currLayer.layerItemConfiguration.kernelInitializer || ""
+        kernelInitializer: currLayer.layerItemConfiguration.kernelInitializer || "",
+        rate: currLayer.layerItemConfiguration.rate || ""
       });
 
       this.removeValidators(i);
@@ -884,7 +898,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
               poolSize: 0,
               units: 0,
               activation: "",
-              kernelInitializer: ""
+              kernelInitializer: "",
+              rate: 0
             }));
           }
         }
@@ -938,6 +953,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.layers.controls[i].get("kernelInitializer").setValidators(Validators.required);
       this.layers.controls[i].get("kernelInitializer").updateValueAndValidity();
     }
+    if (this.isConfigAvailable(i, "rate")) {
+      this.layers.controls[i].get("rate").setValidators(Validators.required);
+      this.layers.controls[i].get("rate").updateValueAndValidity();
+    }
   }
 
   removeValidators(i: number) {
@@ -980,6 +999,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
     if (this.layers.controls[i].get("kernelInitializer")) {
       this.layers.controls[i].get("kernelInitializer").clearValidators();
       this.layers.controls[i].get("kernelInitializer").updateValueAndValidity();
+    }
+    if (this.layers.controls[i].get("rate")) {
+      this.layers.controls[i].get("rate").clearValidators();
+      this.layers.controls[i].get("rate").updateValueAndValidity();
     }
 
   }

@@ -50,6 +50,7 @@ export class NetworkService {
   }
 
   private extractWeights(model: any) {
+    console.log(model);
     const weights: any = [];
 
     model.layers.forEach(layer => {

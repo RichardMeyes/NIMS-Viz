@@ -78,7 +78,10 @@ export class Playground {
                     units: true,
                     activation: true,
                     kernelInitializer: true
-                })
+                }),
+                new TfjsLayerItem(new SelectForm("dropout", "Dropout"), false, {
+                    rate: true
+                }),
             ])
         ];
         this.activation = [
@@ -113,41 +116,74 @@ export class Playground {
             new SelectForm("meanSquaredError", "Mean Squared Error")
         ];
 
-        this.layerCount = 6;
+        // this.mnistLayers = [
+        //     new TfjsLayer(new SelectForm("convolutional", "Convolutional"), [
+        //         new TfjsLayerItem(new SelectForm("conv2d", "2D Convolutional"), true, {
+        //             inputShape: "28, 28, 1",
+        //             kernelSize: "5",
+        //             filters: "8",
+        //             strides: "1",
+        //             activation: 'relu',
+        //             kernelInitializer: 'varianceScaling'
+        //         })
+        //     ]),
+        //     new TfjsLayer(new SelectForm("pooling", "Pooling"), [
+        //         new TfjsLayerItem(new SelectForm("maxPooling2d", "2D Max Pooling"), false, {
+        //             poolSize: "2, 2",
+        //             strides: "2, 2"
+        //         })
+        //     ]),
+        //     new TfjsLayer(new SelectForm("convolutional", "Convolutional"), [
+        //         new TfjsLayerItem(new SelectForm("conv2d", "2D Convolutional"), false, {
+        //             kernelSize: "5",
+        //             filters: "16",
+        //             strides: "1",
+        //             activation: 'relu',
+        //             kernelInitializer: 'varianceScaling'
+        //         })
+        //     ]),
+        //     new TfjsLayer(new SelectForm("pooling", "Pooling"), [
+        //         new TfjsLayerItem(new SelectForm("maxPooling2d", "2D Max Pooling"), false, {
+        //             poolSize: "2, 2",
+        //             strides: "2, 2"
+        //         })
+        //     ]),
+        //     new TfjsLayer(new SelectForm("basic", "Basic"), [
+        //         new TfjsLayerItem(new SelectForm("flatten", "Flatten"), false, {})
+        //     ]),
+        //     new TfjsLayer(new SelectForm("basic", "Basic"), [
+        //         new TfjsLayerItem(new SelectForm("dense", "Dense"), false, {
+        //             units: "10",
+        //             activation: 'softmax',
+        //             kernelInitializer: 'varianceScaling'
+        //         })
+        //     ])
+        // ];
         this.mnistLayers = [
-            new TfjsLayer(new SelectForm("convolutional", "Convolutional"), [
-                new TfjsLayerItem(new SelectForm("conv2d", "2D Convolutional"), true, {
-                    inputShape: "28, 28, 1",
-                    kernelSize: "5",
-                    filters: "8",
-                    strides: "1",
+            new TfjsLayer(new SelectForm("basic", "Basic"), [
+                new TfjsLayerItem(new SelectForm("dense", "Dense"), true, {
+                    inputShape: "784",
+                    units: "64",
                     activation: 'relu',
                     kernelInitializer: 'varianceScaling'
-                })
-            ]),
-            new TfjsLayer(new SelectForm("pooling", "Pooling"), [
-                new TfjsLayerItem(new SelectForm("maxPooling2d", "2D Max Pooling"), false, {
-                    poolSize: "2, 2",
-                    strides: "2, 2"
-                })
-            ]),
-            new TfjsLayer(new SelectForm("convolutional", "Convolutional"), [
-                new TfjsLayerItem(new SelectForm("conv2d", "2D Convolutional"), false, {
-                    kernelSize: "5",
-                    filters: "16",
-                    strides: "1",
-                    activation: 'relu',
-                    kernelInitializer: 'varianceScaling'
-                })
-            ]),
-            new TfjsLayer(new SelectForm("pooling", "Pooling"), [
-                new TfjsLayerItem(new SelectForm("maxPooling2d", "2D Max Pooling"), false, {
-                    poolSize: "2, 2",
-                    strides: "2, 2"
                 })
             ]),
             new TfjsLayer(new SelectForm("basic", "Basic"), [
-                new TfjsLayerItem(new SelectForm("flatten", "Flatten"), false, {})
+                new TfjsLayerItem(new SelectForm("dropout", "Dropout"), false, {
+                    rate: "0.2"
+                })
+            ]),
+            new TfjsLayer(new SelectForm("basic", "Basic"), [
+                new TfjsLayerItem(new SelectForm("dense", "Dense"), false, {
+                    units: "32",
+                    activation: 'relu',
+                    kernelInitializer: 'varianceScaling'
+                })
+            ]),
+            new TfjsLayer(new SelectForm("basic", "Basic"), [
+                new TfjsLayerItem(new SelectForm("dropout", "Dropout"), false, {
+                    rate: "0.2"
+                })
             ]),
             new TfjsLayer(new SelectForm("basic", "Basic"), [
                 new TfjsLayerItem(new SelectForm("dense", "Dense"), false, {
@@ -157,6 +193,7 @@ export class Playground {
                 })
             ])
         ];
+        this.layerCount = this.mnistLayers.length;
         this.mnistLoss = "categoricalCrossentropy";
 
         this.batchSize = 64;
