@@ -47,26 +47,14 @@ mcc-color-picker {
 }
 
 .spacer {
+    display: inline-block;
     width: 16px;
 }
+
 
 
 canvas {
     width: 100vw;
     height: 100vh;
     z-index: -1;
-}
-
-.first-item {
-    margin-top: 1.5rem;
-}
-
-mat-form-field.slider-value {
-    width: 2.5rem;
-}
-
-#btnSetupModel {
-    display: block;
-    margin: 0 auto;
-    margin-bottom: 9px;
 }

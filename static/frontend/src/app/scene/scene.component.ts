@@ -47,7 +47,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private weights: any;
 
-  private showBrainView = true;
+  private showBrainView = false;
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
@@ -126,7 +126,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     // this.selectedFile = this.files[0].value;
     // console.log('ngOnInit');
-    // this.setupScene();
+    this.setupScene();
     // this.setupCamera();
     // this.setupRenderer();
     // this.setupUtilities();
@@ -159,7 +159,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     if (this.showBrainView) {
       // this.brainComponent.ngOnInit();
     } else {
-      // this.moleculeComponent.ngOnInit();
+      this.moleculeComponent.ngOnInit();
     }
 
     /*let objectLoader = new THREE.OBJLoader();

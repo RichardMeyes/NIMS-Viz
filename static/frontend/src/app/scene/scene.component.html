@@ -178,6 +178,7 @@
                 </mat-option>
             </mat-select>
         </mat-form-field>
+        <div class="spacer"></div>        
         <mat-slide-toggle class="form-field">Neural Netowrk</mat-slide-toggle>
         <mat-slide-toggle class="form-field">ANN</mat-slide-toggle>
         <div fxLayout="row wrap" fxLayoutAlign="start center">
@@ -240,10 +241,6 @@
                 <div>{{(col2Trigger/100)}}</div>
             </div>
         </div>
-
-
-
-
         <div fxLayout="row wrap" class="color-config">
             <div fxLayout="row wrap" fxLayoutAlign="start center" class="form-field">
                 <label class="form-field">Color 3</label>
@@ -318,23 +315,14 @@
     </div>
 </ng-template>
 
-
-<!-- <mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap" style="max-width: 313.948px !important;"> -->
-
-
+<h3>Here is the molecule.</h3>
+<app-molecule #moleculeComponent></app-molecule>
 
 
-
-
-
-
-
-
-<!-- </mat-sidenav> -->
-
-<!-- <mat-sidenav-content> -->
-<!-- <canvas #canvas></canvas>
-<app-brain #brainComponent [sceneInput]="scene"></app-brain> -->
-<!--<app-molecule></app-molecule>-->
-
-<!-- </mat-sidenav-content> -->
+<!-- <mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap" style="max-width: 313.948px !important;">
+</mat-sidenav>
+<mat-sidenav-content>
+    <canvas #canvas></canvas>
+    <app-brain #brainComponent [sceneInput]="scene"></app-brain>
+    <app-molecule></app-molecule>
+</mat-sidenav-content> -->
