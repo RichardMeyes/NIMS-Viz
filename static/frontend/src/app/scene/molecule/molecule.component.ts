@@ -228,7 +228,7 @@ export class MoleculeComponent implements OnInit {
                 object.matrixAutoUpdate = false;
                 object.updateMatrix();
 
-                // console.log("adding css3dsprite to root and objects");
+                // console.log('adding css3dsprite to root: ', this.root);
                 this.root.add(object);
 
                 this.objects.push(object);

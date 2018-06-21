@@ -2,77 +2,164 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <title>NGNetz</title>
-  <base href="/">
+    <meta charset="utf-8">
+    <title>NGNetz</title>
+    <base href="/">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--<style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            background-color: #050505;
+            background: radial-gradient(ellipse at center, rgba(43, 45, 48, 1) 0%, rgba(0, 0, 0, 1) 100%);
+
+            margin: 0;
+            font-family: Arial;
+            overflow: hidden;
+        }
+
+        a {
+            color: #ffffff;
+        }
+
+        #info {
+            position: absolute;
+            top: 0px;
+            width: 100%;
+            color: #ffffff;
+            padding: 5px;
+            font-family: Monospace;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1;
+        }
+
+        #menu {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        #topmenu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 100%;
+            text-align: right;
+            padding: 0;
+            margin: 0;
+            z-index: 1;
+        }
+
+        button {
+            color: rgb(255, 255, 255);
+            background: transparent;
+            border: 0px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: rgba(0, 255, 255, 0.5);
+        }
+
+        button:active {
+            color: #000000;
+            background-color: rgba(0, 255, 255, 1);
+        }
+
+        .bond {
+            width: 5px;
+            height: 10px;
+            background: #eee;
+            display: block;
+        }
+    </style>-->
 </head>
 
 <body>
-    <canvas id="canvHeatmap" width="1024" height="1024" style="width: 100vw;height: 100vh;z-index: -1;"></canvas>
     <script id="vertex_shader" type="x-shader/x-vertex">
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        uniform vec3 scale;
+
+        void main() {
+            vUv = uv;
+            float rotation = 0.0;
+            vec3 alignedPosition = vec3(position.x * scale.x, position.y * scale.y, position.z*scale.z);
+            vec2 pos = alignedPosition.xy;
+            vec2 rotatedPosition;
+            rotatedPosition.x = cos( rotation ) * alignedPosition.x - sin( rotation ) * alignedPosition.y;
+            rotatedPosition.y = sin( rotation ) * alignedPosition.x + cos( rotation ) * alignedPosition.y;
+
+            vec4 finalPosition = modelViewMatrix * vec4( 0.0, 0.0, 0.0, 1.0 );
+            finalPosition.xy += rotatedPosition;
+            // finalPosition = projectionMatrix * finalPosition;
+            // gl_Position =  finalPosition;
+            
+            
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+            vNormal = normalize( normalMatrix * normal );
+            vViewPosition = -mvPosition.xyz;
+            // vViewPosition = finalPosition.xyz;
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       
-              varying vec2 vUv;
-              varying vec3 vNormal;
-              varying vec3 vViewPosition;
+        }
       
-              void main() {
+    </script>
+
+    <script id="fragment_shader" type="x-shader/x-fragment">
+        uniform sampler2D brainTexture;
+        uniform sampler2D heatmapTexture;
+        uniform sampler2D alphaTexture;
+        uniform vec3 color;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+            vec4 tc = vec4(color.r, color.g, color.b, 1.0 );
+            // brain texture
+            vec4 brain = texture2D( brainTexture, vUv );
+            // heatmap texture
+            vec4 heatmap = texture2D( heatmapTexture, vUv );
+            // alpha map
+            float alpha = texture2D( alphaTexture, vUv ).r;
+
+            // hack in a fake pointlight at camera location, plus ambient
+            vec3 normal = normalize( vNormal );
+            vec3 lightDir = normalize( vViewPosition );
+
+            float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;
+            vec4 mix_c = heatmap + tc * heatmap.a;
+
+            // correct one without alpha:
+            // gl_FragColor = vec4( mix( brain.rgb, mix_c.xyz, heatmap.a ), 1.0 ) * dotProduct;
+            gl_FragColor = vec4( mix( brain.rgb, heatmap.xyz, heatmap.a ), 1.0 ) * dotProduct;
+                
+            // correct one with alpha:
+            //gl_FragColor = vec4( mix( brain, heatmap, alpha ).rgb * dotProduct, 1.0 );
+            
+            //gl_FragColor = vec4( mix( brain.rgb, heatmap.rgb, heatmap.a ), 1.0 ) * dotProduct;
+            // old one to mix without looking good
+            // gl_FragColor = mix( brain, heatmap, alpha );
+        }
       
-                vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-      
-                vUv = uv;
-                vNormal = normalize( normalMatrix * normal );
-                vViewPosition = -mvPosition.xyz;
-      
-                gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-      
-              }
-      
-            </script>
-      
-          <script id="fragment_shader" type="x-shader/x-fragment">
-      
-              uniform sampler2D brainTexture;
-              uniform sampler2D heatmapTexture;
-              uniform sampler2D alphaTexture;
-              uniform vec3 color;
-              varying vec2 vUv;
-              varying vec3 vNormal;
-              varying vec3 vViewPosition;
-      
-              void main() {
-              vec4 tc = vec4(color.r, color.g, color.b, 1.0 );
-                // brain texture
-                vec4 brain = texture2D( brainTexture, vUv );
-                // heatmap texture
-                vec4 heatmap = texture2D( heatmapTexture, vUv );
-                // alpha map
-                float alpha = texture2D( alphaTexture, vUv ).r;
-      
-                // hack in a fake pointlight at camera location, plus ambient
-                vec3 normal = normalize( vNormal );
-                vec3 lightDir = normalize( vViewPosition );
-      
-                float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;
-      
-                  //gl_FragColor = vec4( mix( brain.rgb, heatmap.rgb, heatmap.a ), 1.0 ) * dotProduct;
-      
-                  vec4 mix_c = heatmap + tc * heatmap.a;
-                  // correct one:
-                  //gl_FragColor = vec4( mix( brain, heatmap, alpha ).rgb * dotProduct, 1.0 );
-      
-                  // old one to show without alpha:
-                  gl_FragColor = vec4( mix( brain.rgb, mix_c.xyz, heatmap.a ), 1.0 ) * dotProduct;
-                  // old one to mix without looking good
-                  //gl_FragColor = mix( brain, heatmap, alpha );
-              }
-      
-          </script>
-  <app-root></app-root>
+    </script>
+    <app-root></app-root>
 </body>
 
 </html>

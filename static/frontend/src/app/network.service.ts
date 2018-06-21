@@ -80,7 +80,7 @@ export class NetworkService {
   }
 
   public createNetworkFromWeights(weightsParam) {
-    console.log('received layers', weightsParam);
+    // console.log('received layers', weightsParam);
     this.layers = weightsParam;
     const convertedNetwork = [];
     for (let i = 0; i < this.layers.length; i += 2) {
@@ -105,7 +105,7 @@ export class NetworkService {
 
   // cut alphamap area according to neural network properties
   private divideIntoLayerAreas(layersparam, angleSpan) {
-    console.log('creating layer areas');
+    // console.log('creating layer areas');
     const layercount = layersparam.length;
     // angle size of the alphamaparea
     const areaPartAngle = angleSpan / layercount;
@@ -124,7 +124,7 @@ export class NetworkService {
   }
 
   private findFittingVerticesInUVMap(layerObjs) {
-    console.log('get center point of each node in layer');
+    // console.log('get center point of each node in layer');
     layerObjs.forEach(layer => {
       // definiere einen kreis mit mittelpunkt des knotens und radius % der gesamtlänge des alphamap zwischenraumes
       const diameterOfNodes = this.radiusRange * layer.size;

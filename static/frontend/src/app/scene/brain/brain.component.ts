@@ -2,7 +2,7 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 
 import * as THREE from 'three';
 import 'three/examples/js/loaders/OBJLoader.js';
-import 'three/examples/js/controls/OrbitControls.js';
+// import 'three/examples/js/controls/OrbitControls.js';
 
 
 @Component({
@@ -14,7 +14,6 @@ export class BrainComponent implements OnInit {
     private traversePolygonsForGeometries;
     private scene: THREE.Scene;
     private objectLoader;
-    private heatmapCanvasTexture;
     @Output() updatedHeatmapCanvasTexture = new EventEmitter<THREE.CanvasTexture>();
     private heatmapSteppingData = [];
     @Output() updatedHeatmapData = new EventEmitter<any>();
@@ -23,17 +22,22 @@ export class BrainComponent implements OnInit {
 
     private heatmapCanvasResolution = 1.0; // 8.0;
 
-    private brainTexture;
     private brainMaterial;
-    private alphaTexture;
     private uniforms;
     // gui configs
+
+    htmlCanvas: any;
+    public get getHeatmapCanvas(): string {
+        return this.htmlCanvas;
+    }
+
 
     private demoConfig = {
         layerCount: 2,
         nodeCount: 3,
         activateEdgeCase: false
     };
+    greyscaleTexture: THREE.Texture;
 
     ngOnInit() {
     }
@@ -133,25 +137,41 @@ export class BrainComponent implements OnInit {
         // textureLoader = new THREE.TextureLoader();
         // texture = textureLoader.load('./assets/textures/heatmap3.jpg', render);
         // texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        const htmlCanvas: any = document.getElementById('canvHeatmap');
-        this.heatmapCanvasTexture = new THREE.CanvasTexture(htmlCanvas, THREE.UVMapping);
+        this.htmlCanvas = document.getElementById('canvHeatmap');
+        // console.log(this.htmlCanvas);
+        const heatmapCanvasTexture = new THREE.CanvasTexture(this.htmlCanvas, THREE.UVMapping);
         // this.heatmapCanvasTexture.needsUpdate = true;
-        this.updatedHeatmapCanvasTexture.emit(this.heatmapCanvasTexture);
-        this.brainTexture = THREE.ImageUtils.loadTexture('/assets/textures/brain_tex.jpg');
+        this.updatedHeatmapCanvasTexture.emit(heatmapCanvasTexture);
+        const brainTexture = new THREE.TextureLoader().load('/assets/textures/brain_tex_grey.jpg');
+        const greyscaleTexture = new THREE.TextureLoader().load('/assets/textures/brain_tex_greyscale.jpg');
         // brainTexture.needsUpdate = true;
-        this.alphaTexture = THREE.ImageUtils.loadTexture('/assets/textures/heatmap_alphamap.jpg');
+        const alphaTexture = new THREE.TextureLoader().load('/assets/textures/heatmap_alphamap.jpg');
         // alphaTexture.needsUpdate = true;
         // uniforms
         this.uniforms = {
-            color: { type: 'c', value: new THREE.Color(0x0000ff) },
-            brainTexture: { type: 't', value: this.brainTexture },
-            heatmapTexture: { type: 't', value: this.heatmapCanvasTexture },
-            alphaTexture: { type: 't', value: this.alphaTexture }
+            color: { type: 'c', value: new THREE.Color(0x000000) },
+            brainTexture: { type: 't', value: greyscaleTexture },
+            heatmapTexture: { type: 't', value: heatmapCanvasTexture },
+            alphaTexture: { type: 't', value: alphaTexture },
+            scale: { type: 'v3', value: new THREE.Vector3() }
         };
 
         // attributes
         const attributes = {
         };
+
+
+        // const spriteMaterial = new THREE.SpriteMaterial( { map: spriteTexture } );
+        // this.grayscaleMaterial = new THREE.ShaderMaterial({
+        //     // attributes: attributes,
+        //     uniforms: this.uniforms,
+        //     vertexShader: document.getElementById('vertex_shader').textContent,
+        //     fragmentShader: document.getElementById('fragment_shader').textContent
+        // });
+        // const grayscaleObj = new THREE.Sprite( spriteMaterial );
+        // sprite.scale.set(2, 2, 1);
+
+        // this.scene.add(sprite);
 
         // material
         this.brainMaterial = new THREE.ShaderMaterial({
@@ -162,15 +182,6 @@ export class BrainComponent implements OnInit {
         });
         this.brainMaterial.name = 'brainmaterial';
 
-        // draw heatmap
-        // this.heat = simpleheat(document.getElementById('canvHeatmap'));
-
-        // heatmapMaterial = new THREE.MeshStandardMaterial({
-        //  map: heatmapCanvasTexture,
-        //  side: THREE.DoubleSide,
-        //  alphaTest: 0.5,
-        //  alphaMap: THREE.ImageUtils.loadTexture("/assets/textures/heatmap_alphamap.jpg")
-        // });
         // https://codepen.io/rauluranga/pen/RNzboz
         // http://adndevblog.typepad.com/cloud_and_mobile/2016/07/projecting-dynamic-textures-onto-flat-surfaces-with-threejs.html
         // https://codepen.io/PierfrancescoSoffritti/pen/wobPVJ
@@ -179,12 +190,16 @@ export class BrainComponent implements OnInit {
     }
 
     private loadObject() {
+        // const loadedObjects = [];
         this.objectLoader = new THREE.OBJLoader();
         this.objectLoader.load('./assets/models/obj/Brain_Model_2.obj',
             (obj) => {
                 obj.traverse((child) => {
-                    if (child instanceof THREE.Mesh) {
+                    if (child instanceof THREE.Mesh && child.name.includes('Brain_Part_06')) {
+                        // console.log('mesh', child);
                         child.material = this.brainMaterial;
+                    } else if (child instanceof THREE.Mesh) {
+                        child.visible = false;
                     }
                 });
 
@@ -196,6 +211,12 @@ export class BrainComponent implements OnInit {
             (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
             (err) => { console.error('An error happened'); }
         );
+        // create plane to add 2Duvmap texture
+        const plane2DGeo = new THREE.PlaneGeometry(2, 2);
+        const plane2DMesh = new THREE.Mesh(plane2DGeo, this.brainMaterial);
+        plane2DMesh.name = 'planeMesh';
+        plane2DMesh.visible = false;
+        this.scene.add(plane2DMesh);
     }
 
     private animateNextStep(convertedLayerObjs, layerID) {
@@ -210,7 +231,7 @@ export class BrainComponent implements OnInit {
 
     // take two points (at random at the moment) from current and the next layer.
     public createConnectionsBetweenLayers(layers, layerObjs, networkReductionFactor) {
-        console.log('createConnectionsBetweenLayers');
+        // console.log('createConnectionsBetweenLayers');
         // let connectionCheat = 0;
         const demothis = true;
 

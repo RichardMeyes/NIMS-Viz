@@ -6,6 +6,7 @@ import * as Stats from 'stats.js/build/stats.min.js';
 import * as simpleheat from 'simpleheat/simpleheat.js';
 
 import '../../customs/enable-three-examples.js';
+import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/loaders/OBJLoader.js';
 import 'three/examples/js/controls/OrbitControls';
 
@@ -20,7 +21,7 @@ import 'three/examples/js/controls/OrbitControls';
 export class SceneComponent implements OnInit, AfterViewInit {
 
   @ViewChild('snav') snav;
-  @ViewChild('canvas') private canvasRef;
+  // @ViewChild('canvas') private canvasRef;
   @ViewChild('brainComponent') brainComponent;
   @ViewChild('moleculeComponent') moleculeComponent;
   @Input() fixedTopGap: boolean;
@@ -68,9 +69,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
   };
 
-  private get canvas(): HTMLCanvasElement {
-    return this.canvasRef.nativeElement;
-  }
+  // private get getCanvas(): HTMLCanvasElement {
+  //   return this.canvasRef.nativeElement;
+  // }
 
   files = [
     { value: 'model1.h5', viewValue: 'File 1' },
@@ -111,6 +112,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   col1Trigger = 40;
   col2Trigger = 65;
   col3Trigger = 100;
+  heatCanvas: any;
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
@@ -121,7 +123,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.camera.aspect = this.windowWidth / this.windowHeight;
       this.camera.updateProjectionMatrix();
 
-      this.renderer.setSize(this.windowWidth, this.windowHeight);
+      this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
     } catch (error) {
       console.log(error);
     }
@@ -131,7 +133,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.networkService.loadFromJson().subscribe(
       (weights) => {
         this.weights = weights;
-        console.log(this.weights);
+        // console.log(this.weights);
         this.networkService.createNetworkFromWeights(this.weights);
         this.setup();
       }
@@ -140,7 +142,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.selectedFile = this.files[0].value;
-    console.log('ngOnInit');
+    // console.log('ngOnInit');
   }
 
   private startCalc() {
@@ -160,6 +162,24 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.setup();
   }
 
+  private planeLookAtCam() {
+    const test = this.controls.enableRotate;
+    console.log(test);
+
+    setInterval(() => {
+      console.error('camera', this.camera);
+      // console.error('orbitcontrols', this.controls);
+      // this.scene.children.forEach(element => {
+      //   if (element.name === 'planeMesh') {
+      //     console.error(element);
+      // let yaw_control = this.controls.getYawObject();
+      // const pos = new THREE.Vector3(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+      // element.lookAt(pos);
+      //   }
+      // });
+    }, 10000);
+  }
+
   public toggle() {
     this.snav.toggle();
   }
@@ -173,35 +193,32 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.setupCamera();
     this.setupRenderer();
     this.setupUtilities();
+    this.planeLookAtCam();
   }
 
   private setupScene() {
-    // this.scene = new THREE.Scene();
+    this.scene = new THREE.Scene();
 
     if (this.showBrainView) {
-      // draw heatmap
-      this.heat = simpleheat(document.getElementById('canvHeatmap'));
+      // const sceneObjects = this.brainComponent.setupBrain();
+      // sceneObjects.forEach(element => {
+      //   console.log("element",element);
+      //   this.scene.add(element);
+      // });
       this.scene = this.brainComponent.setupBrain();
+      this.scene.children.forEach(element => {
+        if (element.name === 'planeMesh') {
+          element.visible = true;
+        }
+      });
+
+      this.heatCanvas = this.brainComponent.getHeatmapCanvas;
+      // console.log('taken heatcanvas', this.heatCanvas);
+      // draw heatmap
+      this.heat = simpleheat(this.heatCanvas);
     } else {
       this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct);
     }
-
-    /*let objectLoader = new THREE.OBJLoader();
-    objectLoader.load("../../assets/models/obj/Brain_Model.obj",
-      (obj) => {
-        obj.traverse(function (child) {
-          if (child instanceof THREE.Mesh) {
-            // child.material = brainMaterial;
-          }
-        });
-
-        obj.position.y = -0.5;
-        obj.rotation.y = Math.PI / 2;
-        this.scene.add(obj);
-      },
-      (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
-      (err) => { console.error('An error happened'); }
-    );*/
   }
 
   private setupCamera() {
@@ -223,18 +240,28 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private setupRenderer() {
+    try {
+      document.body.removeChild(this.renderer.domElement);
+    } catch (error) {
+      console.log('tried to remove renderer');
+    }
     if (this.showBrainView) {
+      // console.log('in renderer:', this.heatCanvas);
       this.renderer = new THREE.WebGLRenderer({
-        canvas: this.canvas,
+        canvas: this.heatCanvas.nativeElement,
         antialias: true
       });
     } else {
       this.renderer = new THREE.CSS3DRenderer();
     }
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    console.log('renderer', this.renderer);
+    this.renderer.setSize(window.innerWidth, window.innerHeight - 67.125);
+    console.log('this.heatCanvas', this.heatCanvas);
+
+    // this.renderer.setSize(this.heatCanvas.clientWidth, this.heatCanvas.clientHeight);
+    // console.log('renderer', this.renderer);
     document.body.appendChild(this.renderer.domElement);
-    // this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    // document.getElementById( 'testcanvas').appendChild(this.renderer.domElement);
+
 
     /*const component: SceneComponent = this;
     (function render() {
@@ -264,11 +291,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
         this.redraw = true;
       }
       this.fpsHack++;
+      // console.log('trying to render this scene:', this.scene);
       this.renderer.render(this.scene, this.camera);
       // this.renderer.dispose();
     };
     render();
-    console.log('render called');
+    // console.log('render called');
   }
 
   private setupUtilities() {
