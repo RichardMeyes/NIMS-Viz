@@ -1,86 +1,139 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import * as d3 from "d3";
+import { Observable, Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-playground-viz',
   templateUrl: './playground-viz.component.html',
   styleUrls: ['./playground-viz.component.scss']
 })
-export class PlaygroundVizComponent implements OnInit {
+export class PlaygroundVizComponent implements OnInit, OnChanges {
   @ViewChild('playCanvas') private playCanvasRef;
   private get canvas(): HTMLCanvasElement {
     return this.playCanvasRef.nativeElement;
   }
 
-  context;
-  data = [];
-  numElements = 100;
-  custom;
-  groupSpacing: number;
-  cellSpacing: number;
-  offsetTop: number;
-  cellSize: number;
+  @Input() topology: any;
+  @Input() weights: any;
 
-  constructor() { }
+  context; base;
+  playCanvasWidth;
+  filteredLayerCount; layerSpacing; nodeRadius;
 
-  ngOnInit() {
-    this.test();
+  rawChangesTopology: Subject<SimpleChanges>;
+  rawChangesWeights: Subject<SimpleChanges>;
+
+  constructor() {
+    this.rawChangesTopology = new Subject();
+    this.playCanvasWidth = window.innerWidth;
+    this.nodeRadius = 5;
   }
 
-  test() {
+  ngOnInit() {
+    this.canvas.width = this.playCanvasWidth;
+    this.rawChangesTopology.pipe(debounceTime(500)).subscribe(
+      filteredChanges => { this.setup(filteredChanges); }
+    )
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.topology) {
+      if (changes.topology.firstChange) this.setup(changes);
+      else this.rawChangesTopology.next(changes);
+    }
+
+    if (changes.weights) {
+      if (changes.weights.currentValue && changes.weights.currentValue.length > 0){
+
+      }
+    }
+    console.log(changes);
+  }
+
+  setup(filteredChanges: SimpleChanges) {
     this.context = this.canvas.getContext("2d");
+    let layers = filteredChanges.topology.currentValue.layers;
+    let customBase = document.createElement('base');
+    this.base = d3.select(customBase);
 
-    d3.range(this.numElements).forEach((el) => { this.data.push({ value: el }); });
-    let customBase = document.createElement('custom');
-    this.custom = d3.select(customBase);
-
-    this.groupSpacing = 4;
-    this.cellSpacing = 2;
-    this.offsetTop = this.canvas.height / 5;
-    this.cellSize = Math.floor((this.canvas.width - 11 * this.groupSpacing) / 100) - this.cellSpacing;
-
-    this.bind();
+    this.filteredLayerCount = 0;
+    let filteredData = [];
+    layers.forEach(layer => {
+      if (layer.units && layer.units != "") {
+        for (let i = 0; i < +layer.units; i++) {
+          filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / +layer.units) });
+        }
+        this.filteredLayerCount++;
+      }
+    });
+    this.layerSpacing = (this.playCanvasWidth / this.filteredLayerCount);
+    this.bindTopology(filteredData);
 
     let self = this;
     let t = d3.timer((elapsed) => {
       self.draw();
-      if (elapsed > 300) t.stop();
-    });
-
+      if (elapsed > 300) { t.stop(); }
+    }, 150);
   }
 
-  bind() {
-    let colourScale = d3.scaleSequential(d3.interpolateSpectral).domain(d3.extent(this.data, function (d) { return d.value; }));
-    let join = this.custom.selectAll('custom.rect')
-      .data(this.data);
+  bindTopology(filteredData) {
+    let join = this.base.selectAll('base.circle')
+      .data(filteredData);
 
     let self = this;
-    var enterSel = join.enter()
-      .append('custom')
-      .attr('class', 'rect')
-      .attr('x', function (d, i) {
-        var x0 = Math.floor(i / 100) % 10, x1 = Math.floor(i % 10);
-        return self.groupSpacing * x0 + (self.cellSpacing + self.cellSize) * (x1 + x0 * 10);
+    let enterSel = join.enter()
+      .append('base')
+      .attr('class', 'circle')
+      .attr('cx', function (d, i) {
+        let cx: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - self.nodeRadius;
+        return cx;
       })
-      .attr('y', function (d, i) {
-        var y0 = Math.floor(i / 1000), y1 = Math.floor(i % 100 / 10);
-        return self.groupSpacing * y0 + (self.cellSpacing + self.cellSize) * (y1 + y0 * 10);
+      .attr('cy', function (d, i) {
+        let cy: number = (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - self.nodeRadius;
+        return cy;
       })
-      .attr('width', this.cellSize)
-      .attr('height', this.cellSize)
-      .attr('fillStyle', function (d) { return colourScale(d.value); });
+      .attr('r', 0);
 
     join
       .merge(enterSel)
       .transition()
-      .attr('width', this.cellSize)
-      .attr('height', this.cellSize)
-      .attr('fillStyle', function (d) { return colourScale(d.value); });
+      .attr('r', this.nodeRadius)
+      .attr('fill', function (d) { return "#3F51B5" });
 
     let exitSel = join.exit()
       .transition()
-      .attr('width', 0)
-      .attr('height', 0)
+      .attr('r', 0)
+      .remove();
+  }
+
+  bindWeights(filteredData) {
+    let join = this.base.selectAll('base.circle')
+      .data(filteredData);
+
+    let self = this;
+    let enterSel = join.enter()
+      .append('base')
+      .attr('class', 'circle')
+      .attr('cx', function (d, i) {
+        let cx: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - self.nodeRadius;
+        return cx;
+      })
+      .attr('cy', function (d, i) {
+        let cy: number = (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - self.nodeRadius;
+        return cy;
+      })
+      .attr('r', 0);
+
+    join
+      .merge(enterSel)
+      .transition()
+      .attr('r', this.nodeRadius)
+      .attr('fill', function (d) { return "#3F51B5" });
+
+    let exitSel = join.exit()
+      .transition()
+      .attr('r', 0)
       .remove();
   }
 
@@ -88,12 +141,14 @@ export class PlaygroundVizComponent implements OnInit {
     this.context.fillStyle = '#fff';
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    let elements = this.custom.selectAll('custom.rect');
+    let elements = this.base.selectAll('base.circle');
     let self = this;
     elements.each(function (d, i) {
       var node = d3.select(this);
-      self.context.fillStyle = node.attr('fillStyle');
-      self.context.fillRect(node.attr('x'), node.attr('y'), node.attr('width'), node.attr('height'));
+      self.context.beginPath();
+      self.context.fillStyle = node.attr('fill');
+      self.context.arc(node.attr('cx'), node.attr('cy'), node.attr('r'), 0, 2 * Math.PI);
+      self.context.fill();
     });
   }
 }

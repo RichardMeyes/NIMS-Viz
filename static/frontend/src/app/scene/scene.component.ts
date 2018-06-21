@@ -517,7 +517,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.modelWeightsEveryBatch = [];
 
     // Iteratively train our model on mini-batches of data.
-    for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {
+    // for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {
+    for (let i = 0; i < 2; i++) {
       // const [batch, validationData] = tf.tidy(() => {
       const batch = this.playgroundService.nextTrainBatch(this.playgroundForm.get('batchSize').value);
       // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
