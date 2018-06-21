@@ -167,7 +167,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     console.log(test);
 
     setInterval(() => {
-      console.error('camera', this.camera);
+      // console.error('camera', this.camera);
       // console.error('orbitcontrols', this.controls);
       // this.scene.children.forEach(element => {
       //   if (element.name === 'planeMesh') {
