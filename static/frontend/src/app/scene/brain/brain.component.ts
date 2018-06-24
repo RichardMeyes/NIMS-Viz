@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 
 import * as THREE from 'three';
 import 'three/examples/js/loaders/OBJLoader.js';
@@ -10,7 +10,7 @@ import 'three/examples/js/loaders/OBJLoader.js';
     templateUrl: './brain.component.html',
     styleUrls: ['./brain.component.scss']
 })
-export class BrainComponent implements OnInit {
+export class BrainComponent implements OnInit, OnDestroy {
     private traversePolygonsForGeometries;
     private scene: THREE.Scene;
     private objectLoader;
@@ -344,5 +344,9 @@ export class BrainComponent implements OnInit {
             tempHeatmapEdges.push([tempx * this.heatmapCanvasResolution, tempy * this.heatmapCanvasResolution, value]);
         }
         return tempHeatmapEdges;
+    }
+
+    ngOnDestroy() {
+        console.log('ngOnDestroy BrainComponent');
     }
 }
