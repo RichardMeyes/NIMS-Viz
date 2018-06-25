@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { DOCUMENT } from '@angular/platform-browser';
 
 import * as THREE from 'three';
 import 'three/examples/js/loaders/OBJLoader.js';
@@ -22,9 +23,11 @@ export class BrainComponent implements OnInit, OnDestroy {
 
     private heatmapCanvasResolution = 1.0; // 8.0;
 
+    private vertexShader;
+    private fragmentShader;
+
     private brainMaterial;
     private uniforms;
-    // gui configs
 
     htmlCanvas: any;
     public get getHeatmapCanvas(): string {
@@ -39,7 +42,112 @@ export class BrainComponent implements OnInit, OnDestroy {
     };
     greyscaleTexture: THREE.Texture;
 
+    constructor() { }
+
     ngOnInit() {
+
+        this.setSpriteMaterial();
+
+        this.vertexShader = `
+        // orig
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        uniform vec3 scale;
+        void main() {
+            vUv = uv;
+            float rotation = 0.0;
+            vec3 alignedPosition = vec3(position.x * scale.x, position.y * scale.y, position.z*scale.z);
+            vec2 pos = alignedPosition.xy;
+            vec2 rotatedPosition;
+            rotatedPosition.x = cos( rotation ) * alignedPosition.x - sin( rotation ) * alignedPosition.y;
+            rotatedPosition.y = sin( rotation ) * alignedPosition.x + cos( rotation ) * alignedPosition.y;
+            vec4 finalPosition = modelViewMatrix * vec4( 0.0, 0.0, 0.0, 1.0 );
+            finalPosition.xy += rotatedPosition;
+            // finalPosition = projectionMatrix * finalPosition;
+            // gl_Position =  finalPosition;
+
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+            vNormal = normalize( normalMatrix * normal );
+            vViewPosition = -mvPosition.xyz;
+            // vViewPosition = finalPosition.xyz;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`;
+
+        this.fragmentShader = `
+        // backup
+        uniform sampler2D brainTexture;
+        uniform sampler2D heatmapTexture;
+        uniform sampler2D alphaTexture;
+        uniform vec3 color;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+
+        void main() {
+            vec4 tc = vec4(color.r, color.g, color.b, 1.0 );
+            // brain texture
+            vec4 brain = texture2D( brainTexture, vUv );
+            // heatmap texture
+            vec4 heatmap = texture2D( heatmapTexture, vUv );
+            // alpha map
+            float alpha = texture2D( alphaTexture, vUv ).r;
+
+            // hack in a fake pointlight at camera location, plus ambient
+            vec3 normal = normalize( vNormal );
+            vec3 lightDir = normalize( vViewPosition );
+
+            float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;
+            vec4 mix_c = heatmap + tc * heatmap.a;
+
+            // correct one without alpha:
+            // gl_FragColor = vec4( mix( brain.rgb, mix_c.xyz, heatmap.a ), 1.0 ) * dotProduct;
+            gl_FragColor = vec4( mix( brain.rgb, heatmap.xyz, heatmap.a ), 1.0 ) * dotProduct;
+            // correct one with alpha:
+            //gl_FragColor = vec4( mix( brain, heatmap, alpha ).rgb * dotProduct, 1.0 );
+            //gl_FragColor = vec4( mix( brain.rgb, heatmap.rgb, heatmap.a ), 1.0 ) * dotProduct;
+            // old one to mix without looking good
+            // gl_FragColor = mix( brain, heatmap, alpha );
+        }`;
+    }
+
+    public setSpriteMaterial() {
+            let spritePluginSource = THREE.SpritePlugin.toString();
+
+            // find "program" variable
+
+            const program = /useProgram\(([^)]+)\)/.exec(spritePluginSource)[1];
+
+            // inject support for custom shader code
+
+            const shaders = ['vertex', 'fragment'];
+            spritePluginSource = spritePluginSource
+            .replace(/(shaderSource)([^\[]*)(\[)/g, function (match, p1, p2, p3) {
+              return p1 + p2 + 'THREE.SpritePlugin.' + shaders.shift() + 'ShaderSource||' + p3;
+            })
+
+            // inject shaders debug stuff
+
+            .replace(/([\w]+)(\.compileShader\()([^\)]+)(\);)/g, function (match, p1, p2, p3, p4) {
+              return p1 + p2 + p3 + p4 + 'console.log(' + p1 + '.getShaderInfoLog(' + p3 + '));';
+            })
+
+            // inject support for custom uniforms
+
+            .replace(/([\w]+)(\.drawElements)/g, function (match, p1, p2) {
+              return '' +
+                'var extraUniforms = THREE.SpritePlugin.uniforms;' +
+                'if (extraUniforms) {' +
+                  'for (var extraName in extraUniforms) {' +
+                      'var extraUniform = extraUniforms[extraName];' +
+                      'extraUniform.location = extraUniform.location || ' + p1 + '.getUniformLocation(' + program + ', extraName);' +
+                      p1 + '.uniform1f (extraUniform.location, extraUniform.value);' +
+                  '}' +
+                '}\n' + p1 + p2;
+            });
+
+            // eval('THREE.SpritePlugin = ' + spritePluginSource);
+
     }
 
     public setupBrain() {
@@ -138,6 +246,8 @@ export class BrainComponent implements OnInit, OnDestroy {
         // texture = textureLoader.load('./assets/textures/heatmap3.jpg', render);
         // texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         this.htmlCanvas = document.getElementById('canvHeatmap');
+        // const testgeometry = new THREE.PlaneGeometry( 1, 1 );
+
         // console.log(this.htmlCanvas);
         const heatmapCanvasTexture = new THREE.CanvasTexture(this.htmlCanvas, THREE.UVMapping);
         // this.heatmapCanvasTexture.needsUpdate = true;
@@ -148,6 +258,7 @@ export class BrainComponent implements OnInit, OnDestroy {
         const alphaTexture = new THREE.TextureLoader().load('/assets/textures/heatmap_alphamap.jpg');
         // alphaTexture.needsUpdate = true;
         // uniforms
+        // backup
         this.uniforms = {
             color: { type: 'c', value: new THREE.Color(0x000000) },
             brainTexture: { type: 't', value: greyscaleTexture },
@@ -155,6 +266,11 @@ export class BrainComponent implements OnInit, OnDestroy {
             alphaTexture: { type: 't', value: alphaTexture },
             scale: { type: 'v3', value: new THREE.Vector3() }
         };
+        // this.uniforms = {
+        //     cur_time: { type: 'f', value: 1.0 },
+        //     beg_time: { type: 'f', value: 1.0 },
+        //     scale: { type: 'v3', value: new THREE.Vector3() }
+        // };
 
         // attributes
         const attributes = {
@@ -174,13 +290,56 @@ export class BrainComponent implements OnInit, OnDestroy {
         // this.scene.add(sprite);
 
         // material
+        // backup
         this.brainMaterial = new THREE.ShaderMaterial({
             // attributes: attributes,
             uniforms: this.uniforms,
-            vertexShader: document.getElementById('vertex_shader').textContent,
-            fragmentShader: document.getElementById('fragment_shader').textContent
+            vertexShader: this.vertexShader,
+            fragmentShader: this.fragmentShader
         });
+        // this.brainMaterial = new THREE.ShaderMaterial({
+        //     uniforms: this.uniforms,
+        //     vertexShader: this.vertexShader,
+        //     fragmentShader: this.fragmentShader,
+        //     transparent: true,
+        //     blending: THREE.AdditiveBlending // It looks like real blast with Additive blending!!!
+
+        // });
         this.brainMaterial.name = 'brainmaterial';
+
+        // finally, set the material - hearts based on http://glslsandbox.com/e#23617.0
+
+        // THREE.SpritePlugin.fragmentShaderSource = '\
+        // precision highp float;\
+        // uniform vec3 color;\
+        // uniform float time;\
+        // varying vec2 vUV;\
+        // vec4 heart( float x, float y ) {\
+        //     float s = fract( time + color.r ) / 8.0;\
+        //     s = 0.9 + 0.8*(1.0-exp(-5.0*s)*sin(50.0*s));\
+        //     x *= s;\
+        //     y *= s;\
+        //     float a = atan(x,y)/3.14159265359;\
+        //     float r = sqrt(x*x*1.5+y*y);\
+        //     float h = abs(a);\
+        //     float d = (13.0*h - 22.0*h*h + 10.1*h*h*h)/(6.0-5.0*h);\
+        //     float g = pow(1.0-clamp(r/d,0.0,1.0),0.25);\
+        //     return vec4(0.5+0.5*g, 0.4*color.g, 0.8*color.b, min(g * 3.0, 1.0));\
+        // }\
+        // void main () {\
+        //     vec2 p = (-1.0+2.0*vUV);\
+        //     gl_FragColor = heart(p.x, p.y-0.35);\
+        // }';
+
+        // // and its time parameter
+
+        // THREE.SpritePlugin.uniforms = {
+        //     time : { value : 0 }
+        // };
+        // const testmesh = new THREE.Mesh( testgeometry, this.brainMaterial );
+        // this.scene.add(testmesh);
+
+
 
         // https://codepen.io/rauluranga/pen/RNzboz
         // http://adndevblog.typepad.com/cloud_and_mobile/2016/07/projecting-dynamic-textures-onto-flat-surfaces-with-threejs.html
