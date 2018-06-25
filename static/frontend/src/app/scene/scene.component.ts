@@ -518,7 +518,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     // Iteratively train our model on mini-batches of data.
     // for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 1; i++) {
       // const [batch, validationData] = tf.tidy(() => {
       const batch = this.playgroundService.nextTrainBatch(this.playgroundForm.get('batchSize').value);
       // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
@@ -530,7 +530,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
         validationData = [
           // Reshape the training data from [64, 28x28] to [64, 28, 28, 1] so
           // that we can feed it to our convolutional neural net.
-          testBatch.xs.reshape([this.playgroundForm.get('testBatchSize').value, 784]), testBatch.labels
+          testBatch.xs.reshape([this.playgroundForm.get('testBatchSize').value, 10]), testBatch.labels
         ];
       }
 
@@ -540,7 +540,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // The entire dataset doesn't fit into memory so we call train repeatedly
       // with batches using the fit() method.
       const history = await this.model.fit(
-        batch.xs.reshape([this.playgroundForm.get('batchSize').value, 784]), batch.labels,
+        batch.xs.reshape([this.playgroundForm.get('batchSize').value, 10]), batch.labels,
         { batchSize: this.playgroundForm.get('batchSize').value, validationData, epochs: this.epochs });
 
       const loss = history.history.loss[0];

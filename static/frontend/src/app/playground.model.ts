@@ -162,8 +162,8 @@ export class Playground {
         this.mnistLayers = [
             new TfjsLayer(new SelectForm("basic", "Basic"), [
                 new TfjsLayerItem(new SelectForm("dense", "Dense"), true, {
-                    inputShape: "784",
-                    units: "64",
+                    inputShape: "10",
+                    units: "8",
                     activation: 'relu',
                     kernelInitializer: 'varianceScaling'
                 })
@@ -175,7 +175,7 @@ export class Playground {
             ]),
             new TfjsLayer(new SelectForm("basic", "Basic"), [
                 new TfjsLayerItem(new SelectForm("dense", "Dense"), false, {
-                    units: "32",
+                    units: "4",
                     activation: 'relu',
                     kernelInitializer: 'varianceScaling'
                 })

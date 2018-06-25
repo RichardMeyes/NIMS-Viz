@@ -25,7 +25,9 @@ export class PlaygroundService {
   trainIndices;
   testIndices;
 
-  constructor() { }
+  constructor() {
+    this.imageSize = 10;
+  }
 
   generateData(numPoints, coeff, sigma = 0.04) {
     return tf.tidy(() => {
@@ -79,7 +81,7 @@ export class PlaygroundService {
     this.shuffledTrainIndex = 0;
     this.shuffledTestIndex = 0;
 
-    this.imageSize = 784;
+    
     this.numClasses = 10;
     this.numDatasetElements = 65000;
 
