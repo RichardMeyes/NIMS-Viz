@@ -82,6 +82,10 @@ def mlp():
 
     return_obj = {"result": MLP.mlp(num_hidden_layers)}
 
+    weights = dict()
+    weights["weights"] = {"l1": [[1,2], [2,3]],
+                          "l2": [[1,2,5], [123,2,4], [1,3,4,5,6,3]]}
+
     return json.dumps(return_obj)
 
 
