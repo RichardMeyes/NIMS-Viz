@@ -27,7 +27,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
   private scenes: THREE.Scene[] = [];
-  private camera: THREE.PerspectiveCamera;
+  // private camera: THREE.PerspectiveCamera;
   private renderer: any;
   private controls: THREE.OrbitControls;
 
@@ -113,6 +113,57 @@ export class SceneComponent implements OnInit, AfterViewInit {
   col2Trigger = 65;
   col3Trigger = 100;
   heatCanvas: any;
+  brainUVMapMesh: THREE.Mesh;
+
+  views = [
+    // brainobj
+    {
+      left: 0,
+      top: 0,
+      width: 0.5,
+      height: 1.0,
+      background: new THREE.Color(0.5, 0.5, 0.7),
+      eye: [0, 0, 3],
+      up: [0, 1, 0],
+      fov: 30
+      // updateCamera: function (camera, scene, mouseX, mouseY) {
+      //   camera.position.x += mouseX * 0.05;
+      //   camera.position.x = Math.max(Math.min(camera.position.x, 2000), -2000);
+      //   camera.lookAt(scene.position);
+      // }
+    },
+    // 2Dbraingreyscale
+    {
+      left: 0.5,
+      top: 0,
+      width: 0.5,
+      height: 0.5,
+      background: new THREE.Color(0.7, 0.5, 0.5),
+      eye: [0, 0, 52],
+      up: [0, 0, 1],
+      fov: 45
+      // updateCamera: function ( camera, scene, mouseX, mouseY ) {
+      // camera.position.x -= mouseX * 0.05;
+      // camera.position.x = Math.max( Math.min( camera.position.x, 2000 ), -2000 );
+      // camera.lookAt( camera.position.clone().setY( 0 ) );
+      // }
+    }
+    // {
+    //   left: 0.5,
+    //   top: 0.5,
+    //   width: 0.5,
+    //   height: 0.5,
+    //   background: new THREE.Color(0.5, 0.7, 0.7),
+    //   eye: [1400, 800, 1400],
+    //   up: [0, 1, 0],
+    //   fov: 60
+    //   // updateCamera: function (camera, scene, mouseX, mouseY) {
+    //   //   camera.position.y -= mouseX * 0.05;
+    //   //   camera.position.y = Math.max(Math.min(camera.position.y, 1600), -1600);
+    //   //   camera.lookAt(scene.position);
+    //   // }
+    // }
+  ];
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
@@ -120,10 +171,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.windowHeight = window.innerHeight;
 
     try {
-      this.camera.aspect = this.windowWidth / this.windowHeight;
-      this.camera.updateProjectionMatrix();
+      for (const view of this.views) {
+        view['camera'].aspect = this.windowWidth / this.windowHeight;
+        view['camera'].updateProjectionMatrix();
 
-      this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
+        this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -163,21 +216,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private planeLookAtCam() {
-    const test = this.controls.enableRotate;
-    console.log(test);
-
     setInterval(() => {
-      // console.error('camera', this.camera);
-      // console.error('orbitcontrols', this.controls);
-      // this.scene.children.forEach(element => {
-      //   if (element.name === 'planeMesh') {
-      //     console.error(element);
-      // let yaw_control = this.controls.getYawObject();
-      // const pos = new THREE.Vector3(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-      // element.lookAt(pos);
-      //   }
-      // });
-    }, 10000);
+      this.brainUVMapMesh.lookAt(this.views[0]['camera'].position);
+    }, 1);
   }
 
   public toggle() {
@@ -193,7 +234,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.setupCamera();
     this.setupRenderer();
     this.setupUtilities();
-    this.planeLookAtCam();
+    // this.planeLookAtCam();
   }
 
   private setupScene() {
@@ -208,7 +249,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.scene = this.brainComponent.setupBrain();
       this.scene.children.forEach(element => {
         if (element.name === 'planeMesh') {
-          element.visible = true;
+          this.brainUVMapMesh = <THREE.Mesh>element;
+          // this.brainUVMapMesh.visible = true;
         }
       });
 
@@ -222,29 +264,46 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private setupCamera() {
-    const aspectRatio = this.getAspectRatio();
-    this.camera = new THREE.PerspectiveCamera(
-      this.fieldOfView,
-      aspectRatio,
-      this.nearClippingPane,
-      this.farClippingPane
-    );
-    this.camera.position.z = 3;
-    this.scene.add(this.camera);
+
+
+    for (const view of this.views) {
+      console.log('view', view);
+
+      const camera = new THREE.PerspectiveCamera(view.fov, window.innerWidth / window.innerHeight, 1, 2000);
+      camera.position.fromArray(view.eye);
+      camera.up.fromArray(view.up);
+      view['camera'] = camera;
+      this.scene.add(camera);
+      const directionalLight = new THREE.DirectionalLight(0xffeedd);
+      // const directionalLight = new THREE.DirectionalLight(0xffffff);
+      // directionalLight.position.set( 0, 0, 1 );
+      camera.add(directionalLight);
+    }
+
+    // old backup:
+    // const aspectRatio = this.getAspectRatio();
+    // this.camera = new THREE.PerspectiveCamera(
+    //   this.fieldOfView,
+    //   aspectRatio,
+    //   this.nearClippingPane,
+    //   this.farClippingPane
+    // );
+    // this.camera.position.z = 3;
+
+    // this.scene.add(this.camera);
 
     const ambientLight = new THREE.AmbientLight(0x444444);
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffeedd);
-    this.camera.add(directionalLight);
+
   }
 
   private setupRenderer() {
-    try {
-      document.body.removeChild(this.renderer.domElement);
-    } catch (error) {
-      console.log('tried to remove renderer');
-    }
+    // try {
+    //   document.body.removeChild(this.renderer.domElement);
+    // } catch (error) {
+    //   console.log('tried to remove renderer');
+    // }
     if (this.showBrainView) {
       // console.log('in renderer:', this.heatCanvas);
       this.renderer = new THREE.WebGLRenderer({
@@ -255,7 +314,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.renderer = new THREE.CSS3DRenderer();
     }
     this.renderer.setSize(window.innerWidth, window.innerHeight - 67.125);
-    console.log('this.heatCanvas', this.heatCanvas);
+    // console.log('this.heatCanvas', this.heatCanvas);
 
     // this.renderer.setSize(this.heatCanvas.clientWidth, this.heatCanvas.clientHeight);
     // console.log('renderer', this.renderer);
@@ -272,6 +331,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
     const render = () => {
       requestAnimationFrame(render);
       if (this.redraw && this.showBrainView) {
+        // always let 2DBrainPlane look at camera
+        // this.brainUVMapMesh.lookAt(this.camera.position);
         // last layer has no connections to "next" layer
         // if (stepperCnt < convertedLayerObjs.length - 1) {
         this.heat.clear();
@@ -292,7 +353,22 @@ export class SceneComponent implements OnInit, AfterViewInit {
       }
       this.fpsHack++;
       // console.log('trying to render this scene:', this.scene);
-      this.renderer.render(this.scene, this.camera);
+      // this.renderer.render(this.scene, this.camera);
+      for (const view of this.views) {
+        const camera = view['camera'];
+        // view.updateCamera(camera, this.scene, mouseX, mouseY);
+        const left = Math.floor(window.innerWidth * view.left);
+        const top = Math.floor(window.innerHeight * view.top);
+        const width = Math.floor(window.innerWidth * view.width);
+        const height = Math.floor(window.innerHeight * view.height);
+        this.renderer.setViewport(left, top, width, height);
+        this.renderer.setScissor(left, top, width, height);
+        this.renderer.setScissorTest(true);
+        this.renderer.setClearColor(view.background);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        this.renderer.render(this.scene, camera);
+      }
       // this.renderer.dispose();
     };
     render();
@@ -303,7 +379,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // ==================================================
     // controls
     // ==================================================
-    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls = new THREE.OrbitControls(this.views[0]['camera'], this.renderer.domElement);
     this.controls.rotateSpeed = 1.0;
     this.controls.zoomSpeed = 1.2;
   }
