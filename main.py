@@ -1,17 +1,22 @@
 from flask import Flask, request, send_from_directory
-from flask_cors import cross_origin
+from flask_cors import CORS, cross_origin
 from werkzeug.routing import BaseConverter
 
 import os
+import json
 import shutil
 import subprocess
+
+import static.backend.MLP as MLP
 
 FRONTEND_DIR = "static/frontend/dist"
 ASSETS_DIR = "static/frontend/dist/assets"
 SOURCE_DIR = "static/frontend/dist/assets/ann/h5/"
 DESTINATION_DIR = "static/frontend/dist/assets/ann/json"
-
+# set up Flask webservices
 app = Flask(__name__, static_folder=FRONTEND_DIR)
+CORS(app)
+
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
 
@@ -56,5 +61,29 @@ def convert(filename):
     return "Conversion done."
 
 
+@app.route("/nn/MLP", methods=["GET"])
+@cross_origin()
+def mlp():
+    """
+
+    :param filename:
+    :return:
+    """
+
+    num_hidden_layers = request.args.get('num_hidden_layers')
+
+    # # parse arguments from POST body
+    # num_hidden_layers = request.form.get('num_hidden_layers')
+    # num_units_per_hidden_layer = request.form.get('num_units_per_hidden_layer')
+    # learning_rate = request.form.get('learning_rate')
+    # num_batches = request.form.get('num_batches')
+    # batch_size = request.form.get('batch_size')
+    # num_epochs = request.form.get('num_epochs')
+
+    return_obj = {"result": MLP.mlp(num_hidden_layers)}
+
+    return json.dumps(return_obj)
+
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, threaded=True)
