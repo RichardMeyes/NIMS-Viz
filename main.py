@@ -15,25 +15,31 @@ app = Flask(__name__, static_folder=FRONTEND_DIR)
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
 
+
 class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
 
+
 app.url_map.converters['regex'] = RegexConverter
+
 
 @app.route("/")
 def angular():
     return send_from_directory(FRONTEND_DIR, "index.html")
 
+
 @app.route("/<regex('(\w*\.)*(css|js)'):path>")
 def angular_src(path):
     return send_from_directory(FRONTEND_DIR, path)
+
 
 @app.route("/assets/<regex('\w(\w*\/)*(\w*(.|-)\w*){1}'):path>")
 def assets(path):
     print(path)
     return send_from_directory(ASSETS_DIR, path)
+
 
 @app.route("/convert/<filename>", methods=["GET"])
 @cross_origin()
@@ -48,6 +54,7 @@ def convert(filename):
     cmd = ["tensorflowjs_converter", "--input_format", "keras", source, app.config["DESTINATION_DIR"]]
     subprocess.run(cmd, shell=True)
     return "Conversion done."
+
 
 if __name__ == "__main__":
     app.run()
