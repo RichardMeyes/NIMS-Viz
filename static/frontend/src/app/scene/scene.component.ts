@@ -385,7 +385,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
 
 
-
   nodeCount = 1;
 
   beforeChart; predictionChart;
@@ -408,7 +407,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   @ViewChild('divStatus') private divStatusRef;
   @ViewChild('trainNetwork') private trainNetworkRef;
   trainNetworkDisabled = false;
-  modelWeightsEveryBatch;
+  // modelWeightsEveryBatch;
 
 
   renderCoefficients(container, coeff) {
@@ -514,11 +513,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // We'll keep a buffer of loss and accuracy values over time.
     const lossValues = [];
     const accuracyValues = [];
-    this.modelWeightsEveryBatch = [];
 
     // Iteratively train our model on mini-batches of data.
-    // for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < this.playgroundForm.get('trainBatches').value; i++) {
+      // for (let i = 0; i < 1; i++) {
       // const [batch, validationData] = tf.tidy(() => {
       const batch = this.playgroundService.nextTrainBatch(this.playgroundForm.get('batchSize').value);
       // batch.xs = batch.xs.reshape<any>([this.batchSize, 28, 28, 1]);
@@ -559,8 +557,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
       // Call dispose on the training/test tensors to free their GPU memory.
       tf.dispose([batch, validationData]);
-
-      this.modelWeightsEveryBatch.push(weights);
+      this.playgroundService.modelWeightsEveryBatch.next(weights);
 
       // tf.nextFrame() returns a promise that resolves at the next call to
       // requestAnimationFrame(). By awaiting this promise we keep our model
@@ -720,8 +717,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       this.playgroundService.loadMnist().then(() => {
         this.SetStatus("Data loaded!");
         this.trainNetworkDisabled = false;
-
-        this.modelWeightsEveryBatch = [];
       });
     }
   }

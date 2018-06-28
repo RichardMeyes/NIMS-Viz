@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -25,8 +26,11 @@ export class PlaygroundService {
   trainIndices;
   testIndices;
 
+  modelWeightsEveryBatch: BehaviorSubject<any>;
+
   constructor() {
     this.imageSize = 10;
+    this.modelWeightsEveryBatch = new BehaviorSubject([]);
   }
 
   generateData(numPoints, coeff, sigma = 0.04) {
@@ -81,7 +85,7 @@ export class PlaygroundService {
     this.shuffledTrainIndex = 0;
     this.shuffledTestIndex = 0;
 
-    
+
     this.numClasses = 10;
     this.numDatasetElements = 65000;
 

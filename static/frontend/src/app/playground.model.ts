@@ -163,7 +163,7 @@ export class Playground {
             new TfjsLayer(new SelectForm("basic", "Basic"), [
                 new TfjsLayerItem(new SelectForm("dense", "Dense"), true, {
                     inputShape: "10",
-                    units: "8",
+                    units: "128",
                     activation: 'relu',
                     kernelInitializer: 'varianceScaling'
                 })
@@ -175,7 +175,7 @@ export class Playground {
             ]),
             new TfjsLayer(new SelectForm("basic", "Basic"), [
                 new TfjsLayerItem(new SelectForm("dense", "Dense"), false, {
-                    units: "4",
+                    units: "64",
                     activation: 'relu',
                     kernelInitializer: 'varianceScaling'
                 })
