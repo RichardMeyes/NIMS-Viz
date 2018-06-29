@@ -66,21 +66,17 @@ def convert(filename):
 def mlp():
     """
 
-    :param filename:
     :return:
     """
 
-    num_hidden_layers = request.args.get('num_hidden_layers')
+    # parse arguments from POST body
+    layers = request.form.get('layers')
+    learning_rate = request.form.get('learning_rate')
+    num_batches = request.form.get('num_batches')
+    batch_size = request.form.get('batch_size')
+    num_epochs = request.form.get('num_epochs')
 
-    # # parse arguments from POST body
-    # num_hidden_layers = request.form.get('num_hidden_layers')
-    # num_units_per_hidden_layer = request.form.get('num_units_per_hidden_layer')
-    # learning_rate = request.form.get('learning_rate')
-    # num_batches = request.form.get('num_batches')
-    # batch_size = request.form.get('batch_size')
-    # num_epochs = request.form.get('num_epochs')
-
-    return_obj = {"result": MLP.mlp(num_hidden_layers)}
+    return_obj = {"result": MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)}
 
     weights = dict()
     weights["weights"] = {"l1": [[1,2], [2,3]],
