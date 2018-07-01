@@ -10,34 +10,29 @@
         </mat-expansion-panel-header>
 
         <form [formGroup]="playgroundForm" fxLayout="row wrap">
-            <mat-form-field>
-                <mat-select placeholder="Problem Type" formControlName="problem" (selectionChange)="problemChange()">
-                    <mat-option *ngFor="let problem of playgroundData.problems" [value]="problem.value">
-                        {{ problem.viewValue }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" style="margin-top: 0.5rem;">
+            <div style="margin-top: 0.5rem;">
                 <strong>Mnist Data</strong>
             </div>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'">
+            <div fxFlex="grow"></div>
+            <div>
                 <mat-form-field>
                     <input matInput placeholder="Batch Size" type="text" formControlName="batchSize">
                 </mat-form-field>
                 <mat-form-field>
-                    <input matInput placeholder="Train Batches" type="text" formControlName="trainBatches">
+                    <input matInput placeholder="Number of Batches" type="text" formControlName="numBatches">
                 </mat-form-field>
                 <mat-form-field>
-                    <input matInput placeholder="Test Batch Size" type="text" formControlName="testBatchSize">
+                    <input matInput placeholder="Epoch" type="text" formControlName="epoch">
                 </mat-form-field>
             </div>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" style="margin-top: 0.5rem;">
+            <div fxFlex="grow"></div>
+            <div style="margin-top: 0.5rem;">
                 <strong>Model</strong>
             </div>
-            <div *ngIf="playgroundForm.get('problem').value == 'mnist'" fxFlex="grow"></div>
+            <div fxFlex="grow"></div>
+            <mat-form-field>
+                <input matInput placeholder="Number of Layers" type="number" formControlName="layerCount">
+            </mat-form-field>
             <mat-form-field>
                 <mat-select placeholder="Learning Rate" formControlName="learningRate">
                     <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
@@ -45,123 +40,22 @@
                     </mat-option>
                 </mat-select>
             </mat-form-field>
-            <div *ngIf="playgroundForm.get('problem').value == 'polynomial-regression'; else mnist">
-                <!-- <mat-form-field>
-                    <mat-select placeholder="Optimizer" formControlName="optimizer">
-                        <mat-option *ngFor="let optimizer of playgroundData.optimizers" [value]="optimizer.value">
-                            {{ optimizer.viewValue }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field> -->
-                <mat-form-field>
-                    <input matInput placeholder="Number of Iteration" type="number" formControlName="numOfIteration">
-                </mat-form-field>
-            </div>
-            <ng-template #mnist>
-                <!-- <mat-form-field>
-                        <mat-select placeholder="Model Type" [(ngModel)]="selectedModelType">
-                            <mat-option *ngFor="let modelType of modelTypes" [value]="modelType.value">
-                                {{ modelType.viewValue }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field> -->
-                <mat-form-field>
-                    <input matInput placeholder="Number of Layers" type="number" formControlName="layerCount">
-                </mat-form-field>
-                <mat-form-field>
-                    <mat-select placeholder="Loss" formControlName="mnistLoss">
-                        <mat-option *ngFor="let loss of playgroundData.loss" [value]="loss.value">
-                            {{ loss.viewValue }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-                <div fxFlex="grow"></div>
+            <div fxFlex="grow"></div>
+            <div>
                 <div formArrayName="layers">
                     <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
                         <div style="margin-top: 0.5rem;">
-                            <strong> {{ i+1 | ordinal }} {{ (i==0)? '(Input)' : ''}} Layer</strong>
+                            <strong> {{ i+1 | ordinal }} Layer</strong>
                         </div>
                         <div fxLayout="column wrap">
-                            <div>
-                                <mat-form-field>
-                                    <mat-select placeholder="Layer Type" formControlName="layerType" (selectionChange)="layerTypeChange(i)">
-                                        <mat-optgroup *ngFor="let layer of playgroundData.layers" [label]="layer.layerGroup.viewValue">
-                                            <mat-option *ngFor="let layerItem of layer.layerItem" [value]="layerItem.layerType.value">
-                                                {{ layerItem.layerType.viewValue }}
-                                            </mat-option>
-                                        </mat-optgroup>
-                                    </mat-select>
-                                </mat-form-field>
-                                <div *ngIf="layer.get('isInput').value" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Input Shape" type="text" formControlName="inputShape">
-                                    </mat-form-field>
-                                </div>
-                                <div fxFlex="grow"></div>
-                            </div>
-                            <div>
-                                <div fxLayout="row wrap">
-                                    <!-- <mat-radio-group formControlName="inputLayer" name="groupIsInput">
-                                        <mat-radio-button [value]="i">Input Layer</mat-radio-button>
-                                    </mat-radio-group> -->
-                                    <!-- <mat-checkbox formControlName="isInput" class="form-field">Input Layer</mat-checkbox> -->
-                                    <!-- <div fxFlex="grow"></div> -->
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'kernelSize')" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Kernel Size" type="text" formControlName="kernelSize">
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'filters')" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Filters" type="text" formControlName="filters">
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'strides')" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Strides" type="text" formControlName="strides">
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'poolSize')" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Pool Size" type="text" formControlName="poolSize">
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'units')" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Number of Unit" type="text" formControlName="units">
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'activation')" style="display: inline">
-                                    <mat-form-field>
-                                        <mat-select placeholder="Activation" formControlName="activation">
-                                            <mat-option *ngFor="let activation of playgroundData.activation" [value]="activation.value">
-                                                {{ activation.viewValue }}
-                                            </mat-option>
-                                        </mat-select>
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'kernelInitializer')" style="display: inline">
-                                    <mat-form-field>
-                                        <mat-select placeholder="Kernel Initializer" formControlName="kernelInitializer">
-                                            <mat-option *ngFor="let kernelInitializer of playgroundData.kernelInitializer" [value]="kernelInitializer.value">
-                                                {{ kernelInitializer.viewValue }}
-                                            </mat-option>
-                                        </mat-select>
-                                    </mat-form-field>
-                                </div>
-                                <div *ngIf="isConfigAvailable(i, 'rate')" style="display: inline">
-                                    <mat-form-field>
-                                        <input matInput placeholder="Rate" type="text" formControlName="rate">
-                                    </mat-form-field>
-                                </div>
-                            </div>
+                            <mat-form-field>
+                                <input matInput placeholder="Number of Units" type="number" formControlName="unitCount">
+                            </mat-form-field>
                         </div>
-
                         <mat-divider></mat-divider>
                     </div>
                 </div>
-            </ng-template>
+            </div>
             <mat-action-row style="width: 100%;">
                 <button mat-button color="accent" (click)="reset()">Reset</button>
                 <button mat-button color="accent" (click)="trainNetwork()" [disabled]="trainNetworkDisabled || !this.playgroundForm.valid">Train Network</button>
@@ -264,47 +158,12 @@
     </mat-expansion-panel>
 </mat-accordion>
 
-
-<div class="plots" fxLayout="row wrap" *ngIf="playgroundForm.get('problem').value=='polynomial-regression';else mnistPlot">
-    <div id="data" class="plot-item">
-        <div class="caption">Original Data (Synthetic)</div>
-        <div class="caption">True coefficients:
-            <span class='coeff' #dataCoeff></span>
-        </div>
-        <div class="chart-container">
-            <canvas #dataCanvas class="plot"></canvas>
-        </div>
-    </div>
-    <div id="random" class="plot-item">
-        <div class="caption">Fit curve with random coefficients
-            <strong>(before training)</strong>
-        </div>
-        <div class="caption">Random coefficients:
-            <span class='coeff' #randomCoeff></span>
-        </div>
-        <div class="chart-container">
-            <canvas #randomCanvas class="plot"></canvas>
-        </div>
-    </div>
-    <div id="trained" class="plot-item">
-        <div class="caption">Fit curve with learned coefficients
-            <strong>(after training)</strong>
-        </div>
-        <div class="caption">Learned coefficients:
-            <span class='coeff' #trainedCoeff></span>
-        </div>
-        <div class="chart-container">
-            <canvas #trainedCanvas class="plot"></canvas>
-        </div>
-    </div>
-</div>
-
-<ng-template #mnistPlot>
+<div>
     <h3>TensorFlow.js: Train MNIST with the Layers API</h3>
 
     <div id="status" #divStatus>Loading data...</div>
     <app-playground-viz [topology]="playgroundForm.value"></app-playground-viz>
-</ng-template>
+</div>
 <!-- <canvas #canvas></canvas>
 <app-brain #brainComponent (updatedHeatmapData)="updateHeatmapData($event)" (updatedHeatmapCanvasTexture)="updateHeatmapCanvasTexture($event)"></app-brain>
 <app-molecule #moleculeComponent></app-molecule> -->
