@@ -47,10 +47,13 @@
                         <div style="margin-top: 0.5rem;">
                             <strong> {{ i+1 | ordinal }} Layer</strong>
                         </div>
-                        <div fxLayout="column wrap">
+                        <div fxLayout="row wrap">
                             <mat-form-field>
                                 <input matInput placeholder="Number of Units" type="number" formControlName="unitCount">
                             </mat-form-field>
+                            <button mat-icon-button (click)="delLayer(i)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
                         </div>
                         <mat-divider></mat-divider>
                     </div>
@@ -160,8 +163,6 @@
 
 <div>
     <h3>TensorFlow.js: Train MNIST with the Layers API</h3>
-
-    <div id="status" #divStatus>Loading data...</div>
     <app-playground-viz [topology]="playgroundForm.value"></app-playground-viz>
 </div>
 <!-- <canvas #canvas></canvas>

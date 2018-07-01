@@ -74,21 +74,26 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     // topology
     if (filteredChanges.topology) {
       let layers = filteredChanges.topology.currentValue.layers;
+      console.log(layers);
 
       this.filteredLayerCount = 0;
       let filteredData = [];
-      for (let i = 0; i < this.playgroundService.imageSize; i++) {
-        filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / this.playgroundService.imageSize) });
+      for (let i = 0; i < 784; i++) {
+        filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / 784) });
       }
       this.filteredLayerCount++;
       layers.forEach(layer => {
-        if (layer.units && layer.units != "") {
-          for (let i = 0; i < +layer.units; i++) {
-            filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / +layer.units) });
+        if (layer.unitCount && layer.unitCount != 0) {
+          for (let i = 0; i < +layer.unitCount; i++) {
+            filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / +layer.unitCount) });
           }
           this.filteredLayerCount++;
         }
       });
+      for (let i = 0; i < 10; i++) {
+        filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / 10) });
+      }
+      this.filteredLayerCount++;
       this.layerSpacing = (this.playCanvasWidth / this.filteredLayerCount);
       this.bindTopology(filteredData);
     }
@@ -140,9 +145,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
         .domain([minWeight, maxWeight])
         .range(["rgb(63,81,181)", "rgb(244,67,54)"]);
 
-      console.log(minWeight);
-      console.log(maxWeight);
-
       this.bindWeights(filteredData);
     }
 
@@ -185,8 +187,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   bindWeights(filteredData) {
-    console.log("called");
-
     let join = this.base.selectAll('base.line')
       .data(filteredData);
 

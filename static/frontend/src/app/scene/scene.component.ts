@@ -151,7 +151,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
     //     this.setup();
     //   }
     // );    
-    this.createForm();
   }
 
   ngOnInit() {
@@ -159,12 +158,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     console.log('ngOnInit');
     // this.setupScene();
 
-    this.trainNetworkDisabled = true;
-
-    this.playgroundService.loadMnist().then(() => {
-      this.SetStatus("Data loaded!");
-      this.trainNetworkDisabled = false;
-    });
+    this.createForm();
   }
 
   private startCalc() {
@@ -360,12 +354,13 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   // mnist 
   data;
-  @ViewChild('divStatus') private divStatusRef;
-  @ViewChild('trainNetwork') private trainNetworkRef;
-  trainNetworkDisabled = false;
 
   trainNetwork() {
-    console.log(this.playgroundForm.value);
+    this.playgroundForm.value.layers.splice(0, 0, { unitCount: 784 });
+    for (let index = 1; index < this.playgroundForm.value.layers.length; index++) {
+      this.playgroundForm.value.layers[index].activation = "relu";
+    }
+    this.playgroundForm.value.layers.push({ unitCount: 10, activation: "softmax" });
   }
 
   // public findInvalidControls() {
@@ -396,6 +391,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
       layerCount: this.playgroundData.layerCount
     });
 
+    while (this.layers.length !== 0) { this.layers.removeAt(0) }
+    for (let index = 0; index < this.playgroundForm.get('layerCount').value; index++) {
+      this.layers.push(this.fb.group({
+        unitCount: [0, Validators.required]
+      }));
+    }
     this.resetForm();
   }
 
@@ -429,8 +430,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
     );
   }
 
-  SetStatus(msg: string) {
-    this.divStatusRef.nativeElement.innerText = msg;
+  delLayer(i: number) {
+    this.layers.removeAt(i);
+    this.playgroundForm.get('layerCount').setValue(this.layers.length);
   }
   // ==================================================
 }
