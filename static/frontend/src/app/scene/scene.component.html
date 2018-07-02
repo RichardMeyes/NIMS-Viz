@@ -31,7 +31,7 @@
             </div>
             <div fxFlex="grow"></div>
             <mat-form-field>
-                <input matInput placeholder="Number of Layers" type="number" formControlName="layerCount">
+                <input matInput placeholder="Number of Layers" type="number" min="0" formControlName="layerCount">
             </mat-form-field>
             <mat-form-field>
                 <mat-select placeholder="Learning Rate" formControlName="learningRate">
@@ -49,7 +49,7 @@
                         </div>
                         <div fxLayout="row wrap">
                             <mat-form-field>
-                                <input matInput placeholder="Number of Units" type="number" formControlName="unitCount">
+                                <input matInput placeholder="Number of Units" type="number" min="0" formControlName="unitCount">
                             </mat-form-field>
                             <button mat-icon-button (click)="delLayer(i)">
                                 <mat-icon>delete</mat-icon>

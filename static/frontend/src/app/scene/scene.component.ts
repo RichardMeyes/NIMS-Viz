@@ -322,12 +322,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   createForm() {
     this.playgroundForm = this.fb.group({
-      batchSize: [0, Validators.required],
-      numBatches: [0, Validators.required],
-      epoch: [0, Validators.required],
+      batchSize: [0, [Validators.required, Validators.min(0)]],
+      numBatches: [0, [Validators.required, Validators.min(0)]],
+      epoch: [0, [Validators.required, Validators.min(0)]],
 
       learningRate: ["", Validators.required],
-      layerCount: [0, Validators.required],
+      layerCount: [0, [Validators.required, Validators.min(0)]],
 
       layers: this.fb.array([])
     });
@@ -343,7 +343,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     this.playgroundForm.setControl('layers', this.fb.array(
       this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
-        unitCount: [0, Validators.required]
+        unitCount: [0, [Validators.required, Validators.min(0)]]
       }))
     ));
 
@@ -396,7 +396,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     while (this.layers.length !== 0) { this.layers.removeAt(0) }
     for (let index = 0; index < this.playgroundForm.get('layerCount').value; index++) {
       this.layers.push(this.fb.group({
-        unitCount: [0, Validators.required]
+        unitCount: [0, [Validators.required, Validators.min(0)]]
       }));
     }
     this.resetForm();
