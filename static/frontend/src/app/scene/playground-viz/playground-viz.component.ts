@@ -74,7 +74,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     // topology
     if (filteredChanges.topology) {
       let layers = filteredChanges.topology.currentValue.layers;
-      console.log(layers);
 
       this.filteredLayerCount = 0;
       let filteredData = [];

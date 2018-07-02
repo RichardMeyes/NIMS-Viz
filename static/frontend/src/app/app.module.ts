@@ -16,6 +16,7 @@ import { PlaygroundVizComponent } from './scene/playground-viz/playground-viz.co
 
 import { AppComponent } from './app.component';
 import { OrdinalPipe } from './ordinal.pipe';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { OrdinalPipe } from './ordinal.pipe';
     ReactiveFormsModule,
     FlexLayoutModule,
     AppRoutingModule,
-    MaterialModule
+    MaterialModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
 import { BehaviorSubject } from 'rxjs';
+import { httpRequestRouter } from '@tensorflow/tfjs-core/dist/io/browser_http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -28,9 +30,18 @@ export class PlaygroundService {
 
   modelWeightsEveryBatch: BehaviorSubject<any>;
 
-  constructor() {
+  constructor(
+    private http: HttpClient
+  ) {
     this.imageSize = 10;
     this.modelWeightsEveryBatch = new BehaviorSubject([]);
+  }
+
+  trainNetwork(data) {
+    const httpOptions = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+    };
+    return this.http.post("http://localhost:5000/nn/MLP", data, httpOptions);
   }
 
   generateData(numPoints, coeff, sigma = 0.04) {

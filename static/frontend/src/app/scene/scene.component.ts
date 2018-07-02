@@ -161,12 +161,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.createForm();
   }
 
-  private startCalc() {
+  startCalc() {
     console.log('quick test', this.selectedFile);
 
   }
 
-  private testFunction() {
+  testFunction() {
     this.brainComponent.createConnectionsBetweenLayers(this.weights,
       this.networkService.getLayerObj,
       this.networkService.getNetworkReductionFactor);
@@ -332,7 +332,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       layers: this.fb.array([])
     });
 
-
     this.playgroundForm.patchValue({
       batchSize: this.playgroundData.batchSize,
       numBatches: this.playgroundData.numBatches,
@@ -352,15 +351,18 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.layerCountChange();
   }
 
-  // mnist 
-  data;
-
   trainNetwork() {
-    this.playgroundForm.value.layers.splice(0, 0, { unitCount: 784 });
-    for (let index = 1; index < this.playgroundForm.value.layers.length; index++) {
-      this.playgroundForm.value.layers[index].activation = "relu";
+    let captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
+    captureForm.layers.splice(0, 0, { unitCount: 784 });
+    for (let index = 1; index < captureForm.layers.length; index++) {
+      captureForm.layers[index].activation = "relu";
     }
-    this.playgroundForm.value.layers.push({ unitCount: 10, activation: "softmax" });
+    captureForm.layers.push({ unitCount: 10, activation: "softmax" });
+    captureForm.layerCount += 2;
+
+    this.playgroundService.trainNetwork(captureForm).subscribe(result => {
+      console.log(result);
+    });
   }
 
   // public findInvalidControls() {

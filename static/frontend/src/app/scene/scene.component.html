@@ -61,7 +61,7 @@
             </div>
             <mat-action-row style="width: 100%;">
                 <button mat-button color="accent" (click)="reset()">Reset</button>
-                <button mat-button color="accent" (click)="trainNetwork()" [disabled]="trainNetworkDisabled || !this.playgroundForm.valid">Train Network</button>
+                <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid">Train Network</button>
             </mat-action-row>
         </form>
     </mat-expansion-panel>
