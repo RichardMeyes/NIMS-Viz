@@ -1,8 +1,9 @@
 from flask import Flask, request, send_from_directory
-from flask_cors import cross_origin
+from flask_cors import CORS, cross_origin
 from werkzeug.routing import BaseConverter
 
 import os
+import json
 import shutil
 import subprocess
 
@@ -10,8 +11,10 @@ FRONTEND_DIR = "static/frontend/dist"
 ASSETS_DIR = "static/frontend/dist/assets"
 SOURCE_DIR = "static/frontend/dist/assets/ann/h5/"
 DESTINATION_DIR = "static/frontend/dist/assets/ann/json"
-
+# set up Flask webservices
 app = Flask(__name__, static_folder=FRONTEND_DIR)
+CORS(app)
+
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
 
@@ -49,5 +52,32 @@ def convert(filename):
     subprocess.run(cmd, shell=True)
     return "Conversion done."
 
+
+@app.route("/nn/MLP", methods=["POST"])
+@cross_origin()
+def mlp():
+    content = request.get_json()
+    
+    batchSize = content['batchSize']
+    epoch = content['epoch']
+    learningRate = content['learningRate']
+    layerCount = content['layerCount']
+
+    # firstUnits = content['layers'][0]["unitCount"]
+    # firstActivation = content['layers'][0]["activation"]
+
+    print(content)
+
+    print(batchSize)
+    print(epoch)
+    print(learningRate)
+    print(layerCount)
+    # print(firstUnits)
+    # print(firstActivation)
+
+    return_obj = {"result": "test"}
+    return_obj = content
+    return json.dumps(content)
+    
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, threaded=True)
