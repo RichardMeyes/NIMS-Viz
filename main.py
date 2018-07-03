@@ -61,26 +61,21 @@ def convert(filename):
     return "Conversion done."
 
 
-@app.route("/nn/MLP", methods=["GET"])
+@app.route("/nn/MLP", methods=["POST", "OPTIONS"])
 @cross_origin()
 def mlp():
-    """
 
-    :return:
-    """
+    params = request.get_json(force=True)
+    print(params)
 
     # parse arguments from POST body
-    layers = request.form.get('layers')
-    learning_rate = request.form.get('learning_rate')
-    num_batches = request.form.get('num_batches')
-    batch_size = request.form.get('batch_size')
-    num_epochs = request.form.get('num_epochs')
+    layers = params["layers"]
+    learning_rate = params["learning_rate"]
+    num_batches = params['num_batches']
+    batch_size = params['batch_size']
+    num_epochs = params['num_epochs']
 
     return_obj = {"result": MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)}
-
-    weights = dict()
-    weights["weights"] = {"l1": [[1,2], [2,3]],
-                          "l2": [[1,2,5], [123,2,4], [1,3,4,5,6,3]]}
 
     return json.dumps(return_obj)
 
