@@ -322,22 +322,22 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   createForm() {
     this.playgroundForm = this.fb.group({
-      batchSize: [0, [Validators.required, Validators.min(0)]],
-      numBatches: [0, [Validators.required, Validators.min(0)]],
-      epoch: [0, [Validators.required, Validators.min(0)]],
+      batch_size: [0, [Validators.required, Validators.min(0)]],
+      // numBatches: [0, [Validators.required, Validators.min(0)]],
+      num_epochs: [0, [Validators.required, Validators.min(0)]],
 
-      learningRate: ["", Validators.required],
+      learning_rate: ["", Validators.required],
       layerCount: [0, [Validators.required, Validators.min(0)]],
 
       layers: this.fb.array([])
     });
 
     this.playgroundForm.patchValue({
-      batchSize: this.playgroundData.batchSize,
-      numBatches: this.playgroundData.numBatches,
-      epoch: this.playgroundData.epoch,
+      batch_size: this.playgroundData.batchSize,
+      // numBatches: this.playgroundData.numBatches,
+      num_epochs: this.playgroundData.epoch,
 
-      learningRate: this.playgroundData.learningRates[0].value,
+      learning_rate: this.playgroundData.learningRates[0].value,
       layerCount: this.playgroundData.layerCount
     });
 
@@ -353,14 +353,19 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   trainNetwork() {
     let captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
-    captureForm.layers.splice(0, 0, { unitCount: 784 });
-    for (let index = 1; index < captureForm.layers.length; index++) {
-      captureForm.layers[index].activation = "relu";
-    }
-    captureForm.layers.push({ unitCount: 10, activation: "softmax" });
-    captureForm.layerCount += 2;
 
-    this.playgroundService.trainNetwork(captureForm).subscribe(result => {
+    let objToSend = {
+      learning_rate: captureForm.learning_rate,
+      batch_size: captureForm.batch_size,
+      num_epochs: captureForm.num_epochs,
+      layers: []
+    };
+
+    captureForm.layers.forEach(layer => {
+      objToSend.layers.push(layer.unitCount);
+    });
+
+    this.playgroundService.trainNetwork(objToSend).subscribe(result => {
       console.log(result);
     });
   }
@@ -387,9 +392,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   reset() {
     this.playgroundForm.patchValue({
-      batchSize: this.playgroundData.batchSize,
-      numBatches: this.playgroundData.numBatches,
-      epoch: this.playgroundData.epoch,
+      batch_size: this.playgroundData.batchSize,
+      // numBatches: this.playgroundData.numBatches,
+      num_epochs: this.playgroundData.epoch,
       layerCount: this.playgroundData.layerCount
     });
 

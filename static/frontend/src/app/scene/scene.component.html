@@ -16,13 +16,13 @@
             <div fxFlex="grow"></div>
             <div>
                 <mat-form-field>
-                    <input matInput placeholder="Batch Size" type="text" formControlName="batchSize">
+                    <input matInput placeholder="Batch Size" type="text" formControlName="batch_size">
                 </mat-form-field>
-                <mat-form-field>
+                <!-- <mat-form-field>
                     <input matInput placeholder="Number of Batches" type="text" formControlName="numBatches">
-                </mat-form-field>
+                </mat-form-field> -->
                 <mat-form-field>
-                    <input matInput placeholder="Epoch" type="text" formControlName="epoch">
+                    <input matInput placeholder="Epoch" type="text" formControlName="num_epochs">
                 </mat-form-field>
             </div>
             <div fxFlex="grow"></div>
@@ -34,7 +34,7 @@
                 <input matInput placeholder="Number of Layers" type="number" min="0" formControlName="layerCount">
             </mat-form-field>
             <mat-form-field>
-                <mat-select placeholder="Learning Rate" formControlName="learningRate">
+                <mat-select placeholder="Learning Rate" formControlName="learning_rate">
                     <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
                         {{ learningRate.viewValue }}
                     </mat-option>
