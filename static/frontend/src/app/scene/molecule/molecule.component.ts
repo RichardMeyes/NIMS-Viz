@@ -1,11 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import * as THREE from 'three';
-import 'three/examples/js/loaders/OBJLoader.js';
-import 'three/examples/js/controls/OrbitControls.js';
-import 'three/examples/js/loaders/PDBLoader.js';
-import 'three/examples/js/renderers/CSS3DRenderer.js';
-import 'three/examples/js/controls/TrackballControls.js';
+// import 'three/examples/js/controls/TrackballControls.js';
 
 @Component({
     selector: 'app-molecule',
@@ -13,7 +9,6 @@ import 'three/examples/js/controls/TrackballControls.js';
     styleUrls: ['./molecule.component.scss']
 })
 export class MoleculeComponent implements OnInit {
-
     private scene: THREE.Scene;
     private root;
 
