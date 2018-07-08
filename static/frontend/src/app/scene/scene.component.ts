@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, I
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
-// import {Scene, OrbitControls, Mesh, Color, PerspectiveCamera, DirectionalLight, AmbientLight, WebGLRenderer, CSS3DRenderer} from 'three';
 import * as Stats from 'stats.js/build/stats.min.js';
 import * as simpleheat from 'simpleheat/simpleheat.js';
 
