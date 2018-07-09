@@ -39,6 +39,12 @@ export class BrainComponent implements OnInit, OnDestroy {
 
     htmlCanvas: any;
     htmlCanvasNodes: any;
+    networkReductionFactor: any;
+    layerObjs: any;
+    layers: any;
+    currentPosition: number;
+    finishedLayers: any;
+    asyncInterval: any;
     public get getHeatmapCanvas(): string {
         return this.htmlCanvas;
     }
@@ -319,32 +325,59 @@ export class BrainComponent implements OnInit, OnDestroy {
         }
     }
 
-    // take two points (at random at the moment) from current and the next layer.
-    public createConnectionsForLayers(layers, layerObjs, networkReductionFactor) {
-        for (let i = 0; i < layerObjs.length - 1; i++) {
-            const currLN = layerObjs[i].heatmapNodes;
-            const nextLN = layerObjs[i + 1].heatmapNodes;
-            // repeat connectionCount times -> amount of connections per layer
-            for (let j = 0; j < currLN.length; j++) {
-                console.log('Progress: ' + (j * 100.0 / currLN.length) + '%');
-                for (let k = 0; k < nextLN.length; k++) {
-                    const weightValue = layers[i * 2]['weights'][0][j / networkReductionFactor][k / networkReductionFactor];
-                    this.createConnectionBetweenCurrLayers(currLN[j], nextLN[k], weightValue);
-                }
+
+    public startCalculation() {
+        // Reset current position to zero
+        this.currentPosition = 0;
+        this.finishedLayers = 0;
+        // Start looping
+        this.asyncInterval = setInterval(
+            this.calculate.bind(this),
+            0
+        );
+    }
+
+    public calculate() {
+        if (this.finishedLayers === this.layerObjs.length - 1) {
+            clearInterval(this.asyncInterval);
+            this.updatedHeatmapNormalData.emit(this.heatmapNormalData);
+            this.updatedHeatmapNodeData.emit(this.heatmapNodeData);
+            return;
+        }
+        // Check that we still have iterations left, otherwise, return
+        // out of function without calling a new one.
+        if (this.currentPosition >= this.layerObjs.length - 1) { return; }
+        // Do computation
+        this.doHeavyLifting(this.layerObjs[this.currentPosition].heatmapNodes, this.layerObjs[this.currentPosition + 1].heatmapNodes);
+
+        // Add to counter
+        this.currentPosition++;
+    }
+
+    private doHeavyLifting(currLN, nextLN) {
+        // repeat connectionCount times -> amount of connections per layer
+        for (let j = 0; j < currLN.length; j++) {
+            for (let k = 0; k < nextLN.length; k++) {
+                const weightValue = this.layers[this.currentPosition * 2]['weights'][0]
+                [j / this.networkReductionFactor][k / this.networkReductionFactor];
+                this.createConnectionBetweenCurrLayers(currLN[j], nextLN[k], weightValue);
+            }
+            const percentage = Math.round(j / currLN.length * 100);
+            if (percentage % 10 === 0) {
+                console.log(percentage + ' % Nodes in current Layer done');
             }
         }
-        this.updatedHeatmapNormalData.emit(this.heatmapNormalData);
-        this.updatedHeatmapNodeData.emit(this.heatmapNodeData);
+        this.finishedLayers++;
+        console.log(this.finishedLayers + '/' + this.layerObjs.length + ' Layers done');
+        // console.log(this.finishedLayers);
+    }
 
-
-        // const result = [];
-        // result.push(this.heatmapNormalData, this.heatmapNodeData);
-        // return result;
-        // return new Promise((resolve) => {
-        //     resolve(result);
-        // });
-
-        // return new Promise(() => )
+    // take two points (at random at the moment) from current and the next layer.
+    public createConnectionsForLayers(layers, layerObjs, networkReductionFactor) {
+        this.layers = layers;
+        this.layerObjs = layerObjs;
+        this.networkReductionFactor = networkReductionFactor;
+        this.startCalculation();
     }
 
     private createConnectionBetweenCurrLayers(firstNode, secondNode, weightValue) {
