@@ -18,6 +18,14 @@ import { AppComponent } from './app.component';
 import { OrdinalPipe } from './ordinal.pipe';
 import { HttpClientModule } from '@angular/common/http';
 
+import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
+
+export const MQTT_SERVICE_OPTIONS: IMqttServiceOptions = {
+  hostname: 'localhost',
+  port: 9001,
+  path: '/mqtt'
+};
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -35,7 +43,8 @@ import { HttpClientModule } from '@angular/common/http';
     FlexLayoutModule,
     AppRoutingModule,
     MaterialModule,
-    HttpClientModule
+    HttpClientModule,
+    MqttModule.forRoot(MQTT_SERVICE_OPTIONS)
   ],
   providers: [],
   bootstrap: [AppComponent]

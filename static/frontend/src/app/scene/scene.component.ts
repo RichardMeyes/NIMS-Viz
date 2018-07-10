@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, AfterViewChecked, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
@@ -13,11 +13,12 @@ import 'three/examples/js/controls/OrbitControls';
 
 // import { BrainComponent } from './brain/brain.component';
 import { PlaygroundService } from '../playground.service';
-import { generate } from 'rxjs';
+import { generate, Subscription } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
 import { Playground, TfjsLayer } from '../playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
+import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 
 @Component({
@@ -25,7 +26,7 @@ import { debounceTime } from 'rxjs/operators';
   templateUrl: './scene.component.html',
   styleUrls: ['./scene.component.scss']
 })
-export class SceneComponent implements OnInit, AfterViewInit {
+export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('snav') snav;
   @ViewChild('canvas') private canvasRef;
@@ -142,7 +143,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
     private renderer2: Renderer2,
     private playgroundService: PlaygroundService,
     private changeDetector: ChangeDetectorRef,
-    private fb: FormBuilder) {
+    private fb: FormBuilder,
+    private _mqttService: MqttService) {
     // this.networkService.loadFromJson().subscribe(
     //   (weights) => {
     //     this.weights = weights;
@@ -151,6 +153,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
     //     this.setup();
     //   }
     // );    
+
+    this.subscription = this._mqttService.observe('my/topic').subscribe((message: IMqttMessage) => {
+      this.message = message.payload.toString();
+    });
   }
 
   ngOnInit() {
@@ -442,4 +448,18 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.playgroundForm.get('layerCount').setValue(this.layers.length);
   }
   // ==================================================
+
+  // ==================================================
+  // MQTT
+  // ==================================================
+  private subscription: Subscription;
+  public message: string;
+
+  public unsafePublish(topic: string, message: string): void {
+    this._mqttService.unsafePublish(topic, message, { qos: 1, retain: true });
+  }
+
+  public ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
 }
