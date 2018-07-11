@@ -10,7 +10,7 @@ import { Layers } from 'three';
 })
 export class NetworkService {
   private layers;
-  private networkReductionFactor = 0.1;
+  private networkReductionFactor = 0.5;
   private convertedLayerObjs;
   private moleculeStruct = [];
   private heatmapCanvasResolution = 1.0; // 8.0;

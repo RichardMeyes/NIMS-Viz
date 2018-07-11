@@ -45,6 +45,7 @@ export class BrainComponent implements OnInit, OnDestroy {
     currentPosition: number;
     finishedLayers: any;
     asyncInterval: any;
+    callCounter = 0;
     public get getHeatmapCanvas(): string {
         return this.htmlCanvas;
     }
@@ -338,6 +339,8 @@ export class BrainComponent implements OnInit, OnDestroy {
     }
 
     public calculate() {
+        // this.callCounter++;
+        // console.log('called ' + this.callCounter + ' times');
         if (this.finishedLayers === this.layerObjs.length - 1) {
             clearInterval(this.asyncInterval);
             this.updatedHeatmapNormalData.emit(this.heatmapNormalData);
@@ -358,9 +361,18 @@ export class BrainComponent implements OnInit, OnDestroy {
         // repeat connectionCount times -> amount of connections per layer
         for (let j = 0; j < currLN.length; j++) {
             for (let k = 0; k < nextLN.length; k++) {
-                const weightValue = this.layers[this.currentPosition * 2]['weights'][0]
-                [j / this.networkReductionFactor][k / this.networkReductionFactor];
-                this.createConnectionBetweenCurrLayers(currLN[j], nextLN[k], weightValue);
+                try {
+                    const weightValue = this.layers[this.currentPosition * 2]['weights'][0]
+                    [j / this.networkReductionFactor][k / this.networkReductionFactor];
+                    this.createConnectionBetweenCurrLayers(currLN[j], nextLN[k], weightValue);
+                } catch (error) {
+                    console.error('layers', this.layers);
+                    console.error('this.currentPosition', this.currentPosition);
+                    console.error('j', j);
+                    console.error('k', k);
+                    break;
+                }
+
             }
             const percentage = Math.round(j / currLN.length * 100);
             if (percentage % 10 === 0) {
