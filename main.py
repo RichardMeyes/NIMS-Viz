@@ -8,6 +8,7 @@ import shutil
 import subprocess
 
 import static.backend.MLP as MLP
+import static.backend.HEATMAP as HEATMAP
 
 FRONTEND_DIR = "static/frontend/dist"
 ASSETS_DIR = "static/frontend/dist/assets"
@@ -79,6 +80,21 @@ def mlp():
 
     return json.dumps(return_obj)
 
+
+@app.route("/calc/heatmap", methods=["POST", "OPTIONS"])
+@cross_origin()
+def calcHeatmap():
+    """layers, layerObjs"""
+
+    params = request.get_json(force=True)
+    print(params)
+
+    # parse arguments from POST body
+    layers = params["layers"]
+    layerObjs = params["layerObjs"]
+    return_obj = {"result": HEATMAP.heatmap(layers, layerObjs)}
+
+    return json.dumps(return_obj)
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

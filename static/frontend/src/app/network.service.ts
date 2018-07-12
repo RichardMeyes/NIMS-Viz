@@ -1,29 +1,49 @@
 import { Injectable } from '@angular/core';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+// import { Http } from '@angular/http';
+import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+
+import { from, Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 import * as tfjs from '@tensorflow/tfjs';
-import { Layers } from 'three';
+const httpOptions = {
+  headers: new HttpHeaders({
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length, X-Requested-With'
+  })
+};
 
 @Injectable({
   providedIn: 'root'
 })
 export class NetworkService {
+  // const httpOptions = {
+  //   headers: new HttpHeaders({
+  //     'Content-Type':  'application/json',
+  //     'Authorization': 'my-auth-token'
+  //   })
+  // };
+  // CORS headers
+  // private headers = new Headers({
+  //   'Content-Type': 'application/x-www-form-urlencoded',
+  //   'Access-Control-Allow-Origin': '*',
+  //   'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,OPTIONS',
+  //   'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length, X-Requested-With'
+  // });
+  // private httpOptions = new RequestOptions({ headers: this.headers });
   private layers;
   private networkReductionFactor = 0.5;
   private convertedLayerObjs;
   private moleculeStruct = [];
   private heatmapCanvasResolution = 1.0; // 8.0;
   private heatmapCanvasHeight = 1024 * this.heatmapCanvasResolution;
-  private heatmapCanvasWidth = 1024 * this.heatmapCanvasResolution;
 
   // angle which defines possible heatmaparea
   private angleSpan = 130.0;
   // center point in UV texture coordinates:
   private pointcenter = [438.669, 650.677];
-  // point consisting of furthest point to the right and furthest point to the bottom.
-  // Resulting in a point that can span the area between 0-90°
-  private point90 = [515.674, 594.35];
 
   /* old values
   let radiusInner = 75;
@@ -42,7 +62,7 @@ export class NetworkService {
     return this.moleculeStruct;
   }
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
   loadFromJson(): Observable<any> {
     return from(tfjs.loadModel('./assets/ann/json/model.json'))
@@ -138,8 +158,6 @@ export class NetworkService {
         const randomOffsetY = (Math.random() * 20) - 10;
         const xCenter = radiusToCenterOfNode * Math.cos(layer.nodesAngle * (Math.PI / 180)) + randomOffsetX;
         const yCenter = radiusToCenterOfNode * Math.sin(layer.nodesAngle * (Math.PI / 180)) + randomOffsetY;
-        // add uv centerpoint as offset. y axis is flipped in heatmap
-        const heatmapValue = 0.5;
         const centerOfNode = [xCenter + this.pointcenter[0] - layerOffset, this.heatmapCanvasHeight - (yCenter + this.pointcenter[1])];
         // expand around point. this will be the reference to
         tempHeatmapNodes.push(centerOfNode);
@@ -188,6 +206,37 @@ export class NetworkService {
       this.moleculeStruct.push(tempLayerObj);
 
     }
+  }
+
+  public asyncCalcHeatmap(layers, layerObjs) {
+    const body = `layers=${layers}&` + `layerObjs=${layerObjs}`;
+
+    /**
+    * Posts to the server, maps the response to the handlerFunction (extractData)
+    * and catches errors with the handleError function
+    */
+    return this.http.post('/calc/heatmap', body, httpOptions)
+      .pipe(
+        catchError(this.handleError)
+      );
+    // .map((res: Response) => this.extractData(res))
+    // .catch((error: any) => this.handleError(error));
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    if (error.error instanceof ErrorEvent) {
+      // A client-side or network error occurred. Handle it accordingly.
+      console.error('An error occurred:', error.error.message);
+    } else {
+      // The backend returned an unsuccessful response code.
+      // The response body may contain clues as to what went wrong,
+      console.error(
+        `Backend returned code ${error.status}, ` +
+        `body was: ${error.error}`);
+    }
+    // return an observable with a user-facing error message
+    return throwError(
+      'Something bad happened; please try again later.');
   }
 
 }
