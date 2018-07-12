@@ -1,0 +1,17 @@
+
+> node-sass@4.9.2 install Z:\NG-Netz\static\frontend\node_modules\node-sass
+> node scripts/install.js
+
+Downloading binary from https://github.com/sass/node-sass/releases/download/v4.9.2/win32-x64-57_binding.node
+Download complete
+Binary saved to Z:\NG-Netz\static\frontend\node_modules\node-sass\vendor\win32-x64-57\binding.node
+Caching binary to C:\Users\ue957233\AppData\Roaming\npm-cache\node-sass\4.9.2\win32-x64-57_binding.node
+
+> node-sass@4.9.2 postinstall Z:\NG-Netz\static\frontend\node_modules\node-sass
+> node scripts/build.js
+
+Binary found at Z:\NG-Netz\static\frontend\node_modules\node-sass\vendor\win32-x64-57\binding.node
+Testing binary
+Binary is fine
++ node-sass@4.9.2
+added 8 packages, removed 11 packages, updated 9 packages and moved 9 packages in 86.143s
