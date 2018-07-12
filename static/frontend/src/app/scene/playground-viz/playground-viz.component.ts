@@ -16,6 +16,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   @Input() topology: any;
+  @Input() weights: any;
 
   context; base;
   playCanvasWidth;
@@ -37,13 +38,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.rawChanges.pipe(debounceTime(500)).subscribe(
       filteredChanges => {
         this.setupTopology(filteredChanges);
-        this.setupWeights({ topology: undefined, weights: [] });
+        this.setupWeights(filteredChanges);
       }
     )
-    this.playgroundService.modelWeightsEveryBatch.subscribe(weights => {
-      let filteredChanges = { topology: undefined, weights: weights };
-      this.setupWeights(filteredChanges);
-    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -56,12 +53,10 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
       else this.rawChanges.next({ topology: this.changesTopology, weights: undefined });
     }
 
-    // if (changes.weights) {
-    //   if (changes.weights.currentValue && changes.weights.currentValue.length > 0) {
-    //     this.changesWeights = changes.weights;
-    //     this.rawChanges.next({ topology: this.changesTopology, weights: this.changesWeights });
-    //   }
-    // }
+    if (changes.weights) {
+      this.changesWeights = changes.weights;
+      this.rawChanges.next({ topology: this.changesTopology, weights: this.changesWeights });
+    }
   }
 
   setupTopology(filteredChanges) {
@@ -106,7 +101,25 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   setupWeights(filteredChanges) {
     // weights
+    // https://stackoverflow.com/questions/32751411/json-foreach-get-key-and-value/32751447
+
     if (filteredChanges.weights) {
+      let trainingResult = filteredChanges.weights.currentValue;
+
+      Object.keys(trainingResult).forEach(epoch => {
+        Object.keys(trainingResult[epoch]).forEach(layer => {
+          trainingResult[epoch][layer].forEach(destination => {
+            destination.forEach(source => {
+              
+            });
+          });
+        });
+      });
+
+      // ==================================================
+      // old code
+      // ==================================================
+
       let filteredData = [];
       let layers = filteredChanges.weights;
       let savedSourceIndex = 0;
@@ -145,6 +158,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
         .range(["rgb(63,81,181)", "rgb(244,67,54)"]);
 
       this.bindWeights(filteredData);
+
+      // ==================================================
     }
 
     this.draw();

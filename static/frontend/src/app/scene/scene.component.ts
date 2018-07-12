@@ -322,6 +322,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   playgroundForm: FormGroup;
   playgroundData: Playground = new Playground();
 
+  vizWeights: any;
+
   get layers(): FormArray {
     return this.playgroundForm.get('layers') as FormArray;
   };
@@ -374,11 +376,15 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       objToSend.layers.push(layer.unitCount);
     });
 
-    console.log(objToSend);
+    // console.log("From frontend:");
+    // console.log(objToSend);
 
-    // this.playgroundService.trainNetwork(objToSend).subscribe(result => {
-    //   console.log(result);
-    // });
+    this.playgroundService.trainNetwork(objToSend).subscribe(result => {
+      // console.log("From backend:")
+      // console.log(JSON.stringify(result));
+
+      this.vizWeights = result;
+    });
   }
 
   // public findInvalidControls() {
