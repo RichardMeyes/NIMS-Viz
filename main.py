@@ -71,13 +71,13 @@ def mlp():
     # parse arguments from POST body
     layers = params["layers"]
     learning_rate = params["learning_rate"]
-    num_batches = params['num_batches']
-    batch_size = params['batch_size']
+    batch_size_train = params['batch_size_train']
+    batch_size_test = params['batch_size_test']
     num_epochs = params['num_epochs']
 
-    return_obj = {"result": MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)}
+    acc, weights = {"result": MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)}
 
-    return json.dumps(return_obj)
+    return json.dumps(weights)
 
 
 if __name__ == "__main__":
