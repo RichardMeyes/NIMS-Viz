@@ -144,7 +144,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       top: 0,
       width: 0.5,
       height: 0.475,
-      background: new THREE.Color(0.5, 0.5, 0.7),
+      background: new THREE.Color(1, 1, 1),
       eye: [0, 0, 3],
       up: [0, 1, 0],
       fov: 30
@@ -160,7 +160,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       top: 0,
       width: 0.5,
       height: 0.475,
-      background: new THREE.Color(0.7, 0.5, 0.5),
+      background: new THREE.Color(1, 1, 1),
       eye: [-0.25, 0.25, 51],
       up: [0, 0, 1],
       fov: 45
@@ -176,7 +176,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       top: 0.475,
       width: 0.5,
       height: 0.475,
-      background: new THREE.Color(0.5, 0.7, 0.7),
+      background: new THREE.Color(1, 1, 1),
       eye: [3.75, 0.25, 51],
       up: [0, 1, 0],
       fov: 45
