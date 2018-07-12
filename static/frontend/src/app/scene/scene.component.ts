@@ -328,7 +328,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   createForm() {
     this.playgroundForm = this.fb.group({
-      batch_size: [0, [Validators.required, Validators.min(0)]],
+      batch_size_train: [0, [Validators.required, Validators.min(0)]],
+      batch_size_test: [0, [Validators.required, Validators.min(0)]],
       // numBatches: [0, [Validators.required, Validators.min(0)]],
       num_epochs: [0, [Validators.required, Validators.min(0)]],
 
@@ -339,7 +340,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.playgroundForm.patchValue({
-      batch_size: this.playgroundData.batchSize,
+      batch_size_train: this.playgroundData.batchSize,
+      batch_size_test: this.playgroundData.batchSize,
       // numBatches: this.playgroundData.numBatches,
       num_epochs: this.playgroundData.epoch,
 
@@ -362,7 +364,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     let objToSend = {
       learning_rate: captureForm.learning_rate,
-      batch_size: captureForm.batch_size,
+      batch_size_train: captureForm.batch_size_train,
+      batch_size_test: captureForm.batch_size_test,
       num_epochs: captureForm.num_epochs,
       layers: []
     };
@@ -371,9 +374,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       objToSend.layers.push(layer.unitCount);
     });
 
-    this.playgroundService.trainNetwork(objToSend).subscribe(result => {
-      console.log(result);
-    });
+    console.log(objToSend);
+
+    // this.playgroundService.trainNetwork(objToSend).subscribe(result => {
+    //   console.log(result);
+    // });
   }
 
   // public findInvalidControls() {
