@@ -96,5 +96,35 @@ def calcHeatmap():
 
     return json.dumps(return_obj)
 
+    
+@cross_origin()
+def indexFolders():
+    """go through folders and scan for heatmaps"""
+
+    path = "./static/backend/"
+    validFiles = []
+
+    for subdir, dirs, files in os.walk(path):
+
+        for currFile in files:
+            name = os.path.join(subdir,currFile)
+            print(name)
+            # try parsing name
+            fileNameValues = []
+            idxStart = currFile.find('[')
+            idxEnd = currFile.find(']')
+            if(idxStart != -1 and idxEnd != -1):
+                fileNameValues = currFile[idxStart,idxEnd].split(',')
+            else:
+                break
+
+            indexedObj = {
+                'name': currFile,
+                'values': fileNameValues 
+            }
+            validFiles.append(indexedObj)
+
+    return json.dumps(validFiles)
+
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)
