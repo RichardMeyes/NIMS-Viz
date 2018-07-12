@@ -75,7 +75,7 @@ def mlp():
     batch_size_test = params['batch_size_test']
     num_epochs = params['num_epochs']
 
-    acc, weights = {"result": MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)}
+    acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
 
     return json.dumps(weights)
 
