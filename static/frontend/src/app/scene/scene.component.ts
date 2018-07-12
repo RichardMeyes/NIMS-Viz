@@ -274,9 +274,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // console.log('nach subscribe');
 
 
-    this.brainComponent.createConnectionsForLayers(this.weights,
+    this.networkService.asyncCalcHeatmap(this.weights);
+    /*this.brainComponent.createConnectionsForLayers(this.weights,
       this.networkService.getLayerObj,
-      this.networkService.getNetworkReductionFactor);
+      this.networkService.getNetworkReductionFactor);*/
   }
 
   public testingToggler(e) {

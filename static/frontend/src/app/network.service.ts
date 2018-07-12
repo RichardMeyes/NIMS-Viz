@@ -208,8 +208,8 @@ export class NetworkService {
     }
   }
 
-  public asyncCalcHeatmap(layers, layerObjs) {
-    const body = `layers=${layers}&` + `layerObjs=${layerObjs}`;
+  public asyncCalcHeatmap(layers) {
+    const body = `layers=${layers}&` + `layerObjs=${this.getLayerObj}`;
 
     /**
     * Posts to the server, maps the response to the handlerFunction (extractData)

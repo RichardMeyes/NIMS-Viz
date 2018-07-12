@@ -92,9 +92,9 @@ def calcHeatmap():
     # parse arguments from POST body
     layers = params["layers"]
     layerObjs = params["layerObjs"]
-    return_obj = {"result": HEATMAP.heatmap(layers, layerObjs)}
+    # return_obj = {"result": HEATMAP.heatmap(layers, layerObjs)}
 
-    return json.dumps(return_obj)
+    return json.dumps(HEATMAP.heatmap(layers, layerObjs))
 
     
 @cross_origin()
@@ -119,7 +119,7 @@ def indexFolders():
                 break
 
             indexedObj = {
-                'name': currFile,
+                'name': name,
                 'values': fileNameValues 
             }
             validFiles.append(indexedObj)

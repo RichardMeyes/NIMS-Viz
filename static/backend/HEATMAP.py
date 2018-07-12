@@ -5,6 +5,7 @@
 heatmapNormalData = []
 heatmapNodeData = []
 density = 5
+angle = 130.0
 
 def heatmap(layers, layerObjs):
     """
