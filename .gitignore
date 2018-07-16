@@ -41,5 +41,5 @@ Thumbs.db
 __pycache__/
 
 # image data
-/data/processed
-/data/raw
+/static/data/processed/*
+/static/data/raw/*
