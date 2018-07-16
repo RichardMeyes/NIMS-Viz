@@ -40,5 +40,6 @@ testem.log
 Thumbs.db
 __pycache__/
 
-# data folder
-/static/data/
+# image data
+/data/processed
+/data/raw
