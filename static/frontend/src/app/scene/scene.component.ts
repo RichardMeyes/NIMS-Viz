@@ -366,10 +366,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     let captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
 
     let objToSend = {
-      learning_rate: captureForm.learning_rate,
-      batch_size_train: captureForm.batch_size_train,
-      batch_size_test: captureForm.batch_size_test,
-      num_epochs: captureForm.num_epochs,
+      learning_rate: +captureForm.learning_rate,
+      batch_size_train: +captureForm.batch_size_train,
+      batch_size_test: +captureForm.batch_size_test,
+      num_epochs: +captureForm.num_epochs,
       layers: []
     };
 

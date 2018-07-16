@@ -40,9 +40,9 @@ export class PlaygroundService {
   trainNetwork(data) {
     const httpOptions = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-    };    
-    return this.http.get("./assets/MLP[20, 15, 10].json", httpOptions);
-    // return this.http.post("http://localhost:5000/nn/MLP", data, httpOptions);
+    };
+    // return this.http.get("./assets/MLP[20, 15, 10].json", httpOptions);
+    return this.http.post("http://localhost:5000/nn/MLP", data, httpOptions);
   }
 
   generateData(numPoints, coeff, sigma = 0.04) {
