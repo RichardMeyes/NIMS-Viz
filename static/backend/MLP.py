@@ -59,11 +59,11 @@ class Net(nn.Module):
             for i_layer in range(len(self.layers)):
                 layer = self.__getattr__("h{0}".format(i_layer+1))
                 weights = layer.weight.data.numpy().tolist()
-                self.weights_dict["epoch_{0}".format(epoch)] = {"h{0}".format(i_layer+1): weights}
+                self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             weights = self.output.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)] = {"output": weights}
+            self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
         #save weights
-        with open("static/data/weights/MLP{0}.json".format(self.layers), "w+") as f:
+        with open("static/data/weights/MLP{0}.json".format(self.layers), "w") as f:
             json.dump(self.weights_dict, f)
 
         # save trained net
