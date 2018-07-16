@@ -18,7 +18,7 @@ import { update } from '@tensorflow/tfjs-layers/dist/variables';
 import { Playground, TfjsLayer } from '../playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
-import { MqttService, IMqttMessage } from 'ngx-mqtt';
+// import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 
 @Component({
@@ -144,7 +144,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     private playgroundService: PlaygroundService,
     private changeDetector: ChangeDetectorRef,
     private fb: FormBuilder,
-    private _mqttService: MqttService) {
+    // private _mqttService: MqttService
+  ) {
     // this.networkService.loadFromJson().subscribe(
     //   (weights) => {
     //     this.weights = weights;
@@ -154,9 +155,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     //   }
     // );    
 
-    this.subscription = this._mqttService.observe('my/topic').subscribe((message: IMqttMessage) => {
-      this.message = message.payload.toString();
-    });
+    // this.subscription = this._mqttService.observe('my/topic').subscribe((message: IMqttMessage) => {
+    //   this.message = message.payload.toString();
+    // });
   }
 
   ngOnInit() {
@@ -467,7 +468,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   public message: string;
 
   public unsafePublish(topic: string, message: string): void {
-    this._mqttService.unsafePublish(topic, message, { qos: 1, retain: true });
+    // this._mqttService.unsafePublish(topic, message, { qos: 1, retain: true });
   }
 
   public ngOnDestroy() {

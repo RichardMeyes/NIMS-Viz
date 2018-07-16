@@ -100,69 +100,35 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   setupWeights(filteredChanges) {
-    // weights
-    // https://stackoverflow.com/questions/32751411/json-foreach-get-key-and-value/32751447
+    let filteredData = [];
 
-    if (filteredChanges.weights) {
+    if (filteredChanges.weights && filteredChanges.weights.currentValue) {
       let trainingResult = filteredChanges.weights.currentValue;
 
-      Object.keys(trainingResult).forEach(epoch => {
-        Object.keys(trainingResult[epoch]).forEach(layer => {
-          trainingResult[epoch][layer].forEach(destination => {
-            destination.forEach(source => {
-              
-            });
+      Object.keys(trainingResult).forEach((epoch, epochIndex) => {
+        setTimeout(() => {
+          Object.keys(trainingResult[epoch]).forEach((layer, layerIndex) => {
+            if (layer != "output") {
+              trainingResult[epoch][layer].forEach((destination, destinationIndex) => {
+                destination.forEach((source, sourceIndex) => {
+                  filteredData.push({
+                    layer: layerIndex,
+                    source: sourceIndex,
+                    target: destinationIndex,
+                    value: source,
+                    unitSpacing: (this.canvas.height / +destination.length),
+                    targetUnitSpacing: (this.canvas.height / +trainingResult[epoch][layer].length)
+                  });
+                });
+              });
+            }
           });
-        });
+          this.bindWeights(filteredData);
+          this.draw();
+        }, 1500 * epochIndex);
       });
-
-      // ==================================================
-      // old code
-      // ==================================================
-
-      let filteredData = [];
-      let layers = filteredChanges.weights;
-      let savedSourceIndex = 0;
-      let layerIndexCount = 0;
-      let maxWeight = 0; let minWeight = 0;
-
-      for (let layerIndex = 0; layerIndex < layers.length; layerIndex++) {
-        layers[layerIndex].weights[0].forEach((source, sourceIndex) => {
-          for (let targetIndex = 0; targetIndex < source.length; targetIndex++) {
-            filteredData.push({ layer: layerIndexCount, isBias: 0, source: sourceIndex, target: targetIndex, value: (source[targetIndex] * Math.pow(10, 16) % 100), unitSpacing: (this.canvas.height / +layers[layerIndex].weights[0].length), targetUnitSpacing: (this.canvas.height / +layers[layerIndex].weights[1].length) });
-            if (targetIndex == 0) {
-              minWeight = source[targetIndex];
-              maxWeight = source[targetIndex];
-            }
-            else {
-              if (source[targetIndex] < minWeight) minWeight = source[targetIndex];
-              if (source[targetIndex] > maxWeight) maxWeight = source[targetIndex];
-            }
-          }
-          // source.forEach((target, targetIndex) => {
-          //   filteredData.push({ layer: layerIndexCount, isBias: 0, source: sourceIndex, target: targetIndex, value: target, unitSpacing: (this.canvas.height / +layers[layerIndex].weights[0].length), targetUnitSpacing: (this.canvas.height / +layers[layerIndex].weights[1].length) });
-          // });
-          savedSourceIndex = sourceIndex;
-        });
-        layers[layerIndex].weights[1].forEach((target, targetIndex) => {
-          // filteredData.push({ layer: layerIndex, isBias: 1, source: (savedSourceIndex + 1), target: targetIndex, value: target, unitSpacing: (this.canvas.height / +batch[layerIndex].weights[0].length) });
-        });
-        if (layers[layerIndex].weights[0].length > 0) layerIndexCount++;
-      }
-
-
-      minWeight = minWeight * Math.pow(10, 16) % 100;
-      maxWeight = maxWeight * Math.pow(10, 16) % 100;
-      this.interpolatedColor = d3.scaleLinear()
-        .domain([minWeight, maxWeight])
-        .range(["rgb(63,81,181)", "rgb(244,67,54)"]);
-
-      this.bindWeights(filteredData);
-
-      // ==================================================
     }
 
-    this.draw();
     // let self = this;
     // let t = d3.timer((elapsed) => {
     //   self.draw();

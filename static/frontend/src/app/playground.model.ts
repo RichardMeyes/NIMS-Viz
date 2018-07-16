@@ -16,8 +16,9 @@ export class Playground {
         this.epoch = 1000;
 
         this.mnistLayers = [
-            new TfjsLayer(32, "relu"),
-            new TfjsLayer(16, "relu")
+            new TfjsLayer(20, "relu"),
+            new TfjsLayer(15, "relu"),
+            new TfjsLayer(10, "relu")
         ];
 
         this.learningRates = [
