@@ -101,6 +101,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   setupWeights(filteredChanges) {
     let filteredData = [];
+    let maxWeight = 0; let minWeight = 0;
 
     if (filteredChanges.weights && filteredChanges.weights.currentValue) {
       let trainingResult = filteredChanges.weights.currentValue;
@@ -111,6 +112,16 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
             if (layer != "output") {
               trainingResult[epoch][layer].forEach((destination, destinationIndex) => {
                 destination.forEach((source, sourceIndex) => {
+                  if (sourceIndex == 0) {
+                    minWeight = source;
+                    maxWeight = source;
+                  }
+                  else {
+                    if (source < minWeight) minWeight = source;
+                    if (source > maxWeight) maxWeight = source;
+                  }
+
+
                   filteredData.push({
                     layer: layerIndex,
                     source: sourceIndex,
@@ -123,6 +134,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
               });
             }
           });
+          this.interpolatedColor = d3.scaleLinear()
+            .domain([minWeight, maxWeight])
+            .range(["rgb(63,81,181)", "rgb(244,67,54)"]);
+
+
           this.bindWeights(filteredData);
           this.draw();
         }, 1500 * epochIndex);

@@ -13,7 +13,7 @@ export class Playground {
     constructor() {
         this.batchSize = 64;
         this.numBatches = 150;
-        this.epoch = 1000;
+        this.epoch = 5;
 
         this.mnistLayers = [
             new TfjsLayer(20, "relu"),
