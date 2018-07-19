@@ -187,6 +187,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // }
     }
   ];
+  isHeatmapChanged = true;
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
@@ -273,8 +274,20 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // });
     // console.log('nach subscribe');
 
+    // console.log(this.weights);
+    this.networkService.asyncCalcHeatmap(this.weights).subscribe(
+      data => {
+        console.log('heatmap data received', data);
+        this.heatmapNodeData = data['heatmapNodeData'];
+        console.log(this.heatmapNodeData.length);
+        console.log('this.heatmapNodeData', this.heatmapNodeData);
 
-    this.networkService.asyncCalcHeatmap(this.weights);
+
+        this.heatmapNormalData = data['heatmapNormalData'];
+        this.isHeatmapChanged = true;
+      }
+    );
+
     /*this.brainComponent.createConnectionsForLayers(this.weights,
       this.networkService.getLayerObj,
       this.networkService.getNetworkReductionFactor);*/
@@ -340,7 +353,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
 
     for (const view of this.views) {
-      console.log('view', view);
+      // console.log('view', view);
 
       const camera = new THREE.PerspectiveCamera(view.fov, window.innerWidth / window.innerHeight, 1, 2000);
       camera.position.fromArray(view.eye);
@@ -402,7 +415,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     const render = () => {
       requestAnimationFrame(render);
-      if (this.redraw && this.showBrainView) {
+      if (this.redraw && this.showBrainView && this.isHeatmapChanged) {
+        console.log('redrawing heatmap');
+        this.isHeatmapChanged = false;
         // always let 2DBrainPlane look at camera
         // this.brainUVMapMesh.lookAt(this.camera.position);
         // last layer has no connections to "next" layer
@@ -412,6 +427,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
         // set radius and blur radius
         this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
         this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
+        console.log('applying this dataset to heatmap', this.heatmapNormalData);
         this.heatmapNormal.data(this.heatmapNormalData);
 
         this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
@@ -464,6 +480,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   public updateHeatmapData(updatedHeatmapData, type) {
+    console.log('triggered updateHeatmapData output');
     if (type === 'normal') {
       this.heatmapNormalData = updatedHeatmapData;
     } else if (type === 'node') {
@@ -472,6 +489,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   public updateHeatmapCanvasTexture(updatedHeatmapCanvasTexture, type) {
+    console.log('triggered updateHeatmapCanvasTexture output');
     if (type === 'normal') {
       this.heatmapCanvasNormalTexture = updatedHeatmapCanvasTexture;
     } else if (type === 'node') {

@@ -57,7 +57,10 @@ def convert(filename):
         os.mkdir(app.config['DESTINATION_DIR'])
 
     source = app.config["SOURCE_DIR"] + filename
-    cmd = ["tensorflowjs_converter", "--input_format", "keras", source, app.config["DESTINATION_DIR"]]
+    cmd = [
+        "tensorflowjs_converter", "--input_format", "keras", source,
+        app.config["DESTINATION_DIR"]
+    ]
     subprocess.run(cmd, shell=True)
     return "Conversion done."
 
@@ -76,7 +79,10 @@ def mlp():
     batch_size = params['batch_size']
     num_epochs = params['num_epochs']
 
-    return_obj = {"result": MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)}
+    return_obj = {
+        "result":
+        MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)
+    }
 
     return json.dumps(return_obj)
 
@@ -85,18 +91,14 @@ def mlp():
 @cross_origin()
 def calcHeatmap():
     """layers, layerObjs"""
+    params = request.get_json()
+    #print(params)
+    print('after params')
 
-    params = request.get_json(force=True)
-    print(params)
 
-    # parse arguments from POST body
-    layers = params["layers"]
-    layerObjs = params["layerObjs"]
-    # return_obj = {"result": HEATMAP.heatmap(layers, layerObjs)}
+    return json.dumps(HEATMAP.heatmap(params['layers'], params['layerObjs']))
 
-    return json.dumps(HEATMAP.heatmap(layers, layerObjs))
 
-    
 @cross_origin()
 def indexFolders():
     """go through folders and scan for heatmaps"""
@@ -107,24 +109,22 @@ def indexFolders():
     for subdir, dirs, files in os.walk(path):
 
         for currFile in files:
-            name = os.path.join(subdir,currFile)
+            name = os.path.join(subdir, currFile)
             print(name)
             # try parsing name
             fileNameValues = []
             idxStart = currFile.find('[')
             idxEnd = currFile.find(']')
-            if(idxStart != -1 and idxEnd != -1):
-                fileNameValues = currFile[idxStart,idxEnd].split(',')
+            if (idxStart != -1 and idxEnd != -1):
+                fileNameValues = currFile[idxStart, idxEnd].split(',')
             else:
                 break
 
-            indexedObj = {
-                'name': name,
-                'values': fileNameValues 
-            }
+            indexedObj = {'name': name, 'values': fileNameValues}
             validFiles.append(indexedObj)
 
     return json.dumps(validFiles)
+
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

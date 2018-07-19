@@ -8,7 +8,8 @@ import { map, catchError } from 'rxjs/operators';
 import * as tfjs from '@tensorflow/tfjs';
 const httpOptions = {
   headers: new HttpHeaders({
-    'Content-Type': 'application/x-www-form-urlencoded',
+    // 'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length, X-Requested-With'
@@ -52,7 +53,7 @@ export class NetworkService {
   private radiusOuter = 230;
   private radiusRange = this.radiusOuter - this.radiusInner;
 
-  public get getLayerObj(): Object {
+  public get getLayerObj(): Array<Object> {
     return this.convertedLayerObjs;
   }
   public get getNetworkReductionFactor(): Number {
@@ -209,13 +210,27 @@ export class NetworkService {
   }
 
   public asyncCalcHeatmap(layers) {
-    const body = `layers=${layers}&` + `layerObjs=${this.getLayerObj}`;
+    console.log('asyncCalcHeatmap');
+    // console.log(this.getLayerObj);
+    // const layerObjJson = {};
+    // for (let i = 0; i < this.getLayerObj.length; i++) {
+    //   const element = this.getLayerObj[i];
+    //   layerObjJson[i] = element;
+    // }
+    // console.log('layerobj: ', this.getLayerObj);
+    // console.log('layerobjJSON: ', layerObjJson);
+    const jsonBody = {
+      'layers': layers,
+      'layerObjs': this.getLayerObj
+    };
+
+    // const body = `layers=${layers}&` + `layerObjs=${layerObjJson}`;
 
     /**
     * Posts to the server, maps the response to the handlerFunction (extractData)
     * and catches errors with the handleError function
     */
-    return this.http.post('/calc/heatmap', body, httpOptions)
+    return this.http.post('/calc/heatmap', jsonBody, httpOptions)
       .pipe(
         catchError(this.handleError)
       );
