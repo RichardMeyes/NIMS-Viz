@@ -35,9 +35,9 @@ def heatmap(layers, layerObjs):
 
 def createConnectionBetweenCurrLayers(firstNode, secondNode, weightValue):
     heatmapNormalConnections = highlightConnection(firstNode, secondNode, weightValue)
-    heatmapNormalData.append(heatmapNormalConnections)
+    heatmapNormalData.extend(heatmapNormalConnections)
     heatmapNodeConnections = highlightNode(firstNode, weightValue)
-    heatmapNodeData.append(heatmapNodeConnections)
+    heatmapNodeData.extend(heatmapNodeConnections)
 
 
 def highlightConnection(currNode, nextNode, value):

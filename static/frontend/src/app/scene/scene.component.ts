@@ -277,20 +277,15 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // console.log(this.weights);
     this.networkService.asyncCalcHeatmap(this.weights).subscribe(
       data => {
-        console.log('heatmap data received', data);
         this.heatmapNodeData = data['heatmapNodeData'];
-        console.log(this.heatmapNodeData.length);
-        console.log('this.heatmapNodeData', this.heatmapNodeData);
-
-
         this.heatmapNormalData = data['heatmapNormalData'];
         this.isHeatmapChanged = true;
       }
     );
 
-    /*this.brainComponent.createConnectionsForLayers(this.weights,
-      this.networkService.getLayerObj,
-      this.networkService.getNetworkReductionFactor);*/
+    // this.brainComponent.createConnectionsForLayers(this.weights,
+    //   this.networkService.getLayerObj,
+    //   this.networkService.getNetworkReductionFactor);
   }
 
   public testingToggler(e) {
@@ -416,7 +411,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     const render = () => {
       requestAnimationFrame(render);
       if (this.redraw && this.showBrainView && this.isHeatmapChanged) {
-        console.log('redrawing heatmap');
+        // console.log('redrawing heatmap');
         this.isHeatmapChanged = false;
         // always let 2DBrainPlane look at camera
         // this.brainUVMapMesh.lookAt(this.camera.position);
@@ -427,7 +422,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
         // set radius and blur radius
         this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
         this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
-        console.log('applying this dataset to heatmap', this.heatmapNormalData);
+        // console.log('applying this dataset to heatmap', this.heatmapNormalData);
         this.heatmapNormal.data(this.heatmapNormalData);
 
         this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
@@ -484,6 +479,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     if (type === 'normal') {
       this.heatmapNormalData = updatedHeatmapData;
     } else if (type === 'node') {
+      console.log('updatedHeatmapData', updatedHeatmapData);
       this.heatmapNodeData = updatedHeatmapData;
     }
   }

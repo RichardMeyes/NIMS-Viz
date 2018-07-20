@@ -35,7 +35,7 @@ export class NetworkService {
   // });
   // private httpOptions = new RequestOptions({ headers: this.headers });
   private layers;
-  private networkReductionFactor = 0.5;
+  private networkReductionFactor = 1;
   private convertedLayerObjs;
   private moleculeStruct = [];
   private heatmapCanvasResolution = 1.0; // 8.0;
