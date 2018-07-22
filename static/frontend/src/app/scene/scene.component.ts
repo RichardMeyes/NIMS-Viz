@@ -279,13 +279,54 @@ export class SceneComponent implements OnInit, AfterViewInit {
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];
         this.heatmapNormalData = data['heatmapNormalData'];
-        this.isHeatmapChanged = true;
+        this.applyingDataToHeatmaps();
+
+        // setTimeout(
+        //   this.applyingDataToHeatmaps.bind(this),
+        //   0
+        // );
+
       }
     );
 
     // this.brainComponent.createConnectionsForLayers(this.weights,
     //   this.networkService.getLayerObj,
     //   this.networkService.getNetworkReductionFactor);
+  }
+
+  private applyingDataToHeatmaps() {
+    console.log('applying data to heatmap');
+
+    this.heatmapNormal.clear();
+    console.log('heatmapNormal cleared');
+    this.heatmapNodes.clear();
+    console.log('heatmapNodes cleared');
+    // set radius and blur radius
+    this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
+    console.log('heatmapNormal radius done');
+    this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
+    console.log('heatmapNormal gradient done');
+    // console.log('applying this dataset to heatmap', this.heatmapNormalData);
+    this.heatmapNormal.data(this.heatmapNormalData);
+    console.log('heatmapNormal data done');
+
+    this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
+    console.log('heatmapNodes radius done');
+    this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
+    console.log('heatmapNodes gradient done');
+    this.heatmapNodes.data(this.heatmapNodeData);
+    console.log('heatmapNodes data done');
+    // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
+    // this.isHeatmapChanged = true;
+
+    this.heatmapNormal.draw();
+    console.log('heatmapNormal drawn');
+    this.heatmapNodes.draw();
+    console.log('heatmapNodes drawn');
+    this.heatmapCanvasNormalTexture.needsUpdate = true;
+    console.log('heatmapCanvasNormalTexture needs update');
+    this.heatmapCanvasNodeTexture.needsUpdate = true;
+    console.log('heatmapCanvasNodeTexture needs update');
   }
 
   public testingToggler(e) {
@@ -410,38 +451,23 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
     const render = () => {
       requestAnimationFrame(render);
-      if (this.redraw && this.showBrainView && this.isHeatmapChanged) {
-        // console.log('redrawing heatmap');
-        this.isHeatmapChanged = false;
-        // always let 2DBrainPlane look at camera
-        // this.brainUVMapMesh.lookAt(this.camera.position);
-        // last layer has no connections to "next" layer
-        // if (stepperCnt < convertedLayerObjs.length - 1) {
-        this.heatmapNormal.clear();
-        this.heatmapNodes.clear();
-        // set radius and blur radius
-        this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
-        this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
-        // console.log('applying this dataset to heatmap', this.heatmapNormalData);
-        this.heatmapNormal.data(this.heatmapNormalData);
+      // if (this.redraw && this.showBrainView && this.isHeatmapChanged) {
+      //   console.log('redrawing heatmap');
+      //   this.isHeatmapChanged = false;
+      //   // always let 2DBrainPlane look at camera
+      //   // this.brainUVMapMesh.lookAt(this.camera.position);
+      //   // last layer has no connections to "next" layer
+      //   // if (stepperCnt < convertedLayerObjs.length - 1) {
+      //   // }
 
-        this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
-        this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
-        this.heatmapNodes.data(this.heatmapNodeData);
-        // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
-        this.heatmapNormal.draw();
-        this.heatmapNodes.draw();
-        this.heatmapCanvasNormalTexture.needsUpdate = true;
-        this.heatmapCanvasNodeTexture.needsUpdate = true;
-        // }
-        this.redraw = false;
-      } else if (this.redraw && !this.showBrainView) {
-        // render molecule
-      } else if (this.fpsHack >= 60) {
-        this.fpsHack = 0;
-        this.redraw = true;
-      }
-      this.fpsHack++;
+      //   this.redraw = false;
+      // } else if (this.redraw && !this.showBrainView) {
+      //   // render molecule
+      // } else if (this.fpsHack >= 60) {
+      //   this.fpsHack = 0;
+      //   this.redraw = true;
+      // }
+      // this.fpsHack++;
       // console.log('trying to render this scene:', this.scene);
       // this.renderer.render(this.scene, this.camera);
       for (const view of this.views) {
