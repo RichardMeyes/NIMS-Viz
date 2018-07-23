@@ -98,32 +98,43 @@ def calcHeatmap():
 
     return json.dumps(HEATMAP.heatmap(params['layers'], params['layerObjs']))
 
-
+@app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()
 def indexFolders():
     """go through folders and scan for heatmaps"""
 
-    path = "./static/backend/"
+    print('SERVER DEBUG: indexFolders...')
+
+    path = "./static/data"
     validFiles = []
 
-    for subdir, dirs, files in os.walk(path):
+    print('os.walk(path) ',os.walk(path))
 
+    for subdir, dirs, files in os.walk(path):
+        print('for subdir: ')
+        print(subdir)
+        print('dir: ')
+        print(dirs)
+        print('files: ')
+        print(files)
         for currFile in files:
-            name = os.path.join(subdir, currFile)
-            print(name)
-            # try parsing name
+            pathName = os.path.join(subdir, currFile)
+            print('Name of File: ' + pathName)
+            # try parsing name , example name: MLP[20, 15, 10].json
             fileNameValues = []
             idxStart = currFile.find('[')
             idxEnd = currFile.find(']')
             if (idxStart != -1 and idxEnd != -1):
-                fileNameValues = currFile[idxStart, idxEnd].split(',')
+                fileNameValues = currFile[idxStart+1:idxEnd].split(',')
             else:
-                break
+                continue
 
-            indexedObj = {'name': name, 'values': fileNameValues}
+            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName}
             validFiles.append(indexedObj)
-
-    return json.dumps(validFiles)
+    
+    print('validFiles')
+    print(validFiles)
+    return json.dumps({'result':validFiles})
 
 
 if __name__ == "__main__":

@@ -70,6 +70,15 @@ export class NetworkService {
       .pipe(map(model => this.extractWeights(model)));
   }
 
+  public detectFiles() {
+    console.log('trying to detect files');
+
+    return this.http.get('/setup/filesearch', httpOptions)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
   private extractWeights(model: any) {
     const weights: any = [];
 

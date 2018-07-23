@@ -218,6 +218,22 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
+    console.log('ngoninit triggering detectfiles');
+    this.networkService.detectFiles().subscribe(
+      data => {
+        console.log('files found', data);
+        const newFileList = [];
+        for (const element of data['result']) {
+          newFileList.push({
+            value: element['pathName'],
+            viewValue: element['fileName']
+          });
+        }
+        // console.log('this.files', this.files);
+        // console.log('newFileList', newFileList);
+        this.files = newFileList;
+      }
+    );
     this.selectedFile = this.files[0].value;
     // console.log('ngOnInit');
   }
