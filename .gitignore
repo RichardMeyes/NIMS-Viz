@@ -4,6 +4,7 @@
 /static/frontend/dist
 /static/frontend/tmp
 /static/frontend/out-tsc
+*.pyc
 
 # dependencies
 /static/frontend/node_modules
