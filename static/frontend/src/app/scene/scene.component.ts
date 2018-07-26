@@ -8,6 +8,7 @@ import * as simpleheat from 'simpleheat/simpleheat.js';
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/controls/OrbitControls';
+import { log } from '@tensorflow/tfjs';
 
 // import { BrainComponent } from './brain/brain.component';
 
@@ -243,54 +244,15 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   }
 
-  public testFunction() {
-    // console.log('vor async');
-    // await this.brainComponent.createConnectionsForLayers(this.weights,
-    //     this.networkService.getLayerObj,
-    //     this.networkService.getNetworkReductionFactor);
-
-    // const promise = new Promise((resolve) => {
-    //   console.log('in promise b4 timeout');
-
-    //   // do async stuff
-    //   setTimeout(() => {
-    //     const testres = this.brainComponent.createConnectionsForLayers(this.weights,
-    //       this.networkService.getLayerObj,
-    //       this.networkService.getNetworkReductionFactor);
-    //   }, 0);
-    //   console.log('in promise after timeout');
-
-
-    //   // resolve(testres);
-    // }).then((data) => {
-    //   console.log('daten angekommen', data);
-    // });
-
-    // const calcObserver = new Observable(observer => {
-    //   // observer.next('Started');
-    //   // setTimeout(() => {
-    //   //   observer.next('Hello, observable world!');
-    //   // }, 1000);
-    //   // setTimeout(() => {
-    //   //   observer.complete();
-    //   // }, 4000);
-    //   observer.next(
-    //     this.brainComponent.createConnectionsForLayers(this.weights,
-    //       this.networkService.getLayerObj,
-    //       this.networkService.getNetworkReductionFactor)
-    //   );
-    // }
-    // );
-    // console.log('bereits nach async, vor sub');
-    // calcObserver.subscribe(async data => {
-    //   console.log('im subscribe');
-    //   console.log('Data', data);
-    //   await this.heatmapNormalData = data[0];
-    //   this.heatmapNodeData = data[1];
-    // });
-    // console.log('nach subscribe');
+  public createHeatmap() {
 
     // console.log(this.weights);
+    this.networkService.createHeatmapFromFile(this.selectedFile).subscribe(
+      data => {
+        console.log('data: ',data);
+      }
+    );
+    
     this.networkService.asyncCalcHeatmap(this.weights).subscribe(
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];

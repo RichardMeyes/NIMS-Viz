@@ -220,14 +220,6 @@ export class NetworkService {
 
   public asyncCalcHeatmap(layers) {
     console.log('asyncCalcHeatmap');
-    // console.log(this.getLayerObj);
-    // const layerObjJson = {};
-    // for (let i = 0; i < this.getLayerObj.length; i++) {
-    //   const element = this.getLayerObj[i];
-    //   layerObjJson[i] = element;
-    // }
-    // console.log('layerobj: ', this.getLayerObj);
-    // console.log('layerobjJSON: ', layerObjJson);
     const jsonBody = {
       'layers': layers,
       'layerObjs': this.getLayerObj
@@ -245,6 +237,16 @@ export class NetworkService {
       );
     // .map((res: Response) => this.extractData(res))
     // .catch((error: any) => this.handleError(error));
+  }
+
+  private createHeatmapFromFile(fileName:string){
+    const jsonBody = {
+      'fileName':fileName
+    }
+    return this.http.post('/calc/heatmapfromfile', jsonBody, httpOptions)
+    .pipe(
+      catchError(this.handleError)
+    );
   }
 
   private handleError(error: HttpErrorResponse) {
