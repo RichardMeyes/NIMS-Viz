@@ -55,15 +55,15 @@ export class SceneComponent implements OnInit, AfterViewInit {
     blur: 2,
     minOpacity: 0.05,
     color1: '#0000ff',
-    color1Trigger: 0.4,
-    color2: '#00ff00',
-    color2Trigger: 0.65,
+    color1Trigger: 0.0,
+    color2: '#0000ff',
+    color2Trigger: 0.1,
     color3: '#ff0000',
     color3Trigger: 1.0,
     colorGradient: function () {
       const tempobj = {};
-      tempobj[0.0] = 'blue';
-      // tempobj[this.color1Trigger] = this.color1;
+      // tempobj[0.0] = 'blue';
+      tempobj[this.color1Trigger] = this.color1;
       tempobj[this.color2Trigger] = this.color2;
       tempobj[this.color3Trigger] = this.color3;
       return tempobj;
@@ -537,5 +537,16 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private getAspectRatio(): number {
     return window.innerWidth / window.innerHeight;
+  }
+
+  private refreshHeatmap() {
+    console.log(this.heatmapNormalConfig);
+    this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
+    this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
+    this.heatmapNormal.draw();
+    console.log('heatmapNormal drawn');
+    this.heatmapNodes.draw();
+    console.log('heatmapNodes drawn');
+    console.log('heatmapNormal refreshed');
   }
 }
