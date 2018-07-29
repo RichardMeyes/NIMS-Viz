@@ -9,7 +9,7 @@
 
             <mat-form-field>
                 <mat-select placeholder="File">
-                    <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFile=file.value">
+                    <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFileClick(file.value)">
                         {{ file.viewValue }}
                     </mat-option>
                 </mat-select>

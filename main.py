@@ -111,12 +111,6 @@ def indexFolders():
     print('os.walk(path) ',os.walk(path))
 
     for subdir, dirs, files in os.walk(path):
-        print('for subdir: ')
-        print(subdir)
-        print('dir: ')
-        print(dirs)
-        print('files: ')
-        print(files)
         for currFile in files:
             pathName = os.path.join(subdir, currFile)
             print('Name of File: ' + pathName)
@@ -126,16 +120,28 @@ def indexFolders():
             idxEnd = currFile.find(']')
             if (idxStart != -1 and idxEnd != -1):
                 fileNameValues = currFile[idxStart+1:idxEnd].split(',')
+                epochMinMax = getEpochsFromFile(pathName)
             else:
                 continue
 
-            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName}
+            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName, 'epochMinMax':epochMinMax}
             validFiles.append(indexedObj)
     
-    print('validFiles')
-    print(validFiles)
     return json.dumps({'result':validFiles})
 
+def getEpochsFromFile(filePath):
+    epochMinMax = [0,0]
+    epochNumbers = []
+    with open(filePath) as json_data:
+        d = json.load(json_data)
+        for key in d:
+            if(key.find('epoch') != -1):
+                epochNumbers.append(key[6:])
+            print('key:')
+            print(key)
+    if(len(epochNumbers)>0):
+        epochMinMax = [min(epochNumbers),max(epochNumbers)]
+    return epochMinMax
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

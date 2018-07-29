@@ -95,18 +95,18 @@ export class SceneComponent implements OnInit, AfterViewInit {
   // }
 
   files = [
-    { value: 'model1.h5', viewValue: 'File 1' },
-    { value: 'model2.h5', viewValue: 'File 2' },
-    { value: 'model3.h5', viewValue: 'File 3' }
+    { value: 'model1.h5', viewValue: 'File 1', epochRange: [0, 0] },
+    { value: 'model2.h5', viewValue: 'File 2', epochRange: [0, 0] },
+    { value: 'model3.h5', viewValue: 'File 3', epochRange: [0, 0] }
   ];
 
-  private selectedFile;
+  private selectedFileName;
 
   layerCount = 15;
   nodeCount = 15;
   minOpac = 40;
 
-  epochRange = [25, 60];
+  private epochRange;
 
   colors: string[] = [
     '#FF6633',
@@ -226,7 +226,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
         for (const element of data['result']) {
           newFileList.push({
             value: element['pathName'],
-            viewValue: element['fileName']
+            viewValue: element['fileName'],
+            epochRange: element['epochMinMax']
           });
         }
         // console.log('this.files', this.files);
@@ -234,12 +235,18 @@ export class SceneComponent implements OnInit, AfterViewInit {
         this.files = newFileList;
       }
     );
-    this.selectedFile = this.files[0].value;
+    this.selectedFileClick(this.files[0].value);
     // console.log('ngOnInit');
   }
 
+  private selectedFileClick(fileName) {
+    this.selectedFileName = fileName;
+    // change slider values
+    this.epochRange = this.files.find(element => element.viewValue === fileName).epochRange;
+  }
+
   public startCalc() {
-    console.log('quick test', this.selectedFile);
+    console.log('quick test', this.selectedFileName);
 
   }
 
