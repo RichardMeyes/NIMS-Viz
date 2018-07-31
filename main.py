@@ -146,9 +146,7 @@ def getEpochsFromFile(filePath):
         d = json.load(json_data)
         for key in d:
             if(key.find('epoch') != -1):
-                epochNumbers.append(key[6:])
-            print('key:')
-            print(key)
+                epochNumbers.append(int(key[6:]))
     if(len(epochNumbers)>0):
         epochMinMax = [min(epochNumbers),max(epochNumbers)]
     return epochMinMax
@@ -160,7 +158,7 @@ def loadWeightsFromFile(fileName):
         for currFile in files:
             pathName = os.path.join(subdir, currFile)
             print('Name of File: ' + pathName)
-            if(fileName === currFile):
+            if(fileName == currFile):
                 return pathName
     
     return ''

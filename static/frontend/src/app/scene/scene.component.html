@@ -29,7 +29,7 @@
             <div fxFlex="grow"></div>
             <div>{{epochRange[1]}}</div>
         </div>
-        <nouislider [connect]="true" [min]="1" [max]="100" [step]="1" [(ngModel)]="epochRange"></nouislider>
+        <nouislider [connect]="true" [min]="epochRange[0]" [max]="epochRange[1]" [step]="1" [(ngModel)]="epochValue"></nouislider>
         <mat-slide-toggle [checked]="!showBrainView" (change)="testingToggler($event)" class="setting-item">Neural Netowrk</mat-slide-toggle>
         <mat-slide-toggle class="setting-item last-item">ANN</mat-slide-toggle>
     </div>

@@ -8,7 +8,6 @@ import * as simpleheat from 'simpleheat/simpleheat.js';
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/controls/OrbitControls';
-import { log } from '@tensorflow/tfjs';
 
 // import { BrainComponent } from './brain/brain.component';
 
@@ -96,18 +95,18 @@ export class SceneComponent implements OnInit, AfterViewInit {
   // }
 
   files = [
-    { value: 'model1.h5', viewValue: 'File 1', epochRange: [0, 0] },
-    { value: 'model2.h5', viewValue: 'File 2', epochRange: [0, 0] },
-    { value: 'model3.h5', viewValue: 'File 3', epochRange: [0, 0] }
+    { value: 'model1.h5', viewValue: 'File 1', epochRange: [0, 1] },
+    { value: 'model2.h5', viewValue: 'File 2', epochRange: [0, 1] },
+    { value: 'model3.h5', viewValue: 'File 3', epochRange: [0, 1] }
   ];
 
-  private selectedFileName;
+  private selectedFile;
 
   layerCount = 15;
   nodeCount = 15;
   minOpac = 40;
 
-  private epochRange;
+  private epochRange = [0, 1];
 
   colors: string[] = [
     '#FF6633',
@@ -189,6 +188,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }
   ];
   isHeatmapChanged = true;
+  epochValue: number;
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
@@ -234,32 +234,36 @@ export class SceneComponent implements OnInit, AfterViewInit {
         // console.log('this.files', this.files);
         // console.log('newFileList', newFileList);
         this.files = newFileList;
+        console.log(this.files);
+        this.selectedFileClick(this.files[0].value);
       }
     );
     this.selectedFileClick(this.files[0].value);
     // console.log('ngOnInit');
   }
 
-  private selectedFileClick(fileName) {
-    this.selectedFileName = fileName;
+  private selectedFileClick(filePath) {
+    this.selectedFile = filePath;
     // change slider values
-    this.epochRange = this.files.find(element => element.viewValue === fileName).epochRange;
+    console.log('epochrange from object: ', this.files.find(element => element.value === filePath).epochRange);
+    this.epochRange = this.files.find(element => element.value === filePath).epochRange;
+    this.epochValue = this.epochRange[0];
   }
 
   public startCalc() {
-    console.log('quick test', this.selectedFileName);
+    console.log('quick test', this.selectedFile);
 
   }
 
   public createHeatmap() {
 
     // console.log(this.weights);
-    this.networkService.createHeatmapFromFile(this.selectedFile).subscribe(
-      data => {
-        console.log('data: ',data);
-      }
-    );
-    
+    // this.networkService.createHeatmapFromFile(this.selectedFile).subscribe(
+    //   data => {
+    //     console.log('data: ', data);
+    //   }
+    // );
+
     this.networkService.asyncCalcHeatmap(this.weights).subscribe(
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];
