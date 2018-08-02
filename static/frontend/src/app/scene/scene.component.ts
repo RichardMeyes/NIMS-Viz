@@ -211,7 +211,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.networkService.loadFromJson().subscribe(
       (weights) => {
         this.weights = weights;
-        // console.log(this.weights);
+        console.log('weights from json', this.weights);
         this.networkService.createNetworkFromWeights(this.weights);
         this.setup();
       }
@@ -258,29 +258,22 @@ export class SceneComponent implements OnInit, AfterViewInit {
   public createHeatmap() {
 
     // console.log(this.weights);
-    // this.networkService.createHeatmapFromFile(this.selectedFile).subscribe(
-    //   data => {
-    //     console.log('data: ', data);
-    //   }
-    // );
-
-    this.networkService.asyncCalcHeatmap(this.weights).subscribe(
+    this.networkService.createHeatmapFromFile(this.selectedFile, this.epochValue).subscribe(
       data => {
+        console.log('data: ', data);
         this.heatmapNodeData = data['heatmapNodeData'];
         this.heatmapNormalData = data['heatmapNormalData'];
         this.applyingDataToHeatmaps();
-
-        // setTimeout(
-        //   this.applyingDataToHeatmaps.bind(this),
-        //   0
-        // );
-
       }
     );
 
-    // this.brainComponent.createConnectionsForLayers(this.weights,
-    //   this.networkService.getLayerObj,
-    //   this.networkService.getNetworkReductionFactor);
+    // this.networkService.asyncCalcHeatmap(this.weights).subscribe(
+    //   data => {
+    //     this.heatmapNodeData = data['heatmapNodeData'];
+    //     this.heatmapNormalData = data['heatmapNormalData'];
+    //     this.applyingDataToHeatmaps();
+    //   }
+    // );
   }
 
   private applyingDataToHeatmaps() {

@@ -2,10 +2,20 @@
 
 """
 
+import math
+import random
+
 heatmapNormalData = []
 heatmapNodeData = []
 density = 5
 angle = 130.0
+radiusInner = 100
+radiusOuter = 230
+radiusRange = radiusOuter - radiusInner
+pointcenter = [438.669, 650.677]
+heatmapCanvasResolution = 1.0 # 8.0;
+heatmapCanvasHeight = 1024 * heatmapCanvasResolution
+
 
 def heatmap(layers, layerObjs):
     """
@@ -32,23 +42,45 @@ def heatmap(layers, layerObjs):
     print('calculation done')
     return heatmapdata
 
-def heatmapFromWeights(filePath):
-    print("calculating heatmap from File")
-    print(filePath)
-    layerObjs = createLayerObjs()
-    layers = getLayers()
+def heatmapFromWeights(weightsObj):
+    print("calculating heatmap from weights")
+    #print(weightsObj)
+    # create keyarray
+    keyArray = []
+    for key in weightsObj:
+        if(key.find('h') != -1):
+            keyArray.append(key)
+    keyArray = sorted(keyArray)
+    keyArray = ['input']+keyArray+['output']
+    #print('fully sorted keyarray')
+    #print(keyArray)
+    layerObjs = createNetworkStruct(weightsObj,keyArray)
+
     heatmapdata = {}
-    for i in range(0,len(layerObjs)-1):
-        print('layer: '+str(i))
+    #print('weightValue')
+    #print(weightsObj[keyArray[1]])
+    #print('weightValue2')
+    #print(weightsObj[keyArray[1]][15])
+    #print('weightValue3')
+    #print(weightsObj[keyArray[1]][15][0]) # WIP
+    for i in range(1,len(keyArray)):
+        #print('layer: '+str(i) + str(weightsObj[]))
         #u'heatmapNodes'
+        lastLN = layerObjs[i - 1]['heatmapNodes']
+        #print(len(lastLN))
         currLN = layerObjs[i]['heatmapNodes']
-        nextLN = layerObjs[i + 1]['heatmapNodes']
+        #print(len(currLN))
+
+        # nextLN = layerObjs[i + 1]['heatmapNodes']
         # repeat connectionCount times -> amount of connections per layer
         for j in range(0,len(currLN)):
             # print('Progress: ' + (j * 100.0 / len(currLN) + '%')
-            for k in range(0,len(nextLN)):
-                weightValue = layers[i * 2]['weights'][0][j][k]
-                createConnectionBetweenCurrLayers(currLN[j], nextLN[k], weightValue)
+            for k in range(0,len(lastLN)):
+                try:
+                    weightValue = weightsObj[keyArray[i]][j][k] # WIP
+                    createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue)
+                except Exception:
+                    print('i: ' + str(i) + ' j: ' +str(j)+ ' k: '+str(k))
     
     heatmapdata['heatmapNormalData'] = heatmapNormalData
     heatmapdata['heatmapNodeData'] = heatmapNodeData
@@ -80,6 +112,55 @@ def highlightNode(currNode, value):
         tempHeatmapEdges.append([tempx, tempy, value])
         return tempHeatmapEdges
 
+def getLayers(filePath):
+    pass
+
+def createLayerObjs():
+    pass
+
+def createNetworkStruct(weightsObj,keyArray):
+    # anzahl layer
+    layercount = len(weightsObj.keys())
+    angleSpan = 150.0
+    areaPartAngle = angleSpan / layercount
+    layerObjs = []
+    for i in range(0,layercount):
+        layerObj = {
+            'layerID': i,
+            'size': 1.0 / (len(weightsObj[keyArray[i]]) * 2 + 1), # nodes + free spaces in between + one freespace
+            'nodeCount': len(weightsObj[keyArray[i]]),
+            'layerAngle': 180.0 - (areaPartAngle * i), # angle of the entire layer
+            'nodesAngle': 180 - ((areaPartAngle * i) - 0.5 * areaPartAngle) # angle bisector from layerpart
+        }
+        layerObj['heatmapNodes'] = createNodeCoordinates(layerObj)
+        layerObjs.append(layerObj)
+    return layerObjs
+
+def createNodeCoordinates(layer):
+    # definiere einen kreis mit mittelpunkt des knotens und radius % der gesamtlänge des alphamap zwischenraumes
+    diameterOfNodes = radiusRange * layer['size']
+    radiusOfNodes = diameterOfNodes / 2.0
+    tempHeatmapNodes = []
+    layerOffset = calcOffsetBasedOnAngle(layer['nodesAngle'])
+    for i in range(1,layer['nodeCount']+1): # Achtung <=
+        # radiusInner as minimum offset + nodesizes * i + radius to get to the center of the current node
+        radiusToCenterOfNode = radiusInner + diameterOfNodes * i + radiusOfNodes
+        randomOffsetX = (random.random() * 20) - 10
+        randomOffsetY = (random.random() * 20) - 10
+        xCenter = radiusToCenterOfNode * math.cos(layer['nodesAngle'] * (math.pi / 180)) + randomOffsetX
+        yCenter = radiusToCenterOfNode * math.sin(layer['nodesAngle'] * (math.pi / 180)) + randomOffsetY
+        centerOfNode = [xCenter + pointcenter[0] - layerOffset, heatmapCanvasHeight - (yCenter + pointcenter[1])]
+        # expand around point. this will be the reference to
+        tempHeatmapNodes.append(centerOfNode)
+    return tempHeatmapNodes
+
+def calcOffsetBasedOnAngle(angle):
+    offset = 0
+    if (angle > 170):
+        offset = 20
+    else:
+        offset = 0
+    return offset
 
 #if __name__ == "__main__":
  #   pass

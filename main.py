@@ -103,9 +103,9 @@ def calcHeatmap():
 def calcHeatmapFromFile():
     """layers, layerObjs"""
     params = request.get_json()
-    #print(params)
+    print(params)
     print('after params')
-    weights = loadWeightsFromFile(params['fileName'])
+    weights = loadWeightsFromFile(params['filePath'],params['epoch'])
     return json.dumps(HEATMAP.heatmapFromWeights(weights))
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
@@ -151,17 +151,13 @@ def getEpochsFromFile(filePath):
         epochMinMax = [min(epochNumbers),max(epochNumbers)]
     return epochMinMax
 
-def loadWeightsFromFile(fileName):
-    path = "./static/data"
-    print('os.walk(path) ',os.walk(path))
-    for subdir, dirs, files in os.walk(path):
-        for currFile in files:
-            pathName = os.path.join(subdir, currFile)
-            print('Name of File: ' + pathName)
-            if(fileName == currFile):
-                return pathName
-    
-    return ''
+def loadWeightsFromFile(filePath,epoch):
+    with open(filePath) as json_data:
+        d = json.load(json_data)
+        epochKey = 'epoch_'+str(epoch)
+        print(epochKey)
+        # print(d[epochKey])
+        return d[epochKey]
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

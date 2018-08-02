@@ -239,14 +239,15 @@ export class NetworkService {
     // .catch((error: any) => this.handleError(error));
   }
 
-  private createHeatmapFromFile(fileName:string){
+  public createHeatmapFromFile(filePath: string, epoch: number) {
     const jsonBody = {
-      'fileName':fileName
-    }
+      'filePath': filePath,
+      'epoch': epoch
+    };
     return this.http.post('/calc/heatmapfromfile', jsonBody, httpOptions)
-    .pipe(
-      catchError(this.handleError)
-    );
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
   private handleError(error: HttpErrorResponse) {
