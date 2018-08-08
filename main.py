@@ -92,9 +92,6 @@ def mlp():
 def calcHeatmap():
     """layers, layerObjs"""
     params = request.get_json()
-    #print(params)
-    print('after params')
-
 
     return json.dumps(HEATMAP.heatmap(params['layers'], params['layerObjs']))
 
@@ -103,8 +100,6 @@ def calcHeatmap():
 def calcHeatmapFromFile():
     """layers, layerObjs"""
     params = request.get_json()
-    print(params)
-    print('after params')
     weights = loadWeightsFromFile(params['filePath'],params['epoch'])
     return json.dumps(HEATMAP.heatmapFromWeights(weights))
 
@@ -112,14 +107,8 @@ def calcHeatmapFromFile():
 @cross_origin()
 def indexFolders():
     """go through folders and scan for heatmaps"""
-
-    print('SERVER DEBUG: indexFolders...')
-
     path = "./static/data"
     validFiles = []
-
-    print('os.walk(path) ',os.walk(path))
-
     for subdir, dirs, files in os.walk(path):
         for currFile in files:
             pathName = os.path.join(subdir, currFile)
@@ -155,8 +144,6 @@ def loadWeightsFromFile(filePath,epoch):
     with open(filePath) as json_data:
         d = json.load(json_data)
         epochKey = 'epoch_'+str(epoch)
-        print(epochKey)
-        # print(d[epochKey])
         return d[epochKey]
 
 if __name__ == "__main__":

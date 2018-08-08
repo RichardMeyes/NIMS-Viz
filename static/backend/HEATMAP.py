@@ -5,8 +5,6 @@
 import math
 import random
 
-heatmapNormalData = []
-heatmapNodeData = []
 density = 5
 angle = 130.0
 radiusInner = 100
@@ -44,7 +42,8 @@ def heatmap(layers, layerObjs):
 
 def heatmapFromWeights(weightsObj):
     print("calculating heatmap from weights")
-    #print(weightsObj)
+    heatmapNormalData = []
+    heatmapNodeData = []
     # create keyarray
     keyArray = []
     for key in weightsObj:
@@ -52,25 +51,12 @@ def heatmapFromWeights(weightsObj):
             keyArray.append(key)
     keyArray = sorted(keyArray)
     keyArray = ['input']+keyArray+['output']
-    #print('fully sorted keyarray')
-    #print(keyArray)
     layerObjs = createNetworkStruct(weightsObj,keyArray)
 
     heatmapdata = {}
-    #print('weightValue')
-    #print(weightsObj[keyArray[1]])
-    #print('weightValue2')
-    #print(weightsObj[keyArray[1]][15])
-    #print('weightValue3')
-    #print(weightsObj[keyArray[1]][15][0]) # WIP
     for i in range(1,len(keyArray)):
-        #print('layer: '+str(i) + str(weightsObj[]))
-        #u'heatmapNodes'
         lastLN = layerObjs[i - 1]['heatmapNodes']
-        #print(len(lastLN))
         currLN = layerObjs[i]['heatmapNodes']
-        #print(len(currLN))
-
         # nextLN = layerObjs[i + 1]['heatmapNodes']
         # repeat connectionCount times -> amount of connections per layer
         for j in range(0,len(currLN)):
@@ -78,7 +64,10 @@ def heatmapFromWeights(weightsObj):
             for k in range(0,len(lastLN)):
                 try:
                     weightValue = weightsObj[keyArray[i]][j][k] # WIP
-                    createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue)
+                    heatmapNormalConnections, heatmapNodeConnections = createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue)
+                    heatmapNormalData.extend(heatmapNormalConnections)
+                    heatmapNodeData.extend(heatmapNodeConnections)
+
                 except Exception:
                     print('i: ' + str(i) + ' j: ' +str(j)+ ' k: '+str(k))
     
@@ -89,9 +78,8 @@ def heatmapFromWeights(weightsObj):
 
 def createConnectionBetweenCurrLayers(firstNode, secondNode, weightValue):
     heatmapNormalConnections = highlightConnection(firstNode, secondNode, weightValue)
-    heatmapNormalData.extend(heatmapNormalConnections)
     heatmapNodeConnections = highlightNode(firstNode, weightValue)
-    heatmapNodeData.extend(heatmapNodeConnections)
+    return heatmapNormalConnections, heatmapNodeConnections
 
 
 def highlightConnection(currNode, nextNode, value):

@@ -231,21 +231,16 @@ export class SceneComponent implements OnInit, AfterViewInit {
             epochRange: element['epochMinMax']
           });
         }
-        // console.log('this.files', this.files);
-        // console.log('newFileList', newFileList);
         this.files = newFileList;
-        console.log(this.files);
         this.selectedFileClick(this.files[0].value);
       }
     );
     this.selectedFileClick(this.files[0].value);
-    // console.log('ngOnInit');
   }
 
   private selectedFileClick(filePath) {
     this.selectedFile = filePath;
     // change slider values
-    console.log('epochrange from object: ', this.files.find(element => element.value === filePath).epochRange);
     this.epochRange = this.files.find(element => element.value === filePath).epochRange;
     this.epochValue = this.epochRange[0];
   }
@@ -256,11 +251,8 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   public createHeatmap() {
-
-    // console.log(this.weights);
     this.networkService.createHeatmapFromFile(this.selectedFile, this.epochValue).subscribe(
       data => {
-        console.log('data: ', data);
         this.heatmapNodeData = data['heatmapNodeData'];
         this.heatmapNormalData = data['heatmapNormalData'];
         this.applyingDataToHeatmaps();
@@ -277,38 +269,23 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private applyingDataToHeatmaps() {
-    console.log('applying data to heatmap');
-
     this.heatmapNormal.clear();
-    console.log('heatmapNormal cleared');
     this.heatmapNodes.clear();
-    console.log('heatmapNodes cleared');
     // set radius and blur radius
     this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
-    console.log('heatmapNormal radius done');
     this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
-    console.log('heatmapNormal gradient done');
     // console.log('applying this dataset to heatmap', this.heatmapNormalData);
     this.heatmapNormal.data(this.heatmapNormalData);
-    console.log('heatmapNormal data done');
 
     this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
-    console.log('heatmapNodes radius done');
     this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
-    console.log('heatmapNodes gradient done');
     this.heatmapNodes.data(this.heatmapNodeData);
-    console.log('heatmapNodes data done');
     // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
     // this.isHeatmapChanged = true;
-
     this.heatmapNormal.draw();
-    console.log('heatmapNormal drawn');
     this.heatmapNodes.draw();
-    console.log('heatmapNodes drawn');
     this.heatmapCanvasNormalTexture.needsUpdate = true;
-    console.log('heatmapCanvasNormalTexture needs update');
     this.heatmapCanvasNodeTexture.needsUpdate = true;
-    console.log('heatmapCanvasNodeTexture needs update');
   }
 
   public testingToggler(e) {
@@ -358,8 +335,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
       this.heatCanvas = this.brainComponent.getHeatmapCanvas;
       this.heatCanvasNodes = this.brainComponent.getHeatmapCanvasNodes;
-      // console.log('taken heatcanvas', this.heatCanvas);
-      // draw heatmap
       this.heatmapNormal = simpleheat(this.heatCanvas);
       this.heatmapNodes = simpleheat(this.heatCanvasNodes);
     } else {
@@ -369,9 +344,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private setupCamera() {
 
-
     for (const view of this.views) {
-      // console.log('view', view);
 
       const camera = new THREE.PerspectiveCamera(view.fov, window.innerWidth / window.innerHeight, 1, 2000);
       camera.position.fromArray(view.eye);
@@ -506,13 +479,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private refreshHeatmap() {
-    console.log(this.heatmapNormalConfig);
     this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
     this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
     this.heatmapNormal.draw();
-    console.log('heatmapNormal drawn');
     this.heatmapNodes.draw();
-    console.log('heatmapNodes drawn');
+    this.heatmapCanvasNormalTexture.needsUpdate = true;
+    this.heatmapCanvasNodeTexture.needsUpdate = true;
     console.log('heatmapNormal refreshed');
   }
 }
