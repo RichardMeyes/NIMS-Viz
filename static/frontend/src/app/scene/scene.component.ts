@@ -49,6 +49,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   private heatmapNodeData: any = [];
   private heatmapCanvasNormalTexture;
   private heatmapCanvasNodeTexture;
+  private drawFully = false;
 
   private heatmapNormalConfig = {
     radius: 4,
@@ -212,6 +213,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
       (weights) => {
         this.weights = weights;
         console.log('weights from json', this.weights);
+        // TODO: this network function is no longer needed?
         this.networkService.createNetworkFromWeights(this.weights);
         this.setup();
       }
@@ -251,7 +253,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   public createHeatmap() {
-    this.networkService.createHeatmapFromFile(this.selectedFile, this.epochValue).subscribe(
+    this.networkService.createHeatmapFromFile(this.selectedFile, this.epochValue, this.drawFully).subscribe(
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];
         this.heatmapNormalData = data['heatmapNormalData'];

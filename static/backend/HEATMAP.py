@@ -40,8 +40,9 @@ def heatmap(layers, layerObjs):
     print('calculation done')
     return heatmapdata
 
-def heatmapFromWeights(weightsObj):
+def heatmapFromWeights(weightsObj, drawFully):
     print("calculating heatmap from weights")
+    isFullyDrawn = drawFully
     heatmapNormalData = []
     heatmapNodeData = []
     # create keyarray
@@ -64,7 +65,7 @@ def heatmapFromWeights(weightsObj):
             for k in range(0,len(lastLN)):
                 try:
                     weightValue = weightsObj[keyArray[i]][j][k] # WIP
-                    heatmapNormalConnections, heatmapNodeConnections = createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue)
+                    heatmapNormalConnections, heatmapNodeConnections = createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue, isFullyDrawn)
                     heatmapNormalData.extend(heatmapNormalConnections)
                     heatmapNodeData.extend(heatmapNodeConnections)
 
@@ -76,20 +77,29 @@ def heatmapFromWeights(weightsObj):
     print('calculation done')
     return heatmapdata
 
-def createConnectionBetweenCurrLayers(firstNode, secondNode, weightValue):
-    heatmapNormalConnections = highlightConnection(firstNode, secondNode, weightValue)
+def createConnectionBetweenCurrLayers(firstNode, secondNode, weightValue, isFullyDrawn):
+    heatmapNormalConnections = highlightConnection(firstNode, secondNode, weightValue, isFullyDrawn)
     heatmapNodeConnections = highlightNode(firstNode, weightValue)
     return heatmapNormalConnections, heatmapNodeConnections
 
 
-def highlightConnection(currNode, nextNode, value):
+def highlightConnection(currNode, nextNode, value, isFullyDrawn):
         tempHeatmapEdges = []
-        # ignore the first and last point because those are in the nodes itself
-        for i in range(1,density):
-            tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * density)) * (nextNode[0] - currNode[0])
-            tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * density)) * (nextNode[1] - currNode[1])
-            # value should change here
-            tempHeatmapEdges.append([tempx, tempy, value])
+        if(isFullyDrawn):
+            # ignore the first and last point because those are in the nodes itself
+            for i in range(0,density+1):
+                tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * density)) * (nextNode[0] - currNode[0])
+                tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * density)) * (nextNode[1] - currNode[1])
+                # value should change here
+                tempHeatmapEdges.append([tempx, tempy, value])
+        else:
+            # ignore the first and last point because those are in the nodes itself
+            for i in range(1,density):
+                tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * density)) * (nextNode[0] - currNode[0])
+                tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * density)) * (nextNode[1] - currNode[1])
+                # value should change here
+                tempHeatmapEdges.append([tempx, tempy, value])
+
 
         return tempHeatmapEdges
 

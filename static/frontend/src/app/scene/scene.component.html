@@ -65,9 +65,9 @@
                 <div fxLayout="row">
                     <div class="setting-label">Color 1 Trigger</div>
                     <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.color1Trigger/100)}}</div>
+                    <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
                 </div>
-                <mat-slider min="1" max="100" step="1" [value]="heatmapNormalConfig.color1Trigger/100.0" (input)="heatmapNormalConfig.color1Trigger=$event.value/100.0; refreshHeatmap()"></mat-slider>
+                <mat-slider min="0.0" max="1.0" step="0.1" [value]="heatmapNormalConfig.color1Trigger" (input)="heatmapNormalConfig.color1Trigger=$event.value; refreshHeatmap()"></mat-slider>
                 <label for="">Color 2</label>
                 <div fxLayout="row">
                     <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
@@ -78,9 +78,9 @@
                 <div fxLayout="row">
                     <div class="setting-label">Color 2 Trigger</div>
                     <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.color2Trigger/100)}}</div>
+                    <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
                 </div>
-                <mat-slider min="1" max="100" step="1" [value]="heatmapNormalConfig.color2Trigger/100.0" (input)="heatmapNormalConfig.color2Trigger=$event.value/100.0; refreshHeatmap()"></mat-slider>
+                <mat-slider min="0.0" max="1.0" step="0.1" [value]="heatmapNormalConfig.color2Trigger" (input)="heatmapNormalConfig.color2Trigger=$event.value; refreshHeatmap()"></mat-slider>
                 <label for="">Color 3</label>
                 <div fxLayout="row">
                     <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
@@ -91,9 +91,10 @@
                 <div fxLayout="row">
                     <div class="setting-label">Color 3 Trigger</div>
                     <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.color3Trigger/100)}}</div>
+                    <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
                 </div>
-                <mat-slider min="1" max="100" step="1" [value]="heatmapNormalConfig.color3Trigger/100.0" (input)="heatmapNormalConfig.color3Trigger=$event.value/100.0; refreshHeatmap()"></mat-slider>
+                <mat-slider min="0.0" max="1.0" step="0.1" [value]="heatmapNormalConfig.color3Trigger" (input)="heatmapNormalConfig.color3Trigger=$event.value; refreshHeatmap()"></mat-slider>
+                <mat-slide-toggle [checked]="drawFully" (change)="drawFully = $event.checked" class="setting-item">Draw full map</mat-slide-toggle>
             </div>
         </mat-expansion-panel>
     </mat-accordion>

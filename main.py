@@ -101,7 +101,9 @@ def calcHeatmapFromFile():
     """layers, layerObjs"""
     params = request.get_json()
     weights = loadWeightsFromFile(params['filePath'],params['epoch'])
-    return json.dumps(HEATMAP.heatmapFromWeights(weights))
+    drawFully = params['drawFully']
+
+    return json.dumps(HEATMAP.heatmapFromWeights(weights, drawFully))
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()

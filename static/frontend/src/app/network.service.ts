@@ -239,11 +239,13 @@ export class NetworkService {
     // .catch((error: any) => this.handleError(error));
   }
 
-  public createHeatmapFromFile(filePath: string, epoch: number) {
+  public createHeatmapFromFile(filePath: string, epoch: number, drawFully: boolean) {
     const jsonBody = {
       'filePath': filePath,
-      'epoch': epoch
+      'epoch': epoch,
+      'drawFully': drawFully
     };
+
     return this.http.post('/calc/heatmapfromfile', jsonBody, httpOptions)
       .pipe(
         catchError(this.handleError)
