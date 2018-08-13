@@ -86,15 +86,6 @@ def mlp():
 
     return json.dumps(return_obj)
 
-
-@app.route("/calc/heatmap", methods=["POST", "OPTIONS"])
-@cross_origin()
-def calcHeatmap():
-    """layers, layerObjs"""
-    params = request.get_json()
-
-    return json.dumps(HEATMAP.heatmap(params['layers'], params['layerObjs']))
-
 @app.route("/calc/heatmapfromfile", methods=["POST", "OPTIONS"])
 @cross_origin()
 def calcHeatmapFromFile():
