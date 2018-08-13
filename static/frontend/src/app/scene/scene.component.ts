@@ -44,9 +44,9 @@ export class SceneComponent implements OnInit, AfterViewInit {
   private fpsHack = 0;
   public showBrainView = true;
   private heatmapNormal;
-  private heatmapNodes: any;
+  private heatmapNodes;
   private heatmapNormalData = [];
-  private heatmapNodeData: any = [];
+  private heatmapNodeData = [];
   private heatmapCanvasNormalTexture;
   private heatmapCanvasNodeTexture;
   private drawFully = false;
@@ -55,18 +55,25 @@ export class SceneComponent implements OnInit, AfterViewInit {
     radius: 4,
     blur: 2,
     minOpacity: 0.05,
+    weightValueMin: -10,
+    weightValueMax: 10,
     color1: '#0000ff',
     color1Trigger: 0.0,
-    color2: '#0000ff',
-    color2Trigger: 0.1,
+    color2: '#ffffff',
+    color2Trigger: 0.5,
     color3: '#ff0000',
     color3Trigger: 1.0,
     colorGradient: function () {
       const tempobj = {};
+      // convert triggervalues into percentages to be >= 0
       // tempobj[0.0] = 'blue';
-      tempobj[this.color1Trigger] = this.color1;
-      tempobj[this.color2Trigger] = this.color2;
-      tempobj[this.color3Trigger] = this.color3;
+      const diff = Math.abs(this.weightValueMax - this.weightValueMin);
+      const col1TriggerInPerc = parseFloat((Math.abs(this.color1Trigger - this.weightValueMin) / diff).toFixed(2));
+      const col2TriggerInPerc = parseFloat((Math.abs(this.color2Trigger - this.weightValueMin) / diff).toFixed(2));
+      const col3TriggerInPerc = parseFloat((Math.abs(this.color3Trigger - this.weightValueMin) / diff).toFixed(2));
+      tempobj[col1TriggerInPerc] = this.color1;
+      tempobj[col2TriggerInPerc] = this.color2;
+      tempobj[col3TriggerInPerc] = this.color3;
       return tempobj;
     }
   };
@@ -75,18 +82,20 @@ export class SceneComponent implements OnInit, AfterViewInit {
     radius: 1,
     blur: 0,
     minOpacity: 0.5,
-    color1: '#0000ff',
-    color1Trigger: 0.01,
-    color2: '#00ff00',
-    color2Trigger: 0.02,
-    color3: '#ff0000',
-    color3Trigger: 0.3,
+    color1: '#ff0000',
+    color1Trigger: 0.1,
+    // color2: '#00ff00',
+    // color2Trigger: 0.02,
+    // color3: '#ff0000',
+    // color3Trigger: 0.3,
     colorGradient: function () {
       const tempobj = {};
-      tempobj[0.0] = 'blue';
-      // tempobj[this.color1Trigger] = this.color1;
+      // const diff = Math.abs(this.weightValueMax - this.weightValueMin);
+      // const col3TriggerInPerc = parseFloat((Math.abs(this.color3Trigger - this.weightValueMin) / diff).toFixed(2));
+      // tempobj[0.0] = 'blue';
+      tempobj[this.color1Trigger] = this.color1;
       // tempobj[this.color2Trigger] = this.color2;
-      tempobj[this.color3Trigger] = this.color3;
+      // tempobj[col3TriggerInPerc] = this.color3;
       return tempobj;
     }
   };
@@ -209,19 +218,18 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   constructor(private networkService: NetworkService, private renderer2: Renderer2) {
-    this.networkService.loadFromJson().subscribe(
+    /*this.networkService.loadFromJson().subscribe(
       (weights) => {
         this.weights = weights;
         console.log('weights from json', this.weights);
         // TODO: this network function is no longer needed?
-        this.networkService.createNetworkFromWeights(this.weights);
-        this.setup();
+        // this.networkService.createNetworkFromWeights(this.weights);
+        // this.setup();
       }
-    );
+    );*/
   }
 
   ngOnInit() {
-    console.log('ngoninit triggering detectfiles');
     this.networkService.detectFiles().subscribe(
       data => {
         console.log('files found', data);
@@ -238,6 +246,10 @@ export class SceneComponent implements OnInit, AfterViewInit {
       }
     );
     this.selectedFileClick(this.files[0].value);
+  }
+
+  ngAfterViewInit() {
+    this.setup();
   }
 
   private selectedFileClick(filePath) {
@@ -257,6 +269,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];
         this.heatmapNormalData = data['heatmapNormalData'];
+        this.heatmapNormalConfig.weightValueMax = data['weightValueMax'];
+        this.heatmapNormalConfig.weightValueMin = data['weightValueMin'];
+        this.heatmapNormalConfig.color1Trigger = this.heatmapNormalConfig.weightValueMin;
+        this.heatmapNormalConfig.color2Trigger = this.heatmapNormalConfig.weightValueMin +
+        (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.0;
+        this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
         this.applyingDataToHeatmaps();
       }
     );
@@ -276,7 +294,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
     // set radius and blur radius
     this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
     this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
-    // console.log('applying this dataset to heatmap', this.heatmapNormalData);
     this.heatmapNormal.data(this.heatmapNormalData);
 
     this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
@@ -284,10 +301,25 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.heatmapNodes.data(this.heatmapNodeData);
     // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
     // this.isHeatmapChanged = true;
-    this.heatmapNormal.draw();
+    this.heatmapNormal.draw(this.heatmapNormalConfig.minOpacity);
     this.heatmapNodes.draw();
     this.heatmapCanvasNormalTexture.needsUpdate = true;
     this.heatmapCanvasNodeTexture.needsUpdate = true;
+  }
+
+  private refreshHeatmap() {
+    try {
+      this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
+      this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
+      this.heatmapNormal.draw(this.heatmapNormalConfig.minOpacity);
+      this.heatmapNodes.draw();
+      this.heatmapCanvasNormalTexture.needsUpdate = true;
+      this.heatmapCanvasNodeTexture.needsUpdate = true;
+      console.log('heatmapNormal refreshed!');
+    } catch (error) {
+      console.log('heatmap refresh failed', error);
+    }
+
   }
 
   public testingToggler(e) {
@@ -304,10 +336,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   public toggle() {
     this.snav.toggle();
-  }
-
-  ngAfterViewInit() {
-
   }
 
   private setup() {
@@ -445,7 +473,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
       // this.renderer.dispose();
     };
     render();
-    // console.log('render called');
   }
 
   private setupUtilities() {
@@ -458,17 +485,14 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   public updateHeatmapData(updatedHeatmapData, type) {
-    console.log('triggered updateHeatmapData output');
     if (type === 'normal') {
       this.heatmapNormalData = updatedHeatmapData;
     } else if (type === 'node') {
-      console.log('updatedHeatmapData', updatedHeatmapData);
       this.heatmapNodeData = updatedHeatmapData;
     }
   }
 
   public updateHeatmapCanvasTexture(updatedHeatmapCanvasTexture, type) {
-    console.log('triggered updateHeatmapCanvasTexture output');
     if (type === 'normal') {
       this.heatmapCanvasNormalTexture = updatedHeatmapCanvasTexture;
     } else if (type === 'node') {
@@ -478,15 +502,5 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private getAspectRatio(): number {
     return window.innerWidth / window.innerHeight;
-  }
-
-  private refreshHeatmap() {
-    this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
-    this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
-    this.heatmapNormal.draw();
-    this.heatmapNodes.draw();
-    this.heatmapCanvasNormalTexture.needsUpdate = true;
-    this.heatmapCanvasNodeTexture.needsUpdate = true;
-    console.log('heatmapNormal refreshed');
   }
 }

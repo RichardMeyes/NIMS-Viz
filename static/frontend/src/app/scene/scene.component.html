@@ -52,9 +52,9 @@
                 <div fxLayout="row">
                     <div class="setting-label">Minimum Opacity</div>
                     <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.minOpacity/100)}}</div>
+                    <div>{{(heatmapNormalConfig.minOpacity)}}</div>
                 </div>
-                <mat-slider min="1" max="100" step="1" [value]="heatmapNormalConfig.minOpacity" (input)="heatmapNormalConfig.minOpacity=$event.value;"></mat-slider>
+                <nouislider [connect]="false" [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity" (change)="refreshHeatmap()"></nouislider>
                 <label for="">Color 1</label>
                 <div fxLayout="row">
                     <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color1=$event; refreshHeatmap()"
@@ -67,7 +67,7 @@
                     <div fxFlex="grow"></div>
                     <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
                 </div>
-                <mat-slider min="0.0" max="1.0" step="0.1" [value]="heatmapNormalConfig.color1Trigger" (input)="heatmapNormalConfig.color1Trigger=$event.value; refreshHeatmap()"></mat-slider>
+                <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color1Trigger" (change)="refreshHeatmap()"></nouislider>
                 <label for="">Color 2</label>
                 <div fxLayout="row">
                     <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
@@ -80,7 +80,7 @@
                     <div fxFlex="grow"></div>
                     <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
                 </div>
-                <mat-slider min="0.0" max="1.0" step="0.1" [value]="heatmapNormalConfig.color2Trigger" (input)="heatmapNormalConfig.color2Trigger=$event.value; refreshHeatmap()"></mat-slider>
+                <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color2Trigger" (change)="refreshHeatmap()"></nouislider>
                 <label for="">Color 3</label>
                 <div fxLayout="row">
                     <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
@@ -93,7 +93,7 @@
                     <div fxFlex="grow"></div>
                     <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
                 </div>
-                <mat-slider min="0.0" max="1.0" step="0.1" [value]="heatmapNormalConfig.color3Trigger" (input)="heatmapNormalConfig.color3Trigger=$event.value; refreshHeatmap()"></mat-slider>
+                <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color3Trigger" (change)="refreshHeatmap()"></nouislider>
                 <mat-slide-toggle [checked]="drawFully" (change)="drawFully = $event.checked" class="setting-item">Draw full map</mat-slide-toggle>
             </div>
         </mat-expansion-panel>
