@@ -136,13 +136,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
     '#66991A',
     '#FF99E6',
   ];
-  color1: string;
-  color2: string;
-  color3: string;
 
-  col1Trigger = 40;
-  col2Trigger = 65;
-  col3Trigger = 100;
   heatCanvas: any;
   heatCanvasNodes: any;
   brainUVMapMesh: THREE.Mesh;
@@ -271,10 +265,12 @@ export class SceneComponent implements OnInit, AfterViewInit {
         this.heatmapNormalData = data['heatmapNormalData'];
         this.heatmapNormalConfig.weightValueMax = data['weightValueMax'];
         this.heatmapNormalConfig.weightValueMin = data['weightValueMin'];
-        this.heatmapNormalConfig.color1Trigger = this.heatmapNormalConfig.weightValueMin;
-        this.heatmapNormalConfig.color2Trigger = this.heatmapNormalConfig.weightValueMin +
-        (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.0;
+        this.heatmapNormalConfig.color1Trigger = this.heatmapNormalConfig.weightValueMin +
+        (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
+        this.heatmapNormalConfig.color2Trigger = this.heatmapNormalConfig.weightValueMax -
+          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
         this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
+        this.heatmapNodeConfig.color1Trigger = this.heatmapNormalConfig.weightValueMax;
         this.applyingDataToHeatmaps();
       }
     );
