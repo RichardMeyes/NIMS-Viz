@@ -52,8 +52,11 @@ def heatmapFromWeights(weightsObj, drawFully):
                 except Exception:
                     print('i: ' + str(i) + ' j: ' +str(j)+ ' k: '+str(k))
     
+    # convert weights to percentages
     for i in range(len(heatmapNormalData)):
         heatmapNormalData[i][2] = (heatmapNormalData[i][2]-weightValueMin)/abs(weightValueMax - weightValueMin)
+    for i in range(len(heatmapNodeData)):
+        heatmapNodeData[i][2] = (heatmapNodeData[i][2]-weightValueMin)/abs(weightValueMax - weightValueMin)
 
     heatmapdata['heatmapNormalData'] = heatmapNormalData
     heatmapdata['heatmapNodeData'] = heatmapNodeData
