@@ -1,3 +1,58 @@
+mat-expansion-panel {
+    width: 100vw;
+}
+
+mat-form-field, .form-field {
+    margin-right: 16px;
+}
+
+.plots {
+    margin-top: 16px;
+}
+
+.plot-item {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.chart-container {
+    position: relative;
+    margin: 0 auto;
+    height:300px;
+    width:300px;
+
+    > canvas {
+        max-width: 300px;
+        max-height: 300px;
+    }
+}
+
+nouislider {
+    width: 166px;
+}
+
+mcc-color-picker {
+    width: 80%;
+    padding: 0;
+}
+
+.color-config {
+    > div:nth-child(1) {
+        width: 45vw;
+    }
+
+    > div::nth-child(2) {
+        width: 50vw;
+    }
+}
+
+.spacer {
+    display: inline-block;
+    width: 16px;
+}
+
+
+
 canvas {
     width: 100vw;
     height: 100vh;

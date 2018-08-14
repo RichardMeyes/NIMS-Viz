@@ -1,15 +1,26 @@
-import { Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input } from '@angular/core';
+import {
+  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, AfterViewChecked, ChangeDetectorRef, OnDestroy
+} from '@angular/core';
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
 import * as Stats from 'stats.js/build/stats.min.js';
 import * as simpleheat from 'simpleheat/simpleheat.js';
+import * as tf from '@tensorflow/tfjs';
+import { Chart } from 'chart.js';
 
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/controls/OrbitControls';
 
 // import { BrainComponent } from './brain/brain.component';
+import { PlaygroundService } from '../playground.service';
+import { generate, Subscription } from 'rxjs';
+import { update } from '@tensorflow/tfjs-layers/dist/variables';
+import { Playground, TfjsLayer } from '../playground.model';
+import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
+import { debounceTime } from 'rxjs/operators';
+// import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 
 @Component({
@@ -17,10 +28,8 @@ import 'three/examples/js/controls/OrbitControls';
   templateUrl: './scene.component.html',
   styleUrls: ['./scene.component.scss']
 })
-export class SceneComponent implements OnInit, AfterViewInit {
+export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  @ViewChild('snav') snav;
-  // @ViewChild('canvas') private canvasRef;
   @ViewChild('brainComponent') brainComponent;
   @ViewChild('moleculeComponent') moleculeComponent;
   @Input() fixedTopGap: boolean;
@@ -114,7 +123,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   layerCount = 15;
   nodeCount = 15;
-  minOpac = 40;
 
   private epochRange = [0, 1];
 
@@ -194,24 +202,33 @@ export class SceneComponent implements OnInit, AfterViewInit {
   isHeatmapChanged = true;
   epochValue: number;
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event) {
-    this.windowWidth = window.innerWidth;
-    this.windowHeight = window.innerHeight;
+  color1: string;
+  color2: string;
+  color3: string;
 
-    try {
-      for (const view of this.views) {
-        view['camera'].aspect = this.windowWidth / this.windowHeight;
-        view['camera'].updateProjectionMatrix();
+  col1Trigger = 40;
+  col2Trigger = 65;
+  col3Trigger = 100;
 
-        this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
-  constructor(private networkService: NetworkService, private renderer2: Renderer2) {
+  // Playground
+  playgroundForm: FormGroup;
+  playgroundData: Playground = new Playground();
+
+  vizWeights: any;
+
+  // Mqtt
+  private subscription: Subscription;
+  public message: string;
+
+  constructor(
+    private networkService: NetworkService,
+    private renderer2: Renderer2,
+    private playgroundService: PlaygroundService,
+    private changeDetector: ChangeDetectorRef,
+    private fb: FormBuilder,
+    // private _mqttService: MqttService
+  ) {
     /*this.networkService.loadFromJson().subscribe(
       (weights) => {
         this.weights = weights;
@@ -221,9 +238,13 @@ export class SceneComponent implements OnInit, AfterViewInit {
         // this.setup();
       }
     );*/
+    // this.subscription = this._mqttService.observe('my/topic').subscribe((message: IMqttMessage) => {
+    //   this.message = message.payload.toString();
+    // });
   }
 
   ngOnInit() {
+    this.createForm();
     this.networkService.detectFiles().subscribe(
       data => {
         console.log('files found', data);
@@ -246,16 +267,28 @@ export class SceneComponent implements OnInit, AfterViewInit {
     this.setup();
   }
 
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    // this.windowWidth = window.innerWidth;
+    // this.windowHeight = window.innerHeight;
+
+    try {
+      for (const view of this.views) {
+        view['camera'].aspect = this.windowWidth / this.windowHeight;
+        view['camera'].updateProjectionMatrix();
+
+        this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   private selectedFileClick(filePath) {
     this.selectedFile = filePath;
     // change slider values
     this.epochRange = this.files.find(element => element.value === filePath).epochRange;
     this.epochValue = this.epochRange[0];
-  }
-
-  public startCalc() {
-    console.log('quick test', this.selectedFile);
-
   }
 
   public createHeatmap() {
@@ -266,7 +299,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
         this.heatmapNormalConfig.weightValueMax = data['weightValueMax'];
         this.heatmapNormalConfig.weightValueMin = data['weightValueMin'];
         this.heatmapNormalConfig.color1Trigger = this.heatmapNormalConfig.weightValueMin +
-        (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
+          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
         this.heatmapNormalConfig.color2Trigger = this.heatmapNormalConfig.weightValueMax -
           (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
         this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
@@ -330,10 +363,6 @@ export class SceneComponent implements OnInit, AfterViewInit {
     }, 1);
   }
 
-  public toggle() {
-    this.snav.toggle();
-  }
-
   private setup() {
     this.setupScene();
     this.setupCamera();
@@ -343,7 +372,7 @@ export class SceneComponent implements OnInit, AfterViewInit {
   }
 
   private setupScene() {
-    this.scene = new THREE.Scene();
+    // this.scene = new THREE.Scene();
 
     if (this.showBrainView) {
       // const sceneObjects = this.brainComponent.setupBrain();
@@ -498,5 +527,158 @@ export class SceneComponent implements OnInit, AfterViewInit {
 
   private getAspectRatio(): number {
     return window.innerWidth / window.innerHeight;
+  }
+
+
+  // ==================================================
+  // playground
+  // ==================================================
+
+
+  get layers(): FormArray {
+    return this.playgroundForm.get('layers') as FormArray;
+  }
+
+  createForm() {
+    this.playgroundForm = this.fb.group({
+      batch_size_train: [0, [Validators.required, Validators.min(0)]],
+      batch_size_test: [0, [Validators.required, Validators.min(0)]],
+      // numBatches: [0, [Validators.required, Validators.min(0)]],
+      num_epochs: [0, [Validators.required, Validators.min(0)]],
+
+      learning_rate: ['', Validators.required],
+      layerCount: [0, [Validators.required, Validators.min(0)]],
+
+      layers: this.fb.array([])
+    });
+
+    this.playgroundForm.patchValue({
+      batch_size_train: this.playgroundData.batchSize,
+      batch_size_test: this.playgroundData.batchSize,
+      // numBatches: this.playgroundData.numBatches,
+      num_epochs: this.playgroundData.epoch,
+
+      learning_rate: this.playgroundData.learningRates[0].value,
+      layerCount: this.playgroundData.layerCount
+    });
+
+    this.playgroundForm.setControl('layers', this.fb.array(
+      this.playgroundService.arrayOne(this.playgroundData.layerCount).map(layer => this.fb.group({
+        unitCount: [1, [Validators.required, Validators.min(1)]]
+      }))
+    ));
+
+    this.resetForm();
+    this.layerCountChange();
+  }
+
+  trainNetwork() {
+    const captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
+
+    const objToSend = {
+      learning_rate: +captureForm.learning_rate,
+      batch_size_train: +captureForm.batch_size_train,
+      batch_size_test: +captureForm.batch_size_test,
+      num_epochs: +captureForm.num_epochs,
+      layers: []
+    };
+
+    captureForm.layers.forEach(layer => {
+      objToSend.layers.push(layer.unitCount);
+    });
+
+    // console.log("From frontend:");
+    // console.log(objToSend);
+
+    this.playgroundService.trainNetwork(objToSend).subscribe(result => {
+      // console.log("From backend:")
+      // console.log(JSON.stringify(result));
+
+      this.vizWeights = result;
+    });
+  }
+
+  // public findInvalidControls() {
+  //   const invalid = [];
+  //   const controls = this.playgroundForm.controls;
+  //   for (const name in controls) {
+  //     if (controls[name].invalid) {
+  //       invalid.push(name);
+  //     }
+  //   }
+
+  //   for (const name in this.layers.controls) {
+  //     for (const name2 in this.layers.controls[name].controls) {
+  //       if (this.layers.controls[name].controls[name2].invalid) {
+  //         invalid.push(name2);
+  //       }
+  //     }
+  //   }
+
+  //   return invalid;
+  // }
+
+  reset() {
+    this.playgroundForm.patchValue({
+      batch_size: this.playgroundData.batchSize,
+      // numBatches: this.playgroundData.numBatches,
+      num_epochs: this.playgroundData.epoch,
+      layerCount: this.playgroundData.layerCount
+    });
+
+    while (this.layers.length !== 0) { this.layers.removeAt(0); }
+    for (let index = 0; index < this.playgroundForm.get('layerCount').value; index++) {
+      this.layers.push(this.fb.group({
+        unitCount: [1, [Validators.required, Validators.min(1)]]
+      }));
+    }
+    this.resetForm();
+  }
+
+  resetForm() {
+    for (let i = 0; i < this.playgroundData.layerCount; i++) {
+      const currLayer = this.playgroundData.mnistLayers[i];
+
+      this.layers.controls[i].setValue({
+        unitCount: currLayer.unitCount
+      });
+    }
+  }
+
+  layerCountChange() {
+    const layerCountControl = this.playgroundForm.get('layerCount');
+    layerCountControl.valueChanges.pipe(debounceTime(500)).forEach(
+      () => {
+        if (+this.playgroundForm.get('layerCount').value > this.layers.controls.length) {
+          for (let i = this.layers.controls.length; i < +this.playgroundForm.get('layerCount').value; i++) {
+            this.layers.push(this.fb.group({
+              unitCount: [1, [Validators.required, Validators.min(1)]]
+            }));
+          }
+        } else {
+          for (let i = this.layers.controls.length; i > +this.playgroundForm.get('layerCount').value; i--) {
+            this.layers.removeAt(i - 1);
+          }
+        }
+      }
+    );
+  }
+
+  delLayer(i: number) {
+    this.layers.removeAt(i);
+    this.playgroundForm.get('layerCount').setValue(this.layers.length);
+  }
+  // ==================================================
+
+  // ==================================================
+  // MQTT
+  // ==================================================
+
+  public unsafePublish(topic: string, message: string): void {
+    // this._mqttService.unsafePublish(topic, message, { qos: 1, retain: true });
+  }
+
+  public ngOnDestroy() {
+    this.subscription.unsubscribe();
   }
 }

@@ -1,139 +1,176 @@
-<mat-sidenav #snav mode="over" position="end" [fixedInViewport]="true" [fixedTopGap]="fixedTopGap">
     <mat-accordion>
         <mat-expansion-panel>
             <mat-expansion-panel-header>
                 <mat-panel-title>
-                    <h3>Setup</h3>
-                </mat-panel-title>
-            </mat-expansion-panel-header>
+                <strong>Playground</strong>
+            </mat-panel-title>
+            <mat-panel-description>
+                Build your own network!!
+            </mat-panel-description>
+        </mat-expansion-panel-header>
 
+        <form [formGroup]="playgroundForm" fxLayout="row wrap">
+            <div style="margin-top: 0.5rem;">
+                <strong>Mnist Data</strong>
+            </div>
+            <div fxFlex="grow"></div>
+            <div>
+                <mat-form-field>
+                    <input matInput placeholder="Batch Size Train" type="text" formControlName="batch_size_train">
+                </mat-form-field>
+                <mat-form-field>
+                    <input matInput placeholder="Batch Size Test" type="text" formControlName="batch_size_test">
+                </mat-form-field>
+                <!-- <mat-form-field>
+                    <input matInput placeholder="Number of Batches" type="text" formControlName="numBatches">
+                </mat-form-field> -->
+                <mat-form-field>
+                    <input matInput placeholder="Epoch" type="text" formControlName="num_epochs">
+                </mat-form-field>
+            </div>
+            <div fxFlex="grow"></div>
+            <div style="margin-top: 0.5rem;">
+                <strong>Model</strong>
+            </div>
+            <div fxFlex="grow"></div>
             <mat-form-field>
-                <mat-select [(value)]="selectedFile" placeholder="File">
-                    <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFileClick(file.value)">
-                        {{ file.viewValue }}
+                <input matInput placeholder="Number of Layers" type="number" min="0" formControlName="layerCount">
+            </mat-form-field>
+            <mat-form-field>
+                <mat-select placeholder="Learning Rate" formControlName="learning_rate">
+                    <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
+                        {{ learningRate.viewValue }}
                     </mat-option>
                 </mat-select>
             </mat-form-field>
-            <mat-action-row>
-                <button mat-button color="accent" (click)="startCalc()">Start the Calculation</button>
-                <button mat-button color="accent" (click)="createHeatmap()">Create Heatmap</button>
+            <div fxFlex="grow"></div>
+            <div>
+                <div formArrayName="layers">
+                    <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
+                        <div style="margin-top: 0.5rem;">
+                            <strong> {{ i+1 | ordinal }} Layer</strong>
+                        </div>
+                        <div fxLayout="row wrap">
+                            <mat-form-field>
+                                <input matInput placeholder="Number of Units" type="number" min="1" formControlName="unitCount">
+                            </mat-form-field>
+                            <button mat-icon-button (click)="delLayer(i)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </div>
+                        <mat-divider></mat-divider>
+                    </div>
+                </div>
+            </div>
+            <mat-action-row style="width: 100%;">
+                <button mat-button color="accent" (click)="reset()">Reset</button>
+                <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid">Train Network</button>
             </mat-action-row>
-        </mat-expansion-panel>
-    </mat-accordion>
+        </form>
+    </mat-expansion-panel>
 
-    <div fxLayout="column wrap" style="padding-left: 1.5rem; padding-right: 1.5rem;">
-        <div fxLayout="row" class="first-item">
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                <strong>Setup</strong>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+
+        <mat-form-field>
+            <mat-select [(value)]="selectedFile" placeholder="File">
+                <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFileClick(file.value)">
+                    {{ file.viewValue }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+        <div class="spacer"></div>
+        <!--<mat-slide-toggle [checked]="!showBrainView" (change)="testingToggler($event)" class="setting-item">Neural Netowrk</mat-slide-toggle>-->
+        <!--<mat-slide-toggle class="form-field">ANN</mat-slide-toggle>-->
+        <div fxLayout="row wrap" fxLayoutAlign="start center">
+            <div class="form-field">Epoch</div>
             <div>{{epochRange[0]}}</div>
-            <div fxFlex="grow"></div>
-            <div class="setting-label">Epoch</div>
-            <div fxFlex="grow"></div>
+            <nouislider [connect]="true" [min]="epochRange[0]" [max]="epochRange[1]" [step]="1" [(ngModel)]="epochValue"></nouislider>
             <div>{{epochRange[1]}}</div>
         </div>
-        <nouislider [connect]="true" [min]="epochRange[0]" [max]="epochRange[1]" [step]="1" [(ngModel)]="epochValue"></nouislider>
-        <mat-slide-toggle [checked]="!showBrainView" (change)="testingToggler($event)" class="setting-item">Neural Netowrk</mat-slide-toggle>
-        <mat-slide-toggle class="setting-item last-item">ANN</mat-slide-toggle>
-    </div>
+        <form>
+            <mat-action-row>
+                <button mat-button color="accent" (click)="createHeatmap()">Create Heatmap</button>
+            </mat-action-row>
+        </form>
+    </mat-expansion-panel>
 
-    <mat-accordion>
-        <mat-expansion-panel>
-            <mat-expansion-panel-header>
-                <mat-panel-title>
-                    <h3>Heatmap Config</h3>
-                </mat-panel-title>
-            </mat-expansion-panel-header>
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>
+            <mat-panel-title>
+                <strong>Heatmap Config</strong>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
 
-            <div fxLayout="column wrap">
-                <mat-form-field>
-                    <input matInput placeholder="Radius" [(value)]="heatmapNormalConfig.radius" (change)="heatmapNormalConfig.radius = $event.target.value; refreshHeatmap()" type="number">
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput placeholder="Blur" [(value)]="heatmapNormalConfig.blur" (change)="heatmapNormalConfig.blur = $event.target.value; refreshHeatmap()" type="number">
-                </mat-form-field>
-                <div fxLayout="row">
-                    <div class="setting-label">Minimum Opacity</div>
-                    <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.minOpacity)}}</div>
-                </div>
-                <nouislider [connect]="false" [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity" (change)="refreshHeatmap()"></nouislider>
-                <label for="">Color 1</label>
-                <div fxLayout="row">
-                    <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color1=$event; refreshHeatmap()"
+        <mat-form-field>
+            <input matInput placeholder="Radius" [(value)]="heatmapNormalConfig.radius" (change)="heatmapNormalConfig.radius = $event.target.value; refreshHeatmap()" type="number">
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput placeholder="Blur" [(value)]="heatmapNormalConfig.blur" (change)="heatmapNormalConfig.blur = $event.target.value; refreshHeatmap()" type="number">
+        </mat-form-field>
+        <div fxLayout="row wrap" fxLayoutAlign="start center">
+            <div class="form-field">Minimum Opacity</div>
+            <nouislider [connect]="false" [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity" (change)="refreshHeatmap()"></nouislider>
+            <div>{{(heatmapNormalConfig.minOpacity)}}</div>
+        </div>
+        <div fxLayout="row wrap" class="color-config">
+            <div fxLayout="row wrap" fxLayoutAlign="start center" class="form-field">
+                <label class="form-field">Color 1</label>
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color1=$event; refreshHeatmap()"
                         (selected)="heatmapNormalConfig.color1=$event; refreshHeatmap()" fxFlex="grow">
                         <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
-                    </mcc-color-picker>
-                </div>
-                <div fxLayout="row">
-                    <div class="setting-label">Color 1 Trigger</div>
-                    <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
-                </div>
+                </mcc-color-picker>
+            </div>
+            <div class="spacer"></div>
+            <div fxLayout="row wrap" fxLayoutAlign="start center">
+                <div class="form-field">Color 1 Trigger</div>
                 <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color1Trigger" (change)="refreshHeatmap()"></nouislider>
-                <label for="">Color 2</label>
-                <div fxLayout="row">
-                    <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
-                        (selected)="heatmapNormalConfig.color2=$event; refreshHeatmap()" fxFlex="grow">
-                        <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
-                    </mcc-color-picker>
-                </div>
-                <div fxLayout="row">
-                    <div class="setting-label">Color 2 Trigger</div>
-                    <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
-                </div>
+                <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
+            </div>
+        </div>
+        <div fxLayout="row wrap" class="color-config">
+            <div fxLayout="row wrap" fxLayoutAlign="start center" class="form-field">
+                <label class="form-field">Color 2</label>
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
+                    (selected)="heatmapNormalConfig.color2=$event; refreshHeatmap()" fxFlex="grow">
+                    <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
+                </mcc-color-picker>
+            </div>
+            <div class="spacer"></div>
+            <div fxLayout="row wrap" fxLayoutAlign="start center">
+                <div class="form-field">Color 2 Trigger</div>
                 <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color2Trigger" (change)="refreshHeatmap()"></nouislider>
-                <label for="">Color 3</label>
-                <div fxLayout="row">
-                    <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
+                <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
+            </div>
+        </div>
+        <div fxLayout="row wrap" class="color-config">
+            <div fxLayout="row wrap" fxLayoutAlign="start center" class="form-field">
+                <label class="form-field">Color 3</label>
+                <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
                         (selected)="heatmapNormalConfig.color3=$event; refreshHeatmap()" fxFlex="grow">
                         <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16"> </mcc-color-picker-collection>
-                    </mcc-color-picker>
-                </div>
-                <div fxLayout="row">
-                    <div class="setting-label">Color 3 Trigger</div>
-                    <div fxFlex="grow"></div>
-                    <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
-                </div>
+                </mcc-color-picker>
+            </div>
+            <div class="spacer"></div>
+            <div fxLayout="row wrap" fxLayoutAlign="start center">
+                <div class="form-field">Color 3 Trigger</div>
                 <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color3Trigger" (change)="refreshHeatmap()"></nouislider>
-                <mat-slide-toggle [checked]="drawFully" (change)="drawFully = $event.checked" class="setting-item">Draw full map</mat-slide-toggle>
+                <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
+            </div>
+            <mat-slide-toggle [checked]="drawFully" (change)="drawFully = $event.checked" class="setting-item">Draw full map</mat-slide-toggle>
             </div>
         </mat-expansion-panel>
     </mat-accordion>
 
-    <mat-accordion>
-        <mat-expansion-panel>
-            <mat-expansion-panel-header>
-                <mat-panel-title>
-                    <h3>Demo Layer</h3>
-                </mat-panel-title>
-            </mat-expansion-panel-header>
-
-            <div fxLayout="column wrap">
-                <div fxLayout="row">
-                    <div class="setting-label">Layer Count</div>
-                    <div fxFlex="grow"></div>
-                    <div>{{layerCount}}</div>
-                </div>
-                <mat-slider min="1" max="100" step="1" [value]="layerCount" (input)="layerCount=$event.value;"></mat-slider>
-                <div fxLayout="row">
-                    <div class="setting-label">Node Count</div>
-                    <div fxFlex="grow"></div>
-                    <div>{{nodeCount}}</div>
-                </div>
-                <mat-slider min="1" max="100" step="1" [value]="nodeCount" (input)="nodeCount=$event.value;"></mat-slider>
-                <mat-slide-toggle class="setting-item last-item">Edge Case</mat-slide-toggle>
-                <mat-action-row>
-                    <button mat-button color="accent">Create Network</button>
-                </mat-action-row>
-
-            </div>
-        </mat-expansion-panel>
-    </mat-accordion>
-
-</mat-sidenav>
-
-<mat-sidenav-content>
-    <!-- <canvas #canvas id="testcanvas"></canvas> -->
-    <app-brain #brainComponent (updatedHeatmapNormalData)="updateHeatmapData($event,'normal')" (updatedHeatmapNodeData)="updateHeatmapData($event,'node')"
-        (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')" (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
-    <app-molecule #moleculeComponent></app-molecule>
-</mat-sidenav-content>
+<div>
+    <app-playground-viz [topology]="playgroundForm.value" [weights]="vizWeights"></app-playground-viz>
+</div>
+<!-- <canvas #canvas id="testcanvas"></canvas> -->
+<app-brain #brainComponent (updatedHeatmapNormalData)="updateHeatmapData($event,'normal')" (updatedHeatmapNodeData)="updateHeatmapData($event,'node')"
+    (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')" (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
+<app-molecule #moleculeComponent></app-molecule>

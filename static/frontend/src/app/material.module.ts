@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 
 import {
   MatButtonModule,
+  MatCheckboxModule,
+  MatDividerModule,
   MatExpansionModule,
   MatIconModule,
   MatInputModule,
+  MatRadioModule,
   MatSelectModule,
   MatSidenavModule,
   MatSliderModule,
@@ -20,9 +23,12 @@ import { MccColorPickerModule } from '../../node_modules/material-community-comp
   imports: [
     CommonModule,
     MatButtonModule,
+    MatCheckboxModule,
+    MatDividerModule,
     MatExpansionModule,
     MatIconModule,
     MatInputModule,
+    MatRadioModule,
     MatSelectModule,
     MatSidenavModule,
     MatSliderModule,
@@ -33,9 +39,12 @@ import { MccColorPickerModule } from '../../node_modules/material-community-comp
   ],
   exports: [
     MatButtonModule,
+    MatCheckboxModule,
+    MatDividerModule,
     MatExpansionModule,
     MatIconModule,
     MatInputModule,
+    MatRadioModule,
     MatSelectModule,
     MatSidenavModule,
     MatSliderModule,

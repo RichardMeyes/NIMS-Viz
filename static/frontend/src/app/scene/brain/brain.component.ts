@@ -279,7 +279,6 @@ export class BrainComponent implements OnInit, OnDestroy {
     }
 
     private loadObject() {
-        // const loadedObjects = [];
         this.objectLoader = new THREE.OBJLoader();
         this.objectLoader.load('./assets/models/obj/Brain_Model_2.obj',
             (obj) => {
