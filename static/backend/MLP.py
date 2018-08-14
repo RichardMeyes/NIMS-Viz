@@ -1,7 +1,7 @@
 """
 
 """
-
+import json
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,6 +15,7 @@ class Net(nn.Module):
     def __init__(self, layers, num_epochs):
         self.layers = layers
         self.num_epochs = num_epochs
+        self.weights_dict = dict()
 
         # create Net
         super(Net, self).__init__()
@@ -51,6 +52,20 @@ class Net(nn.Module):
                                                                                    100. * batch_idx / len(
                                                                                        trainloader),
                                                                                    loss.data.item()))
+
+            # store weights after each epoch
+            weights = self.input.weight.data.numpy().tolist()
+            self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            for i_layer in range(len(self.layers)):
+                layer = self.__getattr__("h{0}".format(i_layer+1))
+                weights = layer.weight.data.numpy().tolist()
+                self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+            weights = self.output.weight.data.numpy().tolist()
+            self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+        #save weights
+        with open("static/data/weights/MLP{0}.json".format(self.layers), "w") as f:
+            json.dump(self.weights_dict, f)
+
         # save trained net
         torch.save(self.state_dict(), 'MLP.pt')
 
@@ -97,10 +112,10 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
     net.train_net(device, trainloader, criterion, optimizer)
     acc = net.test_net(device, testloader, criterion)
 
-    return acc
+    return acc, net.weights_dict
 
 
 if __name__ == "__main__":
 
-    acc = mlp(layers=(40, 40, 40), learning_rate=0.001, batch_size_train=64, batch_size_test=16, num_epochs=10)
+    acc, _ = mlp(layers=(40, 40, 40), learning_rate=0.001, batch_size_train=64, batch_size_test=16, num_epochs=10)
     print(acc)

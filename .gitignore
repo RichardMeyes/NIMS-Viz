@@ -2,12 +2,14 @@
 
 # compiled output
 /static/frontend/dist
+<<<<<<< HEAD
 /static/frontend/tmp
 /static/frontend/out-tsc
 *.pyc
 
 # dependencies
 /static/frontend/node_modules
+
 
 # IDEs and editors
 /.idea
@@ -38,3 +40,8 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+__pycache__/
+
+# image data
+/static/data/processed/*
+/static/data/raw/*
