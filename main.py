@@ -8,6 +8,7 @@ import shutil
 import subprocess
 
 import static.backend.MLP as MLP
+import static.backend.HEATMAP as HEATMAP
 
 FRONTEND_DIR = "static/frontend/dist"
 ASSETS_DIR = "static/frontend/dist/assets"
@@ -56,7 +57,10 @@ def convert(filename):
         os.mkdir(app.config['DESTINATION_DIR'])
 
     source = app.config["SOURCE_DIR"] + filename
-    cmd = ["tensorflowjs_converter", "--input_format", "keras", source, app.config["DESTINATION_DIR"]]
+    cmd = [
+        "tensorflowjs_converter", "--input_format", "keras", source,
+        app.config["DESTINATION_DIR"]
+    ]
     subprocess.run(cmd, shell=True)
     return "Conversion done."
 
@@ -75,10 +79,65 @@ def mlp():
     batch_size = params['batch_size']
     num_epochs = params['num_epochs']
 
-    return_obj = {"result": MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)}
+    return_obj = {
+        "result":
+        MLP.mlp(layers, learning_rate, num_batches, batch_size, num_epochs)
+    }
 
     return json.dumps(return_obj)
 
+@app.route("/calc/heatmapfromfile", methods=["POST", "OPTIONS"])
+@cross_origin()
+def calcHeatmapFromFile():
+    """layers, layerObjs"""
+    params = request.get_json()
+    weights = loadWeightsFromFile(params['filePath'],params['epoch'])
+    drawFully = params['drawFully']
+
+    return json.dumps(HEATMAP.heatmapFromWeights(weights, drawFully))
+
+@app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
+@cross_origin()
+def indexFolders():
+    """go through folders and scan for heatmaps"""
+    path = "./static/data"
+    validFiles = []
+    for subdir, dirs, files in os.walk(path):
+        for currFile in files:
+            pathName = os.path.join(subdir, currFile)
+            print('Name of File: ' + pathName)
+            # try parsing name , example name: MLP[20, 15, 10].json
+            fileNameValues = []
+            idxStart = currFile.find('[')
+            idxEnd = currFile.find(']')
+            if (idxStart != -1 and idxEnd != -1):
+                fileNameValues = currFile[idxStart+1:idxEnd].split(',')
+                epochMinMax = getEpochsFromFile(pathName)
+            else:
+                continue
+
+            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName, 'epochMinMax':epochMinMax}
+            validFiles.append(indexedObj)
+    
+    return json.dumps({'result':validFiles})
+
+def getEpochsFromFile(filePath):
+    epochMinMax = [0,0]
+    epochNumbers = []
+    with open(filePath) as json_data:
+        d = json.load(json_data)
+        for key in d:
+            if(key.find('epoch') != -1):
+                epochNumbers.append(int(key[6:]))
+    if(len(epochNumbers)>0):
+        epochMinMax = [min(epochNumbers),max(epochNumbers)]
+    return epochMinMax
+
+def loadWeightsFromFile(filePath,epoch):
+    with open(filePath) as json_data:
+        d = json.load(json_data)
+        epochKey = 'epoch_'+str(epoch)
+        return d[epochKey]
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)
