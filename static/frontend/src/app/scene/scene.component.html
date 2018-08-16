@@ -167,10 +167,9 @@
         </mat-expansion-panel>
     </mat-accordion>
 
-<div>
+<div id="subAppsContainer">
     <app-playground-viz [topology]="playgroundForm.value" [weights]="vizWeights"></app-playground-viz>
+    <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')" (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
+<!-- <app-molecule #moleculeComponent></app-molecule> -->
 </div>
-<!-- <canvas #canvas id="testcanvas"></canvas> -->
-<app-brain #brainComponent (updatedHeatmapNormalData)="updateHeatmapData($event,'normal')" (updatedHeatmapNodeData)="updateHeatmapData($event,'node')"
-    (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')" (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
-<app-molecule #moleculeComponent></app-molecule>
+
