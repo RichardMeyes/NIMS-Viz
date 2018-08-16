@@ -30,14 +30,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   constructor(private playgroundService: PlaygroundService) {
     this.rawChanges = new Subject();
-    this.playCanvasWidth = window.innerWidth;
-    this.playCanvasHeight = window.innerHeight;
+    this.playCanvasWidth = 0.5 * window.innerWidth;
+    this.playCanvasHeight = 0.5 * window.innerHeight;
     this.nodeRadius = 10;
   }
 
   ngOnInit() {
-    this.canvas.width = 0.5 * this.playCanvasWidth;
-    this.canvas.height = 0.5 * this.playCanvasHeight;
+    this.canvas.width = this.playCanvasWidth;
+    this.canvas.height = this.playCanvasHeight;
     this.rawChanges.pipe(debounceTime(500)).subscribe(
       filteredChanges => {
         this.setupTopology(filteredChanges);
