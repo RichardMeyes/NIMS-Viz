@@ -12,7 +12,7 @@ import { MaterialModule } from './material.module';
 
 import { SceneComponent } from './scene/scene.component';
 import { BrainComponent } from './scene/brain/brain.component';
-import { MoleculeComponent } from './scene/molecule/molecule.component';
+// import { MoleculeComponent } from './scene/molecule/molecule.component';
 import { PlaygroundVizComponent } from './scene/playground-viz/playground-viz.component';
 
 import { AppComponent } from './app.component';
@@ -31,7 +31,7 @@ import { OrdinalPipe } from './ordinal.pipe';
     AppComponent,
     SceneComponent,
     BrainComponent,
-    MoleculeComponent,
+    // MoleculeComponent,
     PlaygroundVizComponent,
     OrdinalPipe
   ],
