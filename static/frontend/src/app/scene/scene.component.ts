@@ -31,7 +31,7 @@ import { debounceTime } from 'rxjs/operators';
 export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('brainComponent') brainComponent;
-  @ViewChild('moleculeComponent') moleculeComponent;
+  // @ViewChild('moleculeComponent') moleculeComponent;
   @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
   private scenes: THREE.Scene[] = [];
@@ -393,7 +393,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.heatmapNormal = simpleheat(this.heatCanvas);
       this.heatmapNodes = simpleheat(this.heatCanvasNodes);
     } else {
-      this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct);
+      // this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct);
     }
   }
 
@@ -448,9 +448,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // console.log('this.heatCanvas', this.heatCanvas);
 
     // this.renderer.setSize(this.heatCanvas.clientWidth, this.heatCanvas.clientHeight);
-    // console.log('renderer', this.renderer);
-    document.body.appendChild(this.renderer.domElement);
-    // document.getElementById( 'testcanvas').appendChild(this.renderer.domElement);
+    console.log('renderer', this.renderer);
+    console.log('this.renderer.domElement', this.renderer.domElement);
+
+    // document.body.appendChild(this.renderer.domElement);
+    document.getElementById('subAppsContainer').appendChild(this.renderer.domElement);
 
 
     /*const component: SceneComponent = this;
@@ -507,14 +509,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.controls = new THREE.OrbitControls(this.views[0]['camera'], this.renderer.domElement);
     this.controls.rotateSpeed = 1.0;
     this.controls.zoomSpeed = 1.2;
-  }
-
-  public updateHeatmapData(updatedHeatmapData, type) {
-    if (type === 'normal') {
-      this.heatmapNormalData = updatedHeatmapData;
-    } else if (type === 'node') {
-      this.heatmapNodeData = updatedHeatmapData;
-    }
   }
 
   public updateHeatmapCanvasTexture(updatedHeatmapCanvasTexture, type) {
