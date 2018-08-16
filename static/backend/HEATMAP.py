@@ -117,7 +117,7 @@ def createNetworkStruct(weightsObj,keyArray):
     return layerObjs
 
 def createNodeCoordinates(layer):
-    # definiere einen kreis mit mittelpunkt des knotens und radius % der gesamtlänge des alphamap zwischenraumes
+    # definiere einen kreis mit mittelpunkt des knotens und radius % der gesamtlaenge des alphamap zwischenraumes
     diameterOfNodes = radiusRange * layer['size']
     radiusOfNodes = diameterOfNodes / 2.0
     tempHeatmapNodes = []
