@@ -20,6 +20,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   context; base;
   playCanvasWidth;
+  playCanvasHeight;
   filteredLayerCount; layerSpacing; nodeRadius;
   interpolatedColor;
 
@@ -30,15 +31,18 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   constructor(private playgroundService: PlaygroundService) {
     this.rawChanges = new Subject();
     this.playCanvasWidth = window.innerWidth;
+    this.playCanvasHeight = window.innerHeight;
     this.nodeRadius = 10;
   }
 
   ngOnInit() {
-    this.canvas.width = this.playCanvasWidth;
+    this.canvas.width = 0.5 * this.playCanvasWidth;
+    this.canvas.height = 0.5 * this.playCanvasHeight;
     this.rawChanges.pipe(debounceTime(500)).subscribe(
       filteredChanges => {
         this.setupTopology(filteredChanges);
         this.setupWeights(filteredChanges);
+        // this.context.translate(200, 200);
       }
     );
   }
@@ -56,10 +60,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
       this.changesWeights = changes.weights;
       this.rawChanges.next({ topology: this.changesTopology, weights: this.changesWeights });
     }
+    // this.context.translate(200, 200);
   }
 
   setupTopology(filteredChanges) {
     this.context = this.canvas.getContext('2d');
+    // this.context.translate(200, 200);
     const customBase = document.createElement('base');
     this.base = d3.select(customBase);
 
@@ -222,6 +228,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   draw() {
     this.context.fillStyle = '#fff';
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // this.context.fillRect(0.5 * this.canvas.width, 0.5 * this.canvas.height, this.canvas.width, this.canvas.height);
 
     let elements = this.base.selectAll('base.circle');
     const self = this;
