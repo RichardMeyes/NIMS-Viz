@@ -90,14 +90,15 @@ def calcHeatmapFromFile():
     params = request.get_json()
     weights = loadWeightsFromFile(params['filePath'],params['epoch'])
     drawFully = params['drawFully']
+    weightMinMax = params['weightMinMax']
 
-    return json.dumps(HEATMAP.heatmapFromWeights(weights, drawFully))
+    return json.dumps(HEATMAP.heatmapFromWeights(weights, weightMinMax, drawFully))
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()
 def indexFolders():
     """go through folders and scan for heatmaps"""
-    path = "./static/data"
+    path = "./static/data/weights"
     validFiles = []
     for subdir, dirs, files in os.walk(path):
         for currFile in files:
@@ -109,26 +110,38 @@ def indexFolders():
             idxEnd = currFile.find(']')
             if (idxStart != -1 and idxEnd != -1):
                 fileNameValues = currFile[idxStart+1:idxEnd].split(',')
-                epochMinMax = getEpochsFromFile(pathName)
+                epochMinMax, weightMinMax = getEpochAndWeightLimitsFromFile(pathName)
             else:
                 continue
 
-            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName, 'epochMinMax':epochMinMax}
+            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName, 'epochMinMax':epochMinMax, 'weightMinMax':weightMinMax}
             validFiles.append(indexedObj)
     
     return json.dumps({'result':validFiles})
 
-def getEpochsFromFile(filePath):
+def getEpochAndWeightLimitsFromFile(filePath):
     epochMinMax = [0,0]
     epochNumbers = []
+    weightMinMax = [0,0]
     with open(filePath) as json_data:
         d = json.load(json_data)
         for key in d:
             if(key.find('epoch') != -1):
                 epochNumbers.append(int(key[6:]))
+                for hiddenlayerkey in d[key]:
+                    # min and max used twice because of nested values
+                    currMin = min(min(d[key][hiddenlayerkey]))
+                    currMax = max(max(d[key][hiddenlayerkey]))
+                    if(currMin < weightMinMax[0]):
+                        weightMinMax[0] = currMin
+                    if(currMax > weightMinMax[1]):
+                        weightMinMax[1] = currMax
     if(len(epochNumbers)>0):
         epochMinMax = [min(epochNumbers),max(epochNumbers)]
-    return epochMinMax
+    # round values
+    weightMinMax[0] = float("{0:.4f}".format(weightMinMax[0]))
+    weightMinMax[1] = float("{0:.4f}".format(weightMinMax[1]))
+    return epochMinMax,weightMinMax
 
 def loadWeightsFromFile(filePath,epoch):
     with open(filePath) as json_data:

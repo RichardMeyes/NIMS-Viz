@@ -14,8 +14,9 @@ pointcenter = [438.669, 650.677]
 heatmapCanvasResolution = 1.0 # 8.0;
 heatmapCanvasHeight = 1024 * heatmapCanvasResolution
 
-def heatmapFromWeights(weightsObj, drawFully):
+def heatmapFromWeights(weightsObj, weightMinMax, drawFully):
     print("calculating heatmap from weights")
+    weightMinMax = weightMinMax
     isFullyDrawn = drawFully
     heatmapNormalData = []
     heatmapNodeData = []
@@ -29,8 +30,6 @@ def heatmapFromWeights(weightsObj, drawFully):
     layerObjs = createNetworkStruct(weightsObj,keyArray)
 
     heatmapdata = {}
-    weightValueMin = 0
-    weightValueMax = 0
     for i in range(1,len(keyArray)):
         lastLN = layerObjs[i - 1]['heatmapNodes']
         currLN = layerObjs[i]['heatmapNodes']
@@ -41,10 +40,6 @@ def heatmapFromWeights(weightsObj, drawFully):
             for k in range(0,len(lastLN)):
                 try:
                     weightValue = weightsObj[keyArray[i]][j][k]
-                    if(weightValue < weightValueMin):
-                        weightValueMin = weightValue
-                    elif(weightValue > weightValueMax):
-                        weightValueMax = weightValue
                     heatmapNormalConnections, heatmapNodeConnections = createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue, isFullyDrawn)
                     heatmapNormalData.extend(heatmapNormalConnections)
                     heatmapNodeData.extend(heatmapNodeConnections)
@@ -53,15 +48,14 @@ def heatmapFromWeights(weightsObj, drawFully):
                     print('i: ' + str(i) + ' j: ' +str(j)+ ' k: '+str(k))
     
     # convert weights to percentages
+    diff = abs(weightMinMax[1] - weightMinMax[0])
     for i in range(len(heatmapNormalData)):
-        heatmapNormalData[i][2] = (heatmapNormalData[i][2]-weightValueMin)/abs(weightValueMax - weightValueMin)
+        heatmapNormalData[i][2] = (heatmapNormalData[i][2]-weightMinMax[0])/diff
     for i in range(len(heatmapNodeData)):
-        heatmapNodeData[i][2] = (heatmapNodeData[i][2]-weightValueMin)/abs(weightValueMax - weightValueMin)
+        heatmapNodeData[i][2] = (heatmapNodeData[i][2]-weightMinMax[0])/diff
 
     heatmapdata['heatmapNormalData'] = heatmapNormalData
     heatmapdata['heatmapNodeData'] = heatmapNodeData
-    heatmapdata['weightValueMin'] = weightValueMin
-    heatmapdata['weightValueMax'] = weightValueMax
     print('calculation done')
     return heatmapdata
 

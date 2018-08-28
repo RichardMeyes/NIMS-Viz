@@ -239,11 +239,12 @@ export class NetworkService {
     // .catch((error: any) => this.handleError(error));
   }
 
-  public createHeatmapFromFile(filePath: string, epoch: number, drawFully: boolean) {
+  public createHeatmapFromFile(filePath: string, epoch: number, weightMinMax, drawFully: boolean) {
     const jsonBody = {
       'filePath': filePath,
       'epoch': epoch,
-      'drawFully': drawFully
+      'drawFully': drawFully,
+      'weightMinMax': weightMinMax
     };
 
     return this.http.post('/calc/heatmapfromfile', jsonBody, httpOptions)

@@ -61,8 +61,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private drawFully = false;
 
   private heatmapNormalConfig = {
-    radius: 4,
-    blur: 2,
+    radius: 2,
+    blur: 8,
     minOpacity: 0.05,
     weightValueMin: -10,
     weightValueMax: 10,
@@ -114,9 +114,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   // }
 
   files = [
-    { value: 'model1.h5', viewValue: 'File 1', epochRange: [0, 1] },
-    { value: 'model2.h5', viewValue: 'File 2', epochRange: [0, 1] },
-    { value: 'model3.h5', viewValue: 'File 3', epochRange: [0, 1] }
+    { value: 'model1.h5', viewValue: 'File 1', epochRange: [0, 1], weightMinMax: [0, 1] },
+    { value: 'model2.h5', viewValue: 'File 2', epochRange: [0, 1], weightMinMax: [0, 1] },
+    { value: 'model3.h5', viewValue: 'File 3', epochRange: [0, 1], weightMinMax: [0, 1] }
   ];
 
   private selectedFile;
@@ -253,7 +253,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
           newFileList.push({
             value: element['pathName'],
             viewValue: element['fileName'],
-            epochRange: element['epochMinMax']
+            epochRange: element['epochMinMax'],
+            weightMinMax: element['weightMinMax']
           });
         }
         this.files = newFileList;
@@ -289,19 +290,27 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // change slider values
     this.epochRange = this.files.find(element => element.value === filePath).epochRange;
     this.epochValue = this.epochRange[0];
+    this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
+    this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
   }
 
   public createHeatmap() {
-    this.networkService.createHeatmapFromFile(this.selectedFile, this.epochValue, this.drawFully).subscribe(
+    this.networkService.createHeatmapFromFile(
+      this.selectedFile,
+      this.epochValue,
+      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+      this.drawFully
+    ).subscribe(
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];
         this.heatmapNormalData = data['heatmapNormalData'];
-        this.heatmapNormalConfig.weightValueMax = data['weightValueMax'];
-        this.heatmapNormalConfig.weightValueMin = data['weightValueMin'];
-        this.heatmapNormalConfig.color1Trigger = this.heatmapNormalConfig.weightValueMin +
-          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
-        this.heatmapNormalConfig.color2Trigger = this.heatmapNormalConfig.weightValueMax -
-          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5;
+
+        // this.heatmapNormalConfig.weightValueMax = data['weightValueMax'];
+        // this.heatmapNormalConfig.weightValueMin = data['weightValueMin'];
+        this.heatmapNormalConfig.color1Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
+          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
+        this.heatmapNormalConfig.color2Trigger = parseFloat((this.heatmapNormalConfig.weightValueMax -
+          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
         this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
         this.heatmapNodeConfig.color1Trigger = this.heatmapNormalConfig.weightValueMax;
         this.applyingDataToHeatmaps();
