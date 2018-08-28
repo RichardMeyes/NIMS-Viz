@@ -245,23 +245,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.createForm();
-    this.networkService.detectFiles().subscribe(
-      data => {
-        console.log('files found', data);
-        const newFileList = [];
-        for (const element of data['result']) {
-          newFileList.push({
-            value: element['pathName'],
-            viewValue: element['fileName'],
-            epochRange: element['epochMinMax'],
-            weightMinMax: element['weightMinMax']
-          });
-        }
-        this.files = newFileList;
-        this.selectedFileClick(this.files[0].value);
-      }
-    );
-    this.selectedFileClick(this.files[0].value);
+    this.scanForFiles();
+    this.selectedFileClick(this.files[0].value, true);
   }
 
   ngAfterViewInit() {
@@ -285,13 +270,52 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private selectedFileClick(filePath) {
+  private scanForFiles(isNewlyCreated?: boolean) {
+    this.networkService.detectFiles().subscribe(
+      data => {
+        console.log('files found', data);
+        const newFileList = [];
+        for (const element of data['result']) {
+          newFileList.push({
+            value: element['pathName'],
+            viewValue: element['fileName'],
+            epochRange: element['epochMinMax'],
+            weightMinMax: element['weightMinMax']
+          });
+        }
+        if (isNewlyCreated) {
+          let newFileValue = '';
+          for (const currFile of newFileList) {
+            const isFound = this.files.find(element => element.value === currFile.value);
+            console.log(isFound);
+
+            if (typeof (isFound) === 'undefined') {
+              newFileValue = currFile.value;
+              break;
+            } else {
+              newFileValue = this.selectedFile;
+            }
+          }
+          this.files = newFileList;
+          this.selectedFileClick(this.files.find(element => element.value === newFileValue).value);
+        } else {
+          this.files = newFileList;
+          this.selectedFileClick(this.files[0].value);
+        }
+      }
+    );
+  }
+
+  private selectedFileClick(filePath, isSetup?: boolean) {
     this.selectedFile = filePath;
     // change slider values
     this.epochRange = this.files.find(element => element.value === filePath).epochRange;
     this.epochValue = this.epochRange[0];
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+    if (!isSetup) {
+      this.createHeatmap();
+    }
   }
 
   public createHeatmap() {
@@ -594,10 +618,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // console.log(objToSend);
 
     this.playgroundService.trainNetwork(objToSend).subscribe(result => {
-      // console.log("From backend:")
-      // console.log(JSON.stringify(result));
 
       this.vizWeights = result;
+      this.scanForFiles(true);
+
     });
   }
 

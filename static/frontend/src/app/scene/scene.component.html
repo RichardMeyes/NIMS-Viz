@@ -90,7 +90,7 @@
         <div fxLayout="row wrap" fxLayoutAlign="start center">
             <div class="form-field">Epoch</div>
             <div>{{epochRange[0]}}</div>
-            <nouislider [connect]="true" [min]="epochRange[0]" [max]="epochRange[1]" [step]="1" [(ngModel)]="epochValue"></nouislider>
+            <nouislider [connect]="true" [min]="epochRange[0]" [max]="epochRange[1]" [step]="1" [(ngModel)]="epochValue" (ngModelChange)="createHeatmap()"></nouislider>
             <div>{{epochRange[1]}}</div>
         </div>
         <form>
@@ -162,7 +162,7 @@
                 <nouislider [connect]="false" [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01" [(ngModel)]="heatmapNormalConfig.color3Trigger" (change)="refreshHeatmap()"></nouislider>
                 <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
             </div>
-            <mat-slide-toggle [checked]="drawFully" (change)="drawFully = $event.checked" class="setting-item">Draw full map</mat-slide-toggle>
+            <mat-slide-toggle [checked]="drawFully" (change)="drawFully = $event.checked; createHeatmap()" class="setting-item">Draw full map</mat-slide-toggle>
             </div>
         </mat-expansion-panel>
     </mat-accordion>
