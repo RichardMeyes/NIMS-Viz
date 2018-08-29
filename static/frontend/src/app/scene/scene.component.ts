@@ -59,6 +59,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private heatmapCanvasNormalTexture;
   private heatmapCanvasNodeTexture;
   private drawFully = false;
+  private isAnimateOn = false;
+  private isPlaying = false;
 
   private heatmapNormalConfig = {
     radius: 2,
@@ -125,6 +127,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   nodeCount = 15;
 
   private epochRange = [0, 1];
+  epochValue: number;
+  private epochSelectedRange = [0, 1];
 
   colors: string[] = [
     '#FF6633',
@@ -200,7 +204,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   ];
   isHeatmapChanged = true;
-  epochValue: number;
 
   color1: string;
   color2: string;
@@ -220,6 +223,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   // Mqtt
   private subscription: Subscription;
   public message: string;
+  animationEpochInterval;
+  newFile = false;
 
   constructor(
     private networkService: NetworkService,
@@ -310,12 +315,37 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedFile = filePath;
     // change slider values
     this.epochRange = this.files.find(element => element.value === filePath).epochRange;
-    this.epochValue = this.epochRange[0];
+    this.epochValue = this.epochRange[1];
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+    this.newFile = true;
     if (!isSetup) {
       this.createHeatmap();
+      this.newFile = false;
     }
+  }
+
+  public fuckingA($event) {
+    console.log('fuckingA', event);
+    console.log('fuckingB', $event);
+  }
+
+  // change in epochvalue triggeres onmodelchange and therefore new heatmapcreation
+  public startEpochAnimation() {
+    this.isPlaying = true;
+    this.epochValue = this.epochSelectedRange[0];
+    this.animationEpochInterval = setInterval(() => {
+      if (this.epochValue < this.epochSelectedRange[1]) {
+        this.epochValue++;
+      } else {
+        this.epochValue = this.epochSelectedRange[0];
+      }
+    }, 1000);
+  }
+
+  public stopEpochAnimation() {
+    this.isPlaying = false;
+    clearInterval(this.animationEpochInterval);
   }
 
   public createHeatmap() {
@@ -323,7 +353,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.selectedFile,
       this.epochValue,
       [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-      this.drawFully
+      this.drawFully,
+      this.newFile
     ).subscribe(
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];
