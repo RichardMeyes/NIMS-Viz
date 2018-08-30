@@ -65,6 +65,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private heatmapNormalConfig = {
     radius: 2,
     blur: 8,
+    density: 5,
     minOpacity: 0.05,
     weightValueMin: -10,
     weightValueMax: 10,
@@ -77,7 +78,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     colorGradient: function () {
       const tempobj = {};
       // convert triggervalues into percentages to be >= 0
-      // tempobj[0.0] = 'blue';
       const diff = Math.abs(this.weightValueMax - this.weightValueMin);
       const col1TriggerInPerc = parseFloat((Math.abs(this.color1Trigger - this.weightValueMin) / diff).toFixed(2));
       const col2TriggerInPerc = parseFloat((Math.abs(this.color2Trigger - this.weightValueMin) / diff).toFixed(2));
@@ -354,7 +354,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.epochValue,
       [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
       this.drawFully,
-      this.newFile
+      this.newFile,
+      this.heatmapNormalConfig.density
     ).subscribe(
       data => {
         this.heatmapNodeData = data['heatmapNodeData'];

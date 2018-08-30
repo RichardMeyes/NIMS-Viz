@@ -165,7 +165,9 @@ export class BrainComponent implements OnInit, OnDestroy {
                 obj.rotation.y = Math.PI / 2;
                 this.scene.add(obj);
             },
-            (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
+            (xhr) => {
+                //  console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
             () => { console.error('An error happened'); }
         );
         // create plane to add 2Duvmap texture

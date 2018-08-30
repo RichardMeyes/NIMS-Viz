@@ -235,17 +235,16 @@ export class NetworkService {
       .pipe(
         catchError(this.handleError)
       );
-    // .map((res: Response) => this.extractData(res))
-    // .catch((error: any) => this.handleError(error));
   }
 
-  public createHeatmapFromFile(filePath: string, epoch: number, weightMinMax, drawFully: boolean, newFile: boolean) {
+  public createHeatmapFromFile(filePath: string, epoch: number, weightMinMax, drawFully: boolean, newFile: boolean, density: number) {
     const jsonBody = {
       'filePath': filePath,
       'epoch': epoch,
       'drawFully': drawFully,
       'weightMinMax': weightMinMax,
-      'newFile': newFile
+      'newFile': newFile,
+      'density': density
     };
 
     return this.http.post('/calc/heatmapfromfile', jsonBody, httpOptions)

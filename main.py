@@ -91,8 +91,11 @@ def calcHeatmapFromFile():
     weights = loadWeightsFromFile(params['filePath'],params['epoch'])
     drawFully = params['drawFully']
     weightMinMax = params['weightMinMax']
+    newFile = params['newFile']
+    density = params['density']
+    heatmapObj = HEATMAP.Heatmap()
 
-    return json.dumps(HEATMAP.heatmapFromWeights(weights, weightMinMax, drawFully))
+    return json.dumps(heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newFile, density))
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()
