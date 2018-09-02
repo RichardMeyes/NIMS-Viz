@@ -234,15 +234,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     private fb: FormBuilder,
     // private _mqttService: MqttService
   ) {
-    /*this.networkService.loadFromJson().subscribe(
-      (weights) => {
-        this.weights = weights;
-        console.log('weights from json', this.weights);
-        // TODO: this network function is no longer needed?
-        // this.networkService.createNetworkFromWeights(this.weights);
-        // this.setup();
-      }
-    );*/
     // this.subscription = this._mqttService.observe('my/topic').subscribe((message: IMqttMessage) => {
     //   this.message = message.payload.toString();
     // });
@@ -372,14 +363,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         this.applyingDataToHeatmaps();
       }
     );
-
-    // this.networkService.asyncCalcHeatmap(this.weights).subscribe(
-    //   data => {
-    //     this.heatmapNodeData = data['heatmapNodeData'];
-    //     this.heatmapNormalData = data['heatmapNormalData'];
-    //     this.applyingDataToHeatmaps();
-    //   }
-    // );
   }
 
   private applyingDataToHeatmaps() {
@@ -458,7 +441,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.heatmapNormal = simpleheat(this.heatCanvas);
       this.heatmapNodes = simpleheat(this.heatCanvasNodes);
     } else {
-      // this.scene = this.moleculeComponent.setupMolecule(this.networkService.getMoleculeStruct);
     }
   }
 

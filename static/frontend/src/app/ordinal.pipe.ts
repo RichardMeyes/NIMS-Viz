@@ -7,10 +7,10 @@ export class OrdinalPipe implements PipeTransform {
 
   transform(value: number): string {
     let suffix = '';
-    let last = value % 10;
-    let specialLast = value % 100;
+    const last = value % 10;
+    const specialLast = value % 100;
     if (!value || value < 1) {
-      return "";
+      return '';
     }
     if (last === 1 && specialLast !== 11) {
       suffix = 'st';

@@ -18,8 +18,8 @@ export class PlaygroundService {
   numTrainElements: number;
   numTestElements: number;
 
-  mnistImagesSpritePath: string = 'https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png';
-  mnistLabelsPath: string = 'https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8';
+  mnistImagesSpritePath = 'https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png';
+  mnistLabelsPath = 'https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8';
 
 
   trainImages; testImages; datasetImages;
@@ -42,7 +42,7 @@ export class PlaygroundService {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' })
     };
     // return this.http.get("./assets/MLP[20, 15, 10].json", httpOptions);
-    return this.http.post("http://localhost:5000/nn/MLP", data, httpOptions);
+    return this.http.post('http://localhost:5000/nn/MLP', data, httpOptions);
   }
 
   generateData(numPoints, coeff, sigma = 0.04) {
@@ -162,7 +162,7 @@ export class PlaygroundService {
     this.trainLabels = this.datasetLabels.slice(0, this.numClasses * this.numTrainElements);
     this.testLabels = this.datasetLabels.slice(this.numClasses * this.numTrainElements);
 
-    return new Promise(function (resolve, reject) { resolve("done"); });
+    return new Promise(function (resolve, reject) { resolve('done'); });
   }
 
   nextTrainBatch(batchSize) {
@@ -204,16 +204,16 @@ export class PlaygroundService {
 
 
   extractWeights(model: any) {
-    let weights: any = [];
+    const weights: any = [];
 
     model.layers.forEach(layer => {
-      let info: any = { "layer-name": layer.name, "weights": [] };
-      let kernel: any = [];
+      const info: any = { 'layer-name': layer.name, 'weights': [] };
+      const kernel: any = [];
       let bias: any = [];
 
       if (layer.getWeights()[0]) {
-        let m = layer.getWeights()[0].shape[0];
-        let eachFeature = tf.split(layer.getWeights()[0], m, 0);
+        const m = layer.getWeights()[0].shape[0];
+        const eachFeature = tf.split(layer.getWeights()[0], m, 0);
         for (let i = 0; i < m; i++) {
           kernel[i] = [];
           kernel[i] = Array.from(eachFeature[i].dataSync());
@@ -224,8 +224,8 @@ export class PlaygroundService {
         bias = Array.from(layer.getWeights()[1].dataSync());
       }
 
-      if (kernel) { info["weights"].push(kernel); }
-      if (bias) { info["weights"].push(bias); }
+      if (kernel) { info['weights'].push(kernel); }
+      if (bias) { info['weights'].push(bias); }
 
       weights.push(info);
     });
