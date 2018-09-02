@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-// import { Http } from '@angular/http';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 
-import { throwError } from 'rxjs';
+import { throwError, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+import * as socketIo from 'socket.io-client';
 
 const httpOptions = {
   headers: new HttpHeaders({
@@ -20,7 +20,39 @@ const httpOptions = {
   providedIn: 'root'
 })
 export class NetworkService {
+  private socket;
+
   constructor(private http: HttpClient) { }
+
+  public initSocket(): void {
+    console.log('b4 socket error');
+    this.socket = socketIo('http://127.0.0.1:5000');
+    console.log('this.socket', this.socket);
+
+  }
+
+  public send(type: string, message: JSON): void {
+    switch (type) {
+      case 'mlp':
+        this.socket.emit('mlp', message);
+        break;
+      default:
+        break;
+    }
+    this.socket.emit('json', message);
+  }
+
+  public onMessage(): Observable<JSON> {
+    return new Observable<JSON>(observer => {
+      this.socket.on('json', (data: JSON) => observer.next(data));
+    });
+  }
+
+  public onEvent(event: string): Observable<any> {
+    return new Observable<string>(observer => {
+      this.socket.on(event, () => observer.next());
+    });
+  }
 
   public detectFiles() {
     console.log('trying to detect files');

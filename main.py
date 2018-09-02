@@ -1,4 +1,5 @@
 from flask import Flask, request, send_from_directory
+from flask_socketio import SocketIO, emit, send
 from flask_cors import CORS, cross_origin
 from werkzeug.routing import BaseConverter
 
@@ -18,8 +19,10 @@ DESTINATION_DIR = "static/frontend/dist/assets/ann/json"
 app = Flask(__name__, static_folder=FRONTEND_DIR)
 CORS(app)
 
+app.config['SECRET_KEY'] = 'braindead'
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
+socketio = SocketIO(app)
 
 
 class RegexConverter(BaseConverter):
@@ -86,7 +89,6 @@ def mlp():
 @app.route("/calc/heatmapfromfile", methods=["POST", "OPTIONS"])
 @cross_origin()
 def calcHeatmapFromFile():
-    """layers, layerObjs"""
     params = request.get_json()
     weights = loadWeightsFromFile(params['filePath'],params['epoch'])
     drawFully = params['drawFully']
@@ -122,6 +124,54 @@ def indexFolders():
     
     return json.dumps({'result':validFiles})
 
+@socketio.on('mlp')
+def mlpSocketIO(params):
+    print(params)
+
+    # parse arguments from POST body
+    layers = params["layers"]
+    learning_rate = params["learning_rate"]
+    batch_size_train = params['batch_size_train']
+    batch_size_test = params['batch_size_test']
+    num_epochs = params['num_epochs']
+
+    acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
+    emit('json', weights)
+    print('final json send')
+    # socketio.sleep(0)
+
+    # job_done = False
+    # results = None
+    # while not job_done:
+    #     job_done, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs, continue_from=results)
+    #     emit('json', weights)
+    # emit('json', {'done': True})
+    # send(json, json=True) 
+
+    
+
+    # return json.dumps(weights)
+
+@socketio.on('heatmap')
+def calcHeatmapSocketIO(json):
+    weights = loadWeightsFromFile(json['filePath'],json['epoch'])
+    drawFully = json['drawFully']
+    weightMinMax = json['weightMinMax']
+    newFile = json['newFile']
+    density = json['density']
+    heatmapObj = HEATMAP.Heatmap()
+    job_done = False
+    results = None
+    while not job_done:
+        job_done, results = heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newFile, density, continue_from=results)
+        emit('json', results)
+    emit('json', {'done': True})
+    # send(json, json=True) 
+
+@socketio.on_error_default  # handles all namespaces without an explicit error handler
+def default_error_handler(e):
+    print(e)
+
 def getEpochAndWeightLimitsFromFile(filePath):
     epochMinMax = [0,0]
     epochNumbers = []
@@ -153,4 +203,5 @@ def loadWeightsFromFile(filePath,epoch):
         return d[epochKey]
 
 if __name__ == "__main__":
-    app.run(debug=True, threaded=True)
+    # app.run(debug=True, threaded=True)
+    socketio.run(app)

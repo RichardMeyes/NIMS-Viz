@@ -225,13 +225,15 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   public message: string;
   animationEpochInterval;
   newFile = false;
+  private ioConnection: any;
+  messages: string[] = [];
 
   constructor(
     private networkService: NetworkService,
     private renderer2: Renderer2,
     private playgroundService: PlaygroundService,
     private changeDetector: ChangeDetectorRef,
-    private fb: FormBuilder,
+    private fb: FormBuilder
     // private _mqttService: MqttService
   ) {
     // this.subscription = this._mqttService.observe('my/topic').subscribe((message: IMqttMessage) => {
@@ -247,6 +249,25 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     this.setup();
+    this.networkService.initSocket();
+
+    this.ioConnection = this.networkService.onMessage()
+      .subscribe((message: JSON) => {
+        // console.log(message);
+        this.vizWeights = message;
+        // this.scanForFiles(true);
+      });
+
+
+    this.networkService.onEvent('connect')
+      .subscribe(() => {
+        console.log('connected');
+      });
+
+    this.networkService.onEvent('disconnect')
+      .subscribe(() => {
+        console.log('disconnected');
+      });
   }
 
   @HostListener('window:resize', ['$event'])
@@ -314,11 +335,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.createHeatmap();
       this.newFile = false;
     }
-  }
-
-  public fuckingA($event) {
-    console.log('fuckingA', event);
-    console.log('fuckingB', $event);
   }
 
   // change in epochvalue triggeres onmodelchange and therefore new heatmapcreation
@@ -631,12 +647,16 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // console.log("From frontend:");
     // console.log(objToSend);
 
-    this.playgroundService.trainNetwork(objToSend).subscribe(result => {
+    this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
-      this.vizWeights = result;
-      this.scanForFiles(true);
+    // this.playgroundService.trainNetwork(objToSend).subscribe(result => {
 
-    });
+    //   console.log('vince result: ', result);
+
+    //   this.vizWeights = result;
+    //   this.scanForFiles(true);
+
+    // });
   }
 
   // public findInvalidControls() {

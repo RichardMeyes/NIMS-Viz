@@ -9,6 +9,7 @@ flask-cors = "*"
 torch = "*"
 torchvision = "*"
 pylint = "*"
+flask-socketio = "*"
 
 [dev-packages]
 pylint = "*"

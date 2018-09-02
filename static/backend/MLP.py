@@ -9,6 +9,7 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 from torch.autograd import Variable
+from flask_socketio import emit, send
 
 
 class Net(nn.Module):
@@ -62,6 +63,10 @@ class Net(nn.Module):
                 self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             weights = self.output.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            # return partial done epochs via socketIO
+            emit('json',self.weights_dict)
+            print('emitted data')
+
         #save weights
         with open("static/data/weights/MLP{0}.json".format(self.layers), "w") as f:
             json.dump(self.weights_dict, f)
@@ -113,6 +118,10 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
     acc = net.test_net(device, testloader, criterion)
 
     return acc, net.weights_dict
+
+# def mlpContinue():
+#     net.train_net(device, trainloader, criterion, optimizer)
+#     acc = net.test_net(device, testloader, criterion)
 
 
 if __name__ == "__main__":
