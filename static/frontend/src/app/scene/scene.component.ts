@@ -54,8 +54,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   public showBrainView = true;
   private heatmapNormal;
   private heatmapNodes;
-  private heatmapNormalData = [];
-  private heatmapNodeData = [];
   private heatmapCanvasNormalTexture;
   private heatmapCanvasNodeTexture;
   private drawFully = false;
@@ -224,9 +222,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscription: Subscription;
   public message: string;
   animationEpochInterval;
-  newFile = false;
   private ioConnection: any;
   messages: string[] = [];
+  trainEpochCnt = 0;
 
   constructor(
     private networkService: NetworkService,
@@ -253,9 +251,34 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.ioConnection = this.networkService.onMessage()
       .subscribe((message: JSON) => {
-        // console.log(message);
-        this.vizWeights = message;
-        // this.scanForFiles(true);
+        console.log(message);
+        const resultWeights = message['resultWeights'];
+        const isDone = message['done'];
+        if (isDone) {
+          this.scanForFiles(true);
+          // this.createHeatmap(message);
+        } else {
+          const resultHeatmapData = message['resultHeatmapData'];
+          const resultWeightMinMax = message['resultWeightMinMax'];
+          this.heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
+          this.heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
+          this.applyingDataToHeatmaps(resultHeatmapData);
+          // let newNodeStruct: boolean;
+          // if (this.trainEpochCnt === 0) {
+          //   newNodeStruct = true;
+          //   this.trainEpochCnt++;
+          // } else {
+          //   newNodeStruct = false;
+          // }
+          // const epochen: number[] = [];
+          // for (const key in result) {
+          //   if (result.hasOwnProperty(key)) {
+          //     epochen.push(parseInt(key.match(/(\d+)$/)[0], 10));
+          //   }
+          // }
+          // this.createHeatmap(result['epoch_' + Math.max.apply(null, epochen)], newNodeStruct);
+        }
+        this.vizWeights = resultWeights;
       });
 
 
@@ -330,10 +353,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.epochValue = this.epochRange[1];
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
-    this.newFile = true;
     if (!isSetup) {
-      this.createHeatmap();
-      this.newFile = false;
+      this.createHeatmap(undefined, true);
+      // this.createGraph();
     }
   }
 
@@ -355,43 +377,42 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     clearInterval(this.animationEpochInterval);
   }
 
-  public createHeatmap() {
+  public createHeatmap(weights?, newNodeStruct?: boolean) {
     this.networkService.createHeatmapFromFile(
       this.selectedFile,
       this.epochValue,
       [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
       this.drawFully,
-      this.newFile,
-      this.heatmapNormalConfig.density
+      newNodeStruct,
+      this.heatmapNormalConfig.density,
+      weights
     ).subscribe(
       data => {
-        this.heatmapNodeData = data['heatmapNodeData'];
-        this.heatmapNormalData = data['heatmapNormalData'];
-
-        // this.heatmapNormalConfig.weightValueMax = data['weightValueMax'];
-        // this.heatmapNormalConfig.weightValueMin = data['weightValueMin'];
-        this.heatmapNormalConfig.color1Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
-          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
-        this.heatmapNormalConfig.color2Trigger = parseFloat((this.heatmapNormalConfig.weightValueMax -
-          (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
-        this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
-        this.heatmapNodeConfig.color1Trigger = this.heatmapNormalConfig.weightValueMax;
-        this.applyingDataToHeatmaps();
+        this.applyingDataToHeatmaps(data);
       }
     );
   }
 
-  private applyingDataToHeatmaps() {
+  private applyingDataToHeatmaps(data) {
+    console.log('data for heatmap', data);
+    const heatmapNodeData = data['heatmapNodeData'];
+    const heatmapNormalData = data['heatmapNormalData'];
+    this.heatmapNormalConfig.color1Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
+      (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
+    this.heatmapNormalConfig.color2Trigger = parseFloat((this.heatmapNormalConfig.weightValueMax -
+      (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
+    this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
+    this.heatmapNodeConfig.color1Trigger = this.heatmapNormalConfig.weightValueMax;
     this.heatmapNormal.clear();
     this.heatmapNodes.clear();
     // set radius and blur radius
     this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
     this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
-    this.heatmapNormal.data(this.heatmapNormalData);
+    this.heatmapNormal.data(heatmapNormalData);
 
     this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
     this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
-    this.heatmapNodes.data(this.heatmapNodeData);
+    this.heatmapNodes.data(heatmapNodeData);
     // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
     // this.isHeatmapChanged = true;
     this.heatmapNormal.draw(this.heatmapNormalConfig.minOpacity);
@@ -436,19 +457,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupScene() {
-    // this.scene = new THREE.Scene();
-
     if (this.showBrainView) {
-      // const sceneObjects = this.brainComponent.setupBrain();
-      // sceneObjects.forEach(element => {
-      //   console.log("element",element);
-      //   this.scene.add(element);
-      // });
       this.scene = this.brainComponent.setupBrain();
       this.scene.children.forEach(element => {
         if (element.name === 'planeMesh') {
           this.brainUVMapMesh = <THREE.Mesh>element;
-          // this.brainUVMapMesh.visible = true;
         }
       });
 

@@ -10,6 +10,7 @@ torch = "*"
 torchvision = "*"
 pylint = "*"
 flask-socketio = "*"
+eventlet = "*"
 
 [dev-packages]
 pylint = "*"

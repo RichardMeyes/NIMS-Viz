@@ -1,5 +1,6 @@
 from flask import Flask, request, send_from_directory
 from flask_socketio import SocketIO, emit, send
+import eventlet
 from flask_cors import CORS, cross_origin
 from werkzeug.routing import BaseConverter
 
@@ -8,6 +9,7 @@ import json
 import shutil
 import subprocess
 
+import static.backend.utility as utility
 import static.backend.MLP as MLP
 import static.backend.HEATMAP as HEATMAP
 
@@ -90,14 +92,29 @@ def mlp():
 @cross_origin()
 def calcHeatmapFromFile():
     params = request.get_json()
-    weights = loadWeightsFromFile(params['filePath'],params['epoch'])
+    # print('params')
+    # print(params)
+    try:
+        newNodeStruct = params['newFile']
+    except KeyError:
+        print('newNodeStruct was not found in params, setting to false')
+        newNodeStruct = False
+
+    try:
+        weights = params['weights']
+    except KeyError:
+        print('weights was not found in params, using filepath and epoch')
+        weights = utility.loadWeightsFromFile(params['filePath'],params['epoch'])
+
+    # print('weights')
+    # print(weights)
     drawFully = params['drawFully']
     weightMinMax = params['weightMinMax']
-    newFile = params['newFile']
+    
     density = params['density']
     heatmapObj = HEATMAP.Heatmap()
 
-    return json.dumps(heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newFile, density))
+    return json.dumps(heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newNodeStruct, density))
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()
@@ -115,7 +132,7 @@ def indexFolders():
             idxEnd = currFile.find(']')
             if (idxStart != -1 and idxEnd != -1):
                 fileNameValues = currFile[idxStart+1:idxEnd].split(',')
-                epochMinMax, weightMinMax = getEpochAndWeightLimitsFromFile(pathName)
+                epochMinMax, weightMinMax = utility.getEpochAndWeightLimitsFromFile(pathName)
             else:
                 continue
 
@@ -126,7 +143,7 @@ def indexFolders():
 
 @socketio.on('mlp')
 def mlpSocketIO(params):
-    print(params)
+    # print(params)
 
     # parse arguments from POST body
     layers = params["layers"]
@@ -136,72 +153,14 @@ def mlpSocketIO(params):
     num_epochs = params['num_epochs']
 
     acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
-    emit('json', weights)
+    emit('json',{'done': True, 'result' : weights})
+    eventlet.sleep(0)
     print('final json send')
-    # socketio.sleep(0)
-
-    # job_done = False
-    # results = None
-    # while not job_done:
-    #     job_done, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs, continue_from=results)
-    #     emit('json', weights)
-    # emit('json', {'done': True})
-    # send(json, json=True) 
-
-    
-
-    # return json.dumps(weights)
-
-@socketio.on('heatmap')
-def calcHeatmapSocketIO(json):
-    weights = loadWeightsFromFile(json['filePath'],json['epoch'])
-    drawFully = json['drawFully']
-    weightMinMax = json['weightMinMax']
-    newFile = json['newFile']
-    density = json['density']
-    heatmapObj = HEATMAP.Heatmap()
-    job_done = False
-    results = None
-    while not job_done:
-        job_done, results = heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newFile, density, continue_from=results)
-        emit('json', results)
-    emit('json', {'done': True})
-    # send(json, json=True) 
 
 @socketio.on_error_default  # handles all namespaces without an explicit error handler
 def default_error_handler(e):
     print(e)
 
-def getEpochAndWeightLimitsFromFile(filePath):
-    epochMinMax = [0,0]
-    epochNumbers = []
-    weightMinMax = [0,0]
-    with open(filePath) as json_data:
-        d = json.load(json_data)
-        for key in d:
-            if(key.find('epoch') != -1):
-                epochNumbers.append(int(key[6:]))
-                for hiddenlayerkey in d[key]:
-                    # min and max used twice because of nested values
-                    currMin = min(min(d[key][hiddenlayerkey]))
-                    currMax = max(max(d[key][hiddenlayerkey]))
-                    if(currMin < weightMinMax[0]):
-                        weightMinMax[0] = currMin
-                    if(currMax > weightMinMax[1]):
-                        weightMinMax[1] = currMax
-    if(len(epochNumbers)>0):
-        epochMinMax = [min(epochNumbers),max(epochNumbers)]
-    # round values
-    weightMinMax[0] = float("{0:.4f}".format(weightMinMax[0]))
-    weightMinMax[1] = float("{0:.4f}".format(weightMinMax[1]))
-    return epochMinMax,weightMinMax
-
-def loadWeightsFromFile(filePath,epoch):
-    with open(filePath) as json_data:
-        d = json.load(json_data)
-        epochKey = 'epoch_'+str(epoch)
-        return d[epochKey]
-
 if __name__ == "__main__":
     # app.run(debug=True, threaded=True)
-    socketio.run(app)
+    socketio.run(app,debug=True)

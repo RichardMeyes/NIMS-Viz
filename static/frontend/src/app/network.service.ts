@@ -63,14 +63,17 @@ export class NetworkService {
       );
   }
 
-  public createHeatmapFromFile(filePath: string, epoch: number, weightMinMax, drawFully: boolean, newFile: boolean, density: number) {
+  public createHeatmapFromFile(
+    filePath: string, epoch: number, weightMinMax, drawFully: boolean, newFile: boolean, density: number, weights?
+  ) {
     const jsonBody = {
       'filePath': filePath,
       'epoch': epoch,
       'drawFully': drawFully,
       'weightMinMax': weightMinMax,
       'newFile': newFile,
-      'density': density
+      'density': density,
+      'weights': weights
     };
 
     return this.http.post('/calc/heatmapfromfile', jsonBody, httpOptions)

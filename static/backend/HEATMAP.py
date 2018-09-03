@@ -27,8 +27,9 @@ class Heatmap(metaclass=Singleton):
         self.layerObjs = []
 
 
-    def heatmapFromWeights(self, weightsObj, weightMinMax, drawFully, createNewStruct, density):
+    def heatmapFromWeights(self, weightsObj, weightMinMax, drawFully, createNewNodeCoordinates, density):
         #print("calculating heatmap from weights")
+        # weightsobj structure => {'input':[[]],'epoch_1':[[]],...}
         self.density = int(density)
         weightMinMax = weightMinMax
         isFullyDrawn = drawFully
@@ -41,7 +42,7 @@ class Heatmap(metaclass=Singleton):
                 keyArray.append(key)
         keyArray = sorted(keyArray)
         keyArray = ['input']+keyArray+['output']
-        if(createNewStruct):
+        if(createNewNodeCoordinates):
             self.layerObjs = self.createNetworkStruct(weightsObj,keyArray)
 
         heatmapdata = {}

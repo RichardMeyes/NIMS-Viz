@@ -10,6 +10,9 @@ import torchvision
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from flask_socketio import emit, send
+import eventlet
+import static.backend.utility as utility
+import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
@@ -63,9 +66,17 @@ class Net(nn.Module):
                 self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             weights = self.output.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
-            # return partial done epochs via socketIO
-            emit('json',self.weights_dict)
-            print('emitted data')
+            # return partial done epochs via socketIO, skip last epoch since it is part of the entire result (redundant emit)
+            if(epoch < self.num_epochs - 1):
+                # create heatmap
+                newNodeStruct = False
+                if(epoch == 0):
+                    newNodeStruct = True
+
+                weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(self.weights_dict["epoch_{0}".format(epoch)], newNodeStruct)
+                emit('json',{'done': False, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+                eventlet.sleep(0)
+                print('emitted epoch data')
 
         #save weights
         with open("static/data/weights/MLP{0}.json".format(self.layers), "w") as f:
@@ -95,6 +106,15 @@ class Net(nn.Module):
                                                                                          testloader.dataset)))
         accuracy = 100. * correct / len(testloader.dataset)
         return accuracy
+    
+    def calcHeatmapFromFile(self, epochWeights, newNodeStruct):
+        drawFully = False
+        weightMinMax = [0,0]
+        utility.getWeightsFromEpoch(epochWeights,weightMinMax)
+        density = 5
+        heatmapObj = HEATMAP.Heatmap()
+
+        return weightMinMax, heatmapObj.heatmapFromWeights(epochWeights, weightMinMax, drawFully, newNodeStruct, density)
 
 
 def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
