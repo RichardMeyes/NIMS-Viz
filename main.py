@@ -110,6 +110,7 @@ def calcHeatmapFromFile():
     # print(weights)
     drawFully = params['drawFully']
     weightMinMax = params['weightMinMax']
+    print('weightMinMax in app route: ',weightMinMax)
     
     density = params['density']
     heatmapObj = HEATMAP.Heatmap()
@@ -153,8 +154,6 @@ def mlpSocketIO(params):
     num_epochs = params['num_epochs']
 
     acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
-    emit('json',{'done': True, 'result' : weights})
-    eventlet.sleep(0)
     print('final json send')
 
 @socketio.on_error_default  # handles all namespaces without an explicit error handler

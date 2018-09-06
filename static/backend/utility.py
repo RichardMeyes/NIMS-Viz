@@ -18,17 +18,17 @@ def getEpochAndWeightLimitsFromFile(filePath):
     return epochMinMax,weightMinMax
 
 def getWeightsFromEpoch(epoch, startMinMax):
-    for hiddenlayerkey in epoch:
-        print('hiddenlayerkey sind auch die input output values? die duerfen nicht in min/max einberechnet werden oder?')
-        print(hiddenlayerkey)
-        # min and max used twice because of nested values
-        currMin = min(min(epoch[hiddenlayerkey]))
-        currMax = max(max(epoch[hiddenlayerkey]))
-        if(currMin < startMinMax[0]):
-            startMinMax[0] = currMin
-        if(currMax > startMinMax[1]):
-            startMinMax[1] = currMax
-    
+    for key in epoch:
+        if(key.find('h') != -1):
+            # print('key sind auch die input output values? die duerfen nicht in min/max einberechnet werden oder?')
+            # print(key)
+            # min and max used twice because of nested values
+            currMin = min(min(epoch[key]))
+            currMax = max(max(epoch[key]))
+            if(currMin < startMinMax[0]):
+                startMinMax[0] = currMin
+            if(currMax > startMinMax[1]):
+                startMinMax[1] = currMax
     return
 
 def loadWeightsFromFile(filePath,epoch):

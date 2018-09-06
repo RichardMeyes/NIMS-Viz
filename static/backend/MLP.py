@@ -38,6 +38,8 @@ class Net(nn.Module):
 
     def train_net(self, device, trainloader, criterion, optimizer):
         log_interval = 10
+        newNodeStruct = True
+        isDone = False
         for epoch in range(self.num_epochs):
             for batch_idx, (data, target) in enumerate(trainloader):
                 data, target = Variable(data), Variable(target)
@@ -66,17 +68,18 @@ class Net(nn.Module):
                 self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             weights = self.output.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
-            # return partial done epochs via socketIO, skip last epoch since it is part of the entire result (redundant emit)
-            if(epoch < self.num_epochs - 1):
-                # create heatmap
+            # return partial done epochs via socketIO (each epoch gets added to the dict)
+            # create heatmap
+            if(epoch > 0):
                 newNodeStruct = False
-                if(epoch == 0):
-                    newNodeStruct = True
 
-                weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(self.weights_dict["epoch_{0}".format(epoch)], newNodeStruct)
-                emit('json',{'done': False, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
-                eventlet.sleep(0)
-                print('emitted epoch data')
+            if(epoch == self.num_epochs - 1):
+                isDone = True
+
+            weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(self.weights_dict["epoch_{0}".format(epoch)], newNodeStruct)
+            emit('json',{'done': isDone, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+            eventlet.sleep(0)
+            print('emitted data')
 
         #save weights
         with open("static/data/weights/MLP{0}.json".format(self.layers), "w") as f:
@@ -111,6 +114,7 @@ class Net(nn.Module):
         drawFully = False
         weightMinMax = [0,0]
         utility.getWeightsFromEpoch(epochWeights,weightMinMax)
+        print('weightMinMax in mlp: ',weightMinMax)
         density = 5
         heatmapObj = HEATMAP.Heatmap()
 
