@@ -39,7 +39,7 @@ export class NetworkService {
       default:
         break;
     }
-    this.socket.emit('json', message);
+    // this.socket.emit('json', message);
   }
 
   public onMessage(): Observable<JSON> {
