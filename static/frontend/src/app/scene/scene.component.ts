@@ -251,34 +251,20 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.ioConnection = this.networkService.onMessage()
       .subscribe((message: JSON) => {
-        console.log(message);
-        const resultWeights = message['resultWeights'];
+        // console.log(message);
         const isDone = message['done'];
         if (isDone) {
           this.scanForFiles(true);
           // this.createHeatmap(message);
         } else {
+          const resultWeights = message['resultWeights'];
           const resultHeatmapData = message['resultHeatmapData'];
           const resultWeightMinMax = message['resultWeightMinMax'];
           this.heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
           this.heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
           this.applyingDataToHeatmaps(resultHeatmapData);
-          // let newNodeStruct: boolean;
-          // if (this.trainEpochCnt === 0) {
-          //   newNodeStruct = true;
-          //   this.trainEpochCnt++;
-          // } else {
-          //   newNodeStruct = false;
-          // }
-          // const epochen: number[] = [];
-          // for (const key in result) {
-          //   if (result.hasOwnProperty(key)) {
-          //     epochen.push(parseInt(key.match(/(\d+)$/)[0], 10));
-          //   }
-          // }
-          // this.createHeatmap(result['epoch_' + Math.max.apply(null, epochen)], newNodeStruct);
+          this.vizWeights = resultWeights;
         }
-        this.vizWeights = resultWeights;
       });
 
 
@@ -311,9 +297,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private scanForFiles(isNewlyCreated?: boolean) {
+    console.log('scanning for files frontend');
+
     this.networkService.detectFiles().subscribe(
       data => {
-        console.log('files found', data);
         const newFileList = [];
         for (const element of data['result']) {
           newFileList.push({
@@ -326,9 +313,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         if (isNewlyCreated) {
           let newFileValue = '';
           for (const currFile of newFileList) {
+            // check which file from the new filelist is not found in the old filelist
             const isFound = this.files.find(element => element.value === currFile.value);
-            console.log(isFound);
-
             if (typeof (isFound) === 'undefined') {
               newFileValue = currFile.value;
               break;
@@ -336,6 +322,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
               newFileValue = this.selectedFile;
             }
           }
+          console.log('newfilevalue', newFileValue);
+
           this.files = newFileList;
           this.selectedFileClick(this.files.find(element => element.value === newFileValue).value);
         } else {
@@ -394,7 +382,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private applyingDataToHeatmaps(data) {
-    console.log('data for heatmap', data);
     const heatmapNodeData = data['heatmapNodeData'];
     const heatmapNormalData = data['heatmapNormalData'];
     this.heatmapNormalConfig.color1Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
@@ -513,7 +500,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     //   console.log('tried to remove renderer');
     // }
     if (this.showBrainView) {
-      // console.log('in renderer:', this.heatCanvas);
       this.renderer = new THREE.WebGLRenderer({
         antialias: true
       });
@@ -524,8 +510,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // console.log('this.heatCanvas', this.heatCanvas);
 
     // this.renderer.setSize(this.heatCanvas.clientWidth, this.heatCanvas.clientHeight);
-    console.log('renderer', this.renderer);
-    console.log('this.renderer.domElement', this.renderer.domElement);
 
     // document.body.appendChild(this.renderer.domElement);
     document.getElementById('subAppsContainer').appendChild(this.renderer.domElement);
@@ -539,25 +523,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const render = () => {
       requestAnimationFrame(render);
-      // if (this.redraw && this.showBrainView && this.isHeatmapChanged) {
-      //   console.log('redrawing heatmap');
-      //   this.isHeatmapChanged = false;
-      //   // always let 2DBrainPlane look at camera
-      //   // this.brainUVMapMesh.lookAt(this.camera.position);
-      //   // last layer has no connections to "next" layer
-      //   // if (stepperCnt < convertedLayerObjs.length - 1) {
-      //   // }
-
-      //   this.redraw = false;
-      // } else if (this.redraw && !this.showBrainView) {
-      //   // render molecule
-      // } else if (this.fpsHack >= 60) {
-      //   this.fpsHack = 0;
-      //   this.redraw = true;
-      // }
-      // this.fpsHack++;
-      // console.log('trying to render this scene:', this.scene);
-      // this.renderer.render(this.scene, this.camera);
       for (const view of this.views) {
         const camera = view['camera'];
         // view.updateCamera(camera, this.scene, mouseX, mouseY);
@@ -656,9 +621,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     captureForm.layers.forEach(layer => {
       objToSend.layers.push(layer.unitCount);
     });
-
-    // console.log("From frontend:");
-    // console.log(objToSend);
 
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 

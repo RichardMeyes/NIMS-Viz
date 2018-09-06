@@ -31,7 +31,6 @@ class Heatmap(metaclass=Singleton):
         #print("calculating heatmap from weights")
         # weightsobj structure => {'input':[[]],'epoch_1':[[]],...}
         self.density = int(density)
-        weightMinMax = weightMinMax
         isFullyDrawn = drawFully
         heatmapNormalData = []
         heatmapNodeData = []
@@ -67,7 +66,7 @@ class Heatmap(metaclass=Singleton):
 
         heatmapdata['heatmapNormalData'] = heatmapNormalData
         heatmapdata['heatmapNodeData'] = heatmapNodeData
-        print('heatmapNormalData', heatmapNormalData[int(len(heatmapNormalData)/2)-1])
+        # print('heatmapNormalData', heatmapNormalData[int(len(heatmapNormalData)/2)-1])
         #print('calculation done')
         return heatmapdata
 
