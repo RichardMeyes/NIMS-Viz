@@ -4,6 +4,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { FlexLayoutModule } from '@angular/flex-layout';
+import { NgProgressModule } from '@ngx-progressbar/core';
+import { NgProgressHttpModule } from '@ngx-progressbar/http';
 
 // import { simpleheat } from 'simpleheat/simpleheat.js';
 
@@ -45,6 +47,8 @@ import { OrdinalPipe } from './ordinal.pipe';
     AppRoutingModule,
     MaterialModule,
     HttpClientModule,
+    NgProgressModule.forRoot(),
+    NgProgressHttpModule.forRoot()
     // MqttModule.forRoot(MQTT_SERVICE_OPTIONS)
   ],
   providers: [],

@@ -23,6 +23,8 @@
     "@angular/platform-browser": "^6.1.6",
     "@angular/platform-browser-dynamic": "^6.1.6",
     "@angular/router": "^6.1.6",
+    "@ngx-progressbar/core": "^5.1.2",
+    "@ngx-progressbar/http": "^5.1.2",
     "@types/socket.io": "^1.4.38",
     "chart.js": "^2.7.2",
     "core-js": "^2.5.7",
