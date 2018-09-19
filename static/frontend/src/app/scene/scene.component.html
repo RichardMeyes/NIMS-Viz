@@ -37,11 +37,7 @@
                 <input matInput placeholder="Number of Layers" type="number" min="0" formControlName="layerCount">
             </mat-form-field>
             <mat-form-field>
-                <mat-select placeholder="Learning Rate" formControlName="learning_rate">
-                    <mat-option *ngFor="let learningRate of playgroundData.learningRates" [value]="learningRate.value">
-                        {{ learningRate.viewValue }}
-                    </mat-option>
-                </mat-select>
+                <input matInput placeholder="Learning Rate (Notations: 0.01 or 1e-2" type="text" formControlName="learning_rate">
             </mat-form-field>
             <div fxFlex="grow"></div>
             <div>
