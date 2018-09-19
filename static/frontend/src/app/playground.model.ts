@@ -22,6 +22,8 @@ export class Playground {
         ];
 
         this.learningRates = [
+            new SelectForm('0.000001', '0.000001'),
+            new SelectForm('0.00001', '0.00001'),
             new SelectForm('0.0001', '0.0001'),
             new SelectForm('0.001', '0.001'),
             new SelectForm('0.01', '0.01'),
