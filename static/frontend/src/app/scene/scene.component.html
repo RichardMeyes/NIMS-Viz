@@ -99,7 +99,7 @@
             <nouislider [min]="epochRange[0]" [max]="epochRange[1]" [step]="1" [(ngModel)]="epochValue" (ngModelChange)="createHeatmap()" [tooltips]="[ true ]" style="margin-top: 4em;"></nouislider>
             <div>{{epochRange[1]}}</div>
         </div>
-        <mat-slide-toggle class="form-field" [(ngModel)]="isAnimateOn" class="setting-item">Animation</mat-slide-toggle>
+        <mat-slide-toggle class="form-field" [ngModel]="isAnimateOn" (ngModelChange)="onIsAnimationActiveChange($event)" class="setting-item">Animation</mat-slide-toggle>
         <div *ngIf="isAnimateOn">
             <div *ngIf="!isPlaying">
                 <button mat-icon-button (click)="startEpochAnimation()"><mat-icon>play_arrow</mat-icon>Play Animation!</button>
