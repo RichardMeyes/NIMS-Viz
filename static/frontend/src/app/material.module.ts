@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import {
+  MatAutocompleteModule,
   MatButtonModule,
   MatCheckboxModule,
   MatDividerModule,
@@ -38,6 +39,7 @@ import { MccColorPickerModule } from '../../node_modules/material-community-comp
     MccColorPickerModule
   ],
   exports: [
+    MatAutocompleteModule,
     MatButtonModule,
     MatCheckboxModule,
     MatDividerModule,
