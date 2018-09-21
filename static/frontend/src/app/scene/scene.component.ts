@@ -296,10 +296,14 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private onIsAnimationActiveChange(event){
-    if(!event)
-        this.stopEpochAnimation();
+  private onIsAnimationActiveChange(event) {
+    if (event) {
+      this.isAnimateOn = true;
+    } else {
+      this.isAnimateOn = false;
+      this.stopEpochAnimation();
     }
+  }
 
   private scanForFiles(isNewlyCreated?: boolean) {
     console.log('scanning for files frontend');
