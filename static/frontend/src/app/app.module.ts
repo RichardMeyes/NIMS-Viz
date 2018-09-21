@@ -47,7 +47,10 @@ import { OrdinalPipe } from './ordinal.pipe';
     AppRoutingModule,
     MaterialModule,
     HttpClientModule,
-    NgProgressModule.forRoot(),
+    NgProgressModule.forRoot({
+      color: '#ff0000',
+      thick: true
+    }),
     NgProgressHttpModule.forRoot()
     // MqttModule.forRoot(MQTT_SERVICE_OPTIONS)
   ],
