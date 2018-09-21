@@ -6,6 +6,10 @@ mat-form-field, .form-field {
     margin-right: 16px;
 }
 
+#subAppsContainer{
+    width: 95%;
+}
+
 .plots {
     margin-top: 16px;
 }
@@ -53,11 +57,11 @@ mcc-color-picker {
 
 
 
-canvas {
-    width: 100vw;
-    height: 100vh;
-    z-index: -1;
-}
+// canvas {
+//     width: 100vw;
+//     height: 100vh;
+//     z-index: -1;
+// }
 
 .setting-label {
     white-space: nowrap;

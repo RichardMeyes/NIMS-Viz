@@ -124,9 +124,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   layerCount = 15;
   nodeCount = 15;
 
-  private epochRange = [0, 1];
-  epochValue: number;
-  private epochSelectedRange = [0, 1];
+  private epochSliderConfig = {
+    epochRange: [0, 1],
+    epochValue: 0,
+    epochSelectedRange: [0, 1]
+  };
 
   colors: string[] = [
     '#FF6633',
@@ -151,13 +153,16 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   heatCanvasNodes: any;
   brainUVMapMesh: THREE.Mesh;
 
+  singleViewHeight = 0.475;
+  singleViewWidth = 0.5;
+
   views = [
     // top left brainobj
     {
       left: 0,
       top: 0,
-      width: 0.5,
-      height: 0.475,
+      width: this.singleViewWidth,
+      height: this.singleViewHeight,
       background: new THREE.Color(1, 1, 1),
       eye: [0, 0, 3],
       up: [0, 1, 0],
@@ -170,10 +175,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     },
     // top right 2Dbraingreyscale
     {
-      left: 0.5,
+      left: 0.475,
       top: 0,
-      width: 0.5,
-      height: 0.475,
+      width: this.singleViewWidth,
+      height: this.singleViewHeight,
       background: new THREE.Color(1, 1, 1),
       eye: [-0.25, 0.25, 51],
       up: [0, 0, 1],
@@ -188,8 +193,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     {
       left: 0,
       top: 0.475,
-      width: 0.5,
-      height: 0.475,
+      width: this.singleViewWidth,
+      height: this.singleViewHeight,
       background: new THREE.Color(1, 1, 1),
       eye: [3.75, 0.25, 51],
       up: [0, 1, 0],
@@ -289,7 +294,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         view['camera'].aspect = this.windowWidth / this.windowHeight;
         view['camera'].updateProjectionMatrix();
 
-        this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
+        this.renderer.setSize(this.windowWidth * 0.95, this.windowHeight - 67.125);
       }
     } catch (error) {
       console.log(error);
@@ -337,8 +342,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private selectedFileClick(filePath, isSetup?: boolean) {
     this.selectedFile = filePath;
     // change slider values
-    this.epochRange = this.files.find(element => element.value === filePath).epochRange;
-    this.epochValue = this.epochRange[1];
+    this.epochSliderConfig.epochRange = this.files.find(element => element.value === filePath).epochRange;
+    this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[1];
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
     if (!isSetup) {
@@ -350,12 +355,12 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   // change in epochvalue triggeres onmodelchange and therefore new heatmapcreation
   public startEpochAnimation() {
     this.isPlaying = true;
-    this.epochValue = this.epochSelectedRange[0];
+    this.epochSliderConfig.epochValue = this.epochSliderConfig.epochSelectedRange[0];
     this.animationEpochInterval = setInterval(() => {
-      if (this.epochValue < this.epochSelectedRange[1]) {
-        this.epochValue++;
+      if (this.epochSliderConfig.epochValue < this.epochSliderConfig.epochSelectedRange[1]) {
+        this.epochSliderConfig.epochValue++;
       } else {
-        this.epochValue = this.epochSelectedRange[0];
+        this.epochSliderConfig.epochValue = this.epochSliderConfig.epochSelectedRange[0];
       }
     }, 1000);
   }
@@ -368,7 +373,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   public createHeatmap(weights?, newNodeStruct?: boolean) {
     this.networkService.createHeatmapFromFile(
       this.selectedFile,
-      this.epochValue,
+      this.epochSliderConfig.epochValue,
       [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
       this.drawFully,
       newNodeStruct,
@@ -506,8 +511,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.renderer = new THREE.CSS3DRenderer();
     }
-    this.renderer.setSize(window.innerWidth, window.innerHeight - 67.125);
-    // console.log('this.heatCanvas', this.heatCanvas);
+    this.renderer.setSize(window.innerWidth * 0.95, window.innerHeight - 67.125);
+    console.log('this.heatCanvas', this.heatCanvas);
+    console.log('this.renderer.domElement', this.renderer.domElement);
+
 
     // this.renderer.setSize(this.heatCanvas.clientWidth, this.heatCanvas.clientHeight);
 
