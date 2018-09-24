@@ -31,6 +31,7 @@ import { debounceTime } from 'rxjs/operators';
 export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('brainComponent') brainComponent;
+  @ViewChild('snav') snav;
   // @ViewChild('moleculeComponent') moleculeComponent;
   @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
@@ -712,6 +713,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public unsafePublish(topic: string, message: string): void {
     // this._mqttService.unsafePublish(topic, message, { qos: 1, retain: true });
+  }
+
+  toggleSnav() {
+    this.snav.toggle();
   }
 
   public ngOnDestroy() {

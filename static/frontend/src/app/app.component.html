@@ -1,5 +1,8 @@
 <mat-toolbar color="primary" class="toolbar">
     <h1 class="app-name">CNN Visualization</h1>
+    <button id="cosmeticsButton" mat-icon-button (click)="appScene.toggleSnav()">
+        <mat-icon>menu</mat-icon>
+    </button>
 </mat-toolbar>
 <app-scene #appScene [style.top.px]="mobileQuery.matches ? 56 : 64"></app-scene>
 
