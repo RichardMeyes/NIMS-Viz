@@ -6,6 +6,10 @@ mat-form-field, .form-field {
     margin-right: 16px;
 }
 
+.cosmeticsFormFields {
+    width: 20%;
+}
+
 .plots {
     margin-top: 16px;
 }
@@ -36,15 +40,15 @@ mcc-color-picker {
     padding: 0;
 }
 
-.color-config {
-    > div:nth-child(1) {
-        width: 45vw;
-    }
+// .color-config {
+//     > div:nth-child(1) {
+//         width: 45vw;
+//     }
 
-    > div::nth-child(2) {
-        width: 50vw;
-    }
-}
+//     > div::nth-child(2) {
+//         width: 50vw;
+//     }
+// }
 
 .spacer {
     display: inline-block;
@@ -99,10 +103,18 @@ mat-form-field.slider-value {
 //     align-items: center;
 //     justify-content: center;
 //   }
+
+.example-sidenav {
+    // display: flex;
+    // align-items: center;
+    // justify-content: center;
+    width: 500px;
+    background: rgba(0, 0, 0, 0.3);
+  }
   
-//   .example-sidenav {
-//     padding: 20px;
-//   }
+  .example-sidenav {
+    padding: 20px;
+  }
 
 //   .example-container {
 //     position: absolute;
@@ -112,3 +124,11 @@ mat-form-field.slider-value {
 //     right: 0;
 //     background: #eee;
 //   }
+
+// md-disable-backdrop
+// md-backdrop.md-sidenav-backdrop{
+//     display:none
+// }
+.mat-drawer-backdrop.mat-drawer-shown{
+    background-color: transparent !important;
+}

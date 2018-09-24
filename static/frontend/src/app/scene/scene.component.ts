@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, AfterViewChecked, ChangeDetectorRef, OnDestroy
+  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, ChangeDetectorRef, OnDestroy, ViewEncapsulation
 } from '@angular/core';
 import { NetworkService } from '../network.service';
 
@@ -26,7 +26,8 @@ import { debounceTime } from 'rxjs/operators';
 @Component({
   selector: 'app-scene',
   templateUrl: './scene.component.html',
-  styleUrls: ['./scene.component.scss']
+  styleUrls: ['./scene.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
