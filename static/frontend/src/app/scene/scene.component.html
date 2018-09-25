@@ -21,9 +21,9 @@
         </div>
         <div fxLayout="row" fxLayoutAlign="start center" class="color-config">
             <label class="form-field">Color 1:</label>
-            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color1=$event; refreshHeatmap()"
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'2'" [selectedColor]="heatmapNormalConfig.color1" (change)="heatmapNormalConfig.color1=$event; refreshHeatmap()"
                 (selected)="heatmapNormalConfig.color1=$event; refreshHeatmap()" fxFlex="10">
-                <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
+                <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="5">
                 </mcc-color-picker-collection>
             </mcc-color-picker>
             <div class="spacer"></div>
@@ -34,7 +34,7 @@
         </div>
         <div fxLayout="row" fxLayoutAlign="start center" class="color-config">
             <label class="form-field">Color 2:</label>
-            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color2" (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
                 (selected)="heatmapNormalConfig.color2=$event; refreshHeatmap()" fxFlex="10">
                 <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
                 </mcc-color-picker-collection>
@@ -47,7 +47,7 @@
         </div>
         <div fxLayout="row" fxLayoutAlign="start center" class="color-config">
             <label class="form-field">Color 3:</label>
-            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color3" (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
                 (selected)="heatmapNormalConfig.color3=$event; refreshHeatmap()" fxFlex="10">
                 <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
                 </mcc-color-picker-collection>
@@ -189,16 +189,6 @@
                         <div>{{epochRange[1]}}</div>
                     </div>
                 </div>
-            </mat-expansion-panel>
-
-            <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                    <mat-panel-title>
-                        <strong>Cosmetics</strong>
-                    </mat-panel-title>
-                </mat-expansion-panel-header>
-
-
             </mat-expansion-panel>
         </mat-accordion>
 
