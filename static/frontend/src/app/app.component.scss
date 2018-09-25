@@ -4,13 +4,19 @@ mat-toolbar {
 }
 
 app-scene {
-    width: 95%;
+    // width: 95%;
     position: absolute;
 }
 
 h1.app-name {
     margin-left: 8px;
 }
+
+#cosmeticsButton {
+    right: 0;
+    position: absolute;
+}
+
 // .toolbar-container {
 //     position: absolute;
 //     top: 0;

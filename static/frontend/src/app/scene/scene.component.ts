@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, AfterViewChecked, ChangeDetectorRef, OnDestroy
+  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, ChangeDetectorRef, OnDestroy, ViewEncapsulation
 } from '@angular/core';
 import { NetworkService } from '../network.service';
 
@@ -26,11 +26,13 @@ import { debounceTime } from 'rxjs/operators';
 @Component({
   selector: 'app-scene',
   templateUrl: './scene.component.html',
-  styleUrls: ['./scene.component.scss']
+  styleUrls: ['./scene.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('brainComponent') brainComponent;
+  @ViewChild('snav') snav;
   // @ViewChild('moleculeComponent') moleculeComponent;
   @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
@@ -153,7 +155,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   heatCanvasNodes: any;
   brainUVMapMesh: THREE.Mesh;
 
-  singleViewHeight = 0.475;
+  singleViewHeight = 0.5;
   singleViewWidth = 0.5;
 
   views = [
@@ -175,7 +177,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     },
     // top right 2Dbraingreyscale
     {
-      left: 0.475,
+      left: 0.5,
       top: 0,
       width: this.singleViewWidth,
       height: this.singleViewHeight,
@@ -192,7 +194,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // bottom left
     {
       left: 0,
-      top: 0.475,
+      top: 0.5,
       width: this.singleViewWidth,
       height: this.singleViewHeight,
       background: new THREE.Color(1, 1, 1),
@@ -294,7 +296,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         view['camera'].aspect = this.windowWidth / this.windowHeight;
         view['camera'].updateProjectionMatrix();
 
-        this.renderer.setSize(this.windowWidth * 0.95, this.windowHeight - 67.125);
+        // reduced canvas size
+        // this.renderer.setSize(this.windowWidth * 0.95, this.windowHeight - 67.125);
+        this.renderer.setSize(this.windowWidth, this.windowHeight - 67.125);
       }
     } catch (error) {
       console.log(error);
@@ -520,7 +524,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.renderer = new THREE.CSS3DRenderer();
     }
-    this.renderer.setSize(window.innerWidth * 0.95, window.innerHeight - 67.125);
+    // reduced canvas size
+    // this.renderer.setSize(window.innerWidth * 0.95, window.innerHeight - 67.125);
+    this.renderer.setSize(window.innerWidth, window.innerHeight - 67.125);
     console.log('this.heatCanvas', this.heatCanvas);
     console.log('this.renderer.domElement', this.renderer.domElement);
 
@@ -728,6 +734,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public unsafePublish(topic: string, message: string): void {
     // this._mqttService.unsafePublish(topic, message, { qos: 1, retain: true });
+  }
+
+  toggleSnav() {
+    this.snav.toggle();
   }
 
   public ngOnDestroy() {
