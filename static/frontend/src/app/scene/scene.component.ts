@@ -640,6 +640,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
+    this.vizWeights = undefined;
+
     // this.playgroundService.trainNetwork(objToSend).subscribe(result => {
 
     //   console.log('vince result: ', result);

@@ -111,42 +111,39 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     if (filteredChanges.weights && filteredChanges.weights.currentValue) {
       const trainingResult = filteredChanges.weights.currentValue;
 
-      Object.keys(trainingResult).forEach((epoch, epochIndex) => {
-        setTimeout(() => {
-          Object.keys(trainingResult[epoch]).forEach((layer, layerIndex) => {
-            if (layer !== 'output') {
-              trainingResult[epoch][layer].forEach((destination, destinationIndex) => {
-                destination.forEach((source, sourceIndex) => {
-                  if (sourceIndex === 0) {
-                    minWeight = source;
-                    maxWeight = source;
-                  } else {
-                    if (source < minWeight) { minWeight = source; }
-                    if (source > maxWeight) { maxWeight = source; }
-                  }
+      let lastEpoch = Object.keys(trainingResult).pop();
+      Object.keys(trainingResult[lastEpoch]).forEach((layer, layerIndex) => {
+        if (layer !== 'output') {
+          trainingResult[lastEpoch][layer].forEach((destination, destinationIndex) => {
+            destination.forEach((source, sourceIndex) => {
+              if (sourceIndex === 0) {
+                minWeight = source;
+                maxWeight = source;
+              } else {
+                if (source < minWeight) { minWeight = source; }
+                if (source > maxWeight) { maxWeight = source; }
+              }
 
 
-                  filteredData.push({
-                    layer: layerIndex,
-                    source: sourceIndex,
-                    target: destinationIndex,
-                    value: source,
-                    unitSpacing: (this.canvas.height / +destination.length),
-                    targetUnitSpacing: (this.canvas.height / +trainingResult[epoch][layer].length)
-                  });
-                });
+              filteredData.push({
+                layer: layerIndex,
+                source: sourceIndex,
+                target: destinationIndex,
+                value: source,
+                unitSpacing: (this.canvas.height / +destination.length),
+                targetUnitSpacing: (this.canvas.height / +trainingResult[lastEpoch][layer].length)
               });
-            }
+            });
           });
-          this.interpolatedColor = d3.scaleLinear()
-            .domain([minWeight, maxWeight])
-            .range(['rgb(63,81,181)', 'rgb(244,67,54)']);
-
-
-          this.bindWeights(filteredData);
-          this.draw();
-        }, 1500 * epochIndex);
+        }
       });
+      this.interpolatedColor = d3.scaleLinear()
+        .domain([minWeight, maxWeight])
+        .range(['rgb(63,81,181)', 'rgb(244,67,54)']);
+
+
+      this.bindWeights(filteredData);
+      this.draw();
     }
 
     // let self = this;
