@@ -445,24 +445,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   }
 
-  public testingToggler(e) {
-    this.showBrainView = !e['checked'];
-    console.log('this.showBrainView', this.showBrainView);
-    this.setup();
-  }
-
-  private planeLookAtCam() {
-    setInterval(() => {
-      this.brainUVMapMesh.lookAt(this.views[0]['camera'].position);
-    }, 1);
-  }
-
   private setup() {
     this.setupScene();
     this.setupCamera();
     this.setupRenderer();
     this.setupUtilities();
-    // this.planeLookAtCam();
   }
 
   private setupScene() {
