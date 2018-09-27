@@ -1,7 +1,7 @@
-import { Component, ViewChild, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, ViewChild, Input, OnChanges, SimpleChanges, OnInit, HostListener } from '@angular/core';
 import * as d3 from 'd3';
 import { Observable, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, take } from 'rxjs/operators';
 import { PlaygroundService } from '../../playground.service';
 
 @Component({
@@ -18,6 +18,18 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   @Input() topology: any;
   @Input() weights: any;
 
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    this.playCanvasWidth = 0.5 * window.innerWidth;
+    this.playCanvasHeight = 0.5 * window.innerHeight;
+
+    this.canvas.width = this.playCanvasWidth;
+    this.canvas.height = this.playCanvasHeight;
+    
+    this.setupTopology(this.changesForRedraw);
+    this.setupWeights(this.changesForRedraw);
+  }
+
   context; base;
   playCanvasWidth;
   playCanvasHeight;
@@ -25,6 +37,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   interpolatedColor;
 
   changesTopology; changesWeights;
+  changesForRedraw;
   rawChanges: Subject<SimpleChanges>;
 
 
@@ -40,6 +53,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.canvas.height = this.playCanvasHeight;
     this.rawChanges.pipe(debounceTime(500)).subscribe(
       filteredChanges => {
+        this.changesForRedraw = filteredChanges;
         this.setupTopology(filteredChanges);
         this.setupWeights(filteredChanges);
         // this.context.translate(200, 200);
