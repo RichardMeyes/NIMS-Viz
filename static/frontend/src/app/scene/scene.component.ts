@@ -288,8 +288,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
-    // this.windowWidth = window.innerWidth;
-    // this.windowHeight = window.innerHeight;
+    this.windowWidth = window.innerWidth;
+    this.windowHeight = window.innerHeight;
 
     try {
       for (const view of this.views) {
@@ -361,7 +361,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
     if (!isSetup) {
       this.createHeatmap(undefined, true);
-      // this.createGraph();
+      this.createGraph(this.selectedFile);
     }
   }
 
@@ -394,6 +394,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       weights
     ).subscribe(
       data => {
+        console.log(data);
         this.applyingDataToHeatmaps(data);
       }
     );
@@ -586,6 +587,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     return window.innerWidth / window.innerHeight;
   }
 
+  createGraph(selectedFile: string) {
+
+  }
 
   // ==================================================
   // playground
@@ -645,6 +649,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
+
+    this.vizWeights = undefined;
 
     // this.playgroundService.trainNetwork(objToSend).subscribe(result => {
 

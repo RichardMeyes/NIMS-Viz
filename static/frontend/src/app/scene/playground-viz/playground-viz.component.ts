@@ -1,7 +1,7 @@
-import { Component, ViewChild, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, ViewChild, Input, OnChanges, SimpleChanges, OnInit, HostListener } from '@angular/core';
 import * as d3 from 'd3';
 import { Observable, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, take } from 'rxjs/operators';
 import { PlaygroundService } from '../../playground.service';
 
 @Component({
@@ -18,6 +18,18 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   @Input() topology: any;
   @Input() weights: any;
 
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    this.playCanvasWidth = 0.5 * window.innerWidth;
+    this.playCanvasHeight = 0.5 * window.innerHeight;
+
+    this.canvas.width = this.playCanvasWidth;
+    this.canvas.height = this.playCanvasHeight;
+    
+    this.setupTopology(this.changesForRedraw);
+    this.setupWeights(this.changesForRedraw);
+  }
+
   context; base;
   playCanvasWidth;
   playCanvasHeight;
@@ -25,6 +37,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   interpolatedColor;
 
   changesTopology; changesWeights;
+  changesForRedraw;
   rawChanges: Subject<SimpleChanges>;
 
 
@@ -40,6 +53,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.canvas.height = this.playCanvasHeight;
     this.rawChanges.pipe(debounceTime(500)).subscribe(
       filteredChanges => {
+        this.changesForRedraw = filteredChanges;
         this.setupTopology(filteredChanges);
         this.setupWeights(filteredChanges);
         // this.context.translate(200, 200);
@@ -111,42 +125,39 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     if (filteredChanges.weights && filteredChanges.weights.currentValue) {
       const trainingResult = filteredChanges.weights.currentValue;
 
-      Object.keys(trainingResult).forEach((epoch, epochIndex) => {
-        setTimeout(() => {
-          Object.keys(trainingResult[epoch]).forEach((layer, layerIndex) => {
-            if (layer !== 'output') {
-              trainingResult[epoch][layer].forEach((destination, destinationIndex) => {
-                destination.forEach((source, sourceIndex) => {
-                  if (sourceIndex === 0) {
-                    minWeight = source;
-                    maxWeight = source;
-                  } else {
-                    if (source < minWeight) { minWeight = source; }
-                    if (source > maxWeight) { maxWeight = source; }
-                  }
+      let lastEpoch = Object.keys(trainingResult).pop();
+      Object.keys(trainingResult[lastEpoch]).forEach((layer, layerIndex) => {
+        if (layer !== 'output') {
+          trainingResult[lastEpoch][layer].forEach((destination, destinationIndex) => {
+            destination.forEach((source, sourceIndex) => {
+              if (sourceIndex === 0) {
+                minWeight = source;
+                maxWeight = source;
+              } else {
+                if (source < minWeight) { minWeight = source; }
+                if (source > maxWeight) { maxWeight = source; }
+              }
 
 
-                  filteredData.push({
-                    layer: layerIndex,
-                    source: sourceIndex,
-                    target: destinationIndex,
-                    value: source,
-                    unitSpacing: (this.canvas.height / +destination.length),
-                    targetUnitSpacing: (this.canvas.height / +trainingResult[epoch][layer].length)
-                  });
-                });
+              filteredData.push({
+                layer: layerIndex,
+                source: sourceIndex,
+                target: destinationIndex,
+                value: source,
+                unitSpacing: (this.canvas.height / +destination.length),
+                targetUnitSpacing: (this.canvas.height / +trainingResult[lastEpoch][layer].length)
               });
-            }
+            });
           });
-          this.interpolatedColor = d3.scaleLinear()
-            .domain([minWeight, maxWeight])
-            .range(['rgb(63,81,181)', 'rgb(244,67,54)']);
-
-
-          this.bindWeights(filteredData);
-          this.draw();
-        }, 1500 * epochIndex);
+        }
       });
+      this.interpolatedColor = d3.scaleLinear()
+        .domain([minWeight, maxWeight])
+        .range(['rgb(63,81,181)', 'rgb(244,67,54)']);
+
+
+      this.bindWeights(filteredData);
+      this.draw();
     }
 
     // let self = this;

@@ -232,4 +232,8 @@ export class PlaygroundService {
 
     return weights;
   }
+
+  loadNetworkDetail(selectedFile: string) {
+    let baseURL = "";
+  }
 }
