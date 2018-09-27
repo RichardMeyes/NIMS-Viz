@@ -1,0 +1,14 @@
+image: node:latest
+stages:
+  - build
+
+before_script:
+  - npm install
+
+app-build:
+  stage: build
+  artifacts:
+    paths:
+      - dist/
+  script:
+    - npm run build
