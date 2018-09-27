@@ -94,7 +94,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     blur: 0,
     minOpacity: 0.5,
     color1: '#ff0000',
-    color1Trigger: 0.1,
+    color1Trigger: 1.0,
     // color2: '#00ff00',
     // color2Trigger: 0.02,
     // color3: '#ff0000',
@@ -394,7 +394,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       weights
     ).subscribe(
       data => {
-        console.log(data);
         this.applyingDataToHeatmaps(data);
       }
     );
@@ -403,12 +402,16 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private applyingDataToHeatmaps(data) {
     const heatmapNodeData = data['heatmapNodeData'];
     const heatmapNormalData = data['heatmapNormalData'];
+    const deltaMinMax = this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin;
+    // Trigger 1 initial value is 40% of delta min-max
     this.heatmapNormalConfig.color1Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
-      (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
-    this.heatmapNormalConfig.color2Trigger = parseFloat((this.heatmapNormalConfig.weightValueMax -
-      (this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin) / 2.5).toFixed(4));
+      deltaMinMax * 0.4).toFixed(4));
+    // Trigger 2 initial value is 60% of delta min-max (effectively between 40% of trigger 1 and 60%)
+    this.heatmapNormalConfig.color2Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
+      deltaMinMax * 0.6).toFixed(4));
     this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
-    this.heatmapNodeConfig.color1Trigger = this.heatmapNormalConfig.weightValueMax;
+    // NodeConfig Trigger is one color for all values. That's the reason for 1.0 => 100%
+    this.heatmapNodeConfig.color1Trigger = 1.0;
     this.heatmapNormal.clear();
     this.heatmapNodes.clear();
     // set radius and blur radius
