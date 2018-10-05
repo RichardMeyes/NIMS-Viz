@@ -41,7 +41,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   rawChanges: Subject<SimpleChanges>;
 
   minMaxDiffs; prevFilteredData;
-  activities;
+  activities = [];
 
   constructor(private playgroundService: PlaygroundService) {
     this.rawChanges = new Subject();
@@ -80,6 +80,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   setupTopology(filteredChanges) {
     // topology
+    console.log(filteredChanges);
     if (filteredChanges.topology) {
       const layers = filteredChanges.topology.currentValue.layers;
 
@@ -169,10 +170,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
         this.activities = [];
 
         this.bindWeights(filteredData);
+        console.log(this.activities);
         this.draw();
       }
     }
-    else this.prevFilteredData = undefined;
+    else {
+      this.prevFilteredData = undefined;
+      this.activities = [];
+    }
   }
 
   bindTopology(filteredData) {
@@ -249,17 +254,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     // this.context.fillRect(0.5 * this.canvas.width, 0.5 * this.canvas.height, this.canvas.width, this.canvas.height);
 
-    let elements = this.base.selectAll('base.circle');
-    const self = this;
-    elements.each(function (d, i) {
-      const node = d3.select(this);
-      self.context.beginPath();
-      self.context.fillStyle = node.attr('fill');
-      self.context.arc(node.attr('cx'), node.attr('cy'), node.attr('r'), 0, 2 * Math.PI);
-      self.context.fill();
-    });
 
-    elements = this.base.selectAll('base.line');
+    let elements = this.base.selectAll('base.line');
+    const self = this;
     elements.each(function (d, i) {
       const node = d3.select(this);
       self.context.beginPath();
@@ -267,6 +264,16 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
       self.context.moveTo(node.attr('x1'), node.attr('y1'));
       self.context.lineTo(node.attr('x2'), node.attr('y2'));
       self.context.stroke();
+    });
+
+    elements = this.base.selectAll('base.circle');
+    // const self = this;
+    elements.each(function (d, i) {
+      const node = d3.select(this);
+      self.context.beginPath();
+      self.context.fillStyle = node.attr('fill');
+      self.context.arc(node.attr('cx'), node.attr('cy'), node.attr('r'), 0, 2 * Math.PI);
+      self.context.fill();
     });
   }
 
@@ -301,6 +308,21 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     }
 
     if (mode == "topology") {
+      for (let i = 0; i < this.activities.length; i++) {
+        if ((this.activities[i].layer == d.layer && this.activities[i].source == d.unit) || (this.activities[i].layer == d.layer - 1 && this.activities[i].target == d.unit)) {
+          switch (this.activities[i].activity) {
+            case 1: {
+              color = "rgba(229, 115, 115, .35)";
+              break;
+            }
+            case 0.5: {
+              color = "rgba(229, 115, 115, .175)";
+              break;
+            }
+          }
+          break;
+        }
+      }
     }
 
     return color;
