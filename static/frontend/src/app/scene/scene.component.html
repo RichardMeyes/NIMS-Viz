@@ -116,6 +116,7 @@
                             </mat-option>
                         </mat-autocomplete>
                     </mat-form-field>
+                    <mat-checkbox formControlName="fromJson" *ngIf="false">Visualize from JSON (dev only)</mat-checkbox>
                     <div fxFlex="grow"></div>
                     <div>
                         <div formArrayName="layers">
@@ -194,7 +195,7 @@
         </mat-accordion>
 
         <div id="subAppsContainer">
-            <app-playground-viz [topology]="playgroundForm.value" [weights]="vizWeights"></app-playground-viz>
+            <app-playground-viz [topology]="playgroundForm.value" [weights]="vizWeights" [fromJson]="playgroundForm.value.fromJson"></app-playground-viz>
             <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')"
                 (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
             <!-- <app-molecule #moleculeComponent></app-molecule> -->
