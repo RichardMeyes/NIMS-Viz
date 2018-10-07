@@ -275,12 +275,12 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
 
-    this.networkService.onEvent('connect')
+    this.networkService.onConnect()
       .subscribe(() => {
         console.log('connected');
       });
 
-    this.networkService.onEvent('disconnect')
+    this.networkService.onDisconnect()
       .subscribe(() => {
         console.log('disconnected');
       });

@@ -20,7 +20,7 @@ const httpOptions = {
   providedIn: 'root'
 })
 export class NetworkService {
-  private socket;
+  private socket: SocketIOClient.Socket;
 
   constructor(private http: HttpClient) { }
 
@@ -48,11 +48,38 @@ export class NetworkService {
     });
   }
 
-  public onEvent(event: string): Observable<any> {
+  public onDisconnect(): Observable<any> {
     return new Observable<string>(observer => {
-      this.socket.on(event, () => observer.next());
+      this.socket.on('disconnect', () => {
+        console.log('trying to reconnect...');
+        // this.socket.connect();
+        // this.initSocket();
+        observer.next();
+      });
     });
   }
+
+  public onConnect(): Observable<any> {
+    return new Observable<string>(observer => {
+      this.socket.on('connect', () => observer.next());
+    });
+  }
+
+  // public onEvent(event: string): Observable<any> {
+  //   if (event === 'disconnect') {
+  //     return new Observable<string>(observer => {
+  //       this.socket.on(event, () => {
+  //         console.log('trying to reconnect...');
+  //         this.socket.reconnect();
+  //         observer.next();
+  //       });
+  //     });
+  //   } else {
+  //     return new Observable<string>(observer => {
+  //       this.socket.on(event, () => observer.next());
+  //     });
+  //   }
+  // }
 
   public detectFiles() {
     console.log('trying to detect files');
