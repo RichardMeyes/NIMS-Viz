@@ -24,7 +24,8 @@ CORS(app)
 app.config['SECRET_KEY'] = 'braindead'
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
-socketio = SocketIO(app)
+# keep socketio alive for x minutes (60s*x)
+socketio = SocketIO(app, ping_timeout=(60*60))
 
 
 class RegexConverter(BaseConverter):
