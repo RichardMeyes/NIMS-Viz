@@ -45,17 +45,22 @@ class Heatmap(metaclass=Singleton):
             self.layerObjs = self.createNetworkStruct(weightsObj,keyArray)
 
         heatmapdata = {}
-        for i in range(1,len(keyArray)):
-            lastLN = self.layerObjs[i - 1]['heatmapNodes']
-            currLN = self.layerObjs[i]['heatmapNodes']
+        addedFirstLayerNodesAlready = False
+        for epochLayer in range(1,len(keyArray)):
+            lastLN = self.layerObjs[epochLayer - 1]['heatmapNodes']
+            currLN = self.layerObjs[epochLayer]['heatmapNodes']
             # repeat connectionCount times -> amount of connections per layer
-            for j in range(0,len(currLN)):
+            for currNodeIndex in range(0,len(currLN)):
                 # print('Progress: ' + (j * 100.0 / len(currLN) + '%')
-                for k in range(0,len(lastLN)):
-                    weightValue = weightsObj[keyArray[i]][j][k]
-                    heatmapNormalConnections, heatmapNodeConnections = self.createConnectionBetweenCurrLayers(currLN[j], lastLN[k], weightValue, isFullyDrawn)
+                for lastNodeIndex in range(0,len(lastLN)):
+                    weightValue = weightsObj[keyArray[epochLayer]][currNodeIndex][lastNodeIndex]
+                    heatmapNormalConnections, heatmapNodeConnections = self.createConnectionBetweenCurrLayers(
+                        currLN[currNodeIndex], lastLN[lastNodeIndex], weightValue, 
+                        isFullyDrawn, not addedFirstLayerNodesAlready)
                     heatmapNormalData.extend(heatmapNormalConnections)
                     heatmapNodeData.extend(heatmapNodeConnections)
+                    
+                addedFirstLayerNodesAlready = True
         
         # convert weights to percentages
         diff = abs(weightMinMax[1] - weightMinMax[0])
@@ -70,24 +75,26 @@ class Heatmap(metaclass=Singleton):
         #print('calculation done')
         return heatmapdata
 
-    def createConnectionBetweenCurrLayers(self,firstNode, secondNode, weightValue, isFullyDrawn):
-        heatmapNormalConnections = self.highlightConnection(firstNode, secondNode, weightValue, isFullyDrawn)
-        heatmapNodeConnections = self.highlightNode(firstNode, weightValue)
+    def createConnectionBetweenCurrLayers(self,currNode, lastNode, weightValue, isFullyDrawn, addedFirstLayerNodesAlready):
+        heatmapNormalConnections = self.highlightConnection(currNode, lastNode, weightValue, isFullyDrawn)
+        heatmapNodeConnections = self.highlightNode(currNode, weightValue)
+        if(not addedFirstLayerNodesAlready):
+            heatmapNodeConnections.extend(self.highlightNode(lastNode, weightValue))
         return heatmapNormalConnections, heatmapNodeConnections
 
 
-    def highlightConnection(self,currNode, nextNode, value, isFullyDrawn):
+    def highlightConnection(self,currNode, lastNode, value, isFullyDrawn):
             tempHeatmapEdges = []
             if(isFullyDrawn):
                 for i in range(0,self.density+1):
-                    tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * self.density)) * (nextNode[0] - currNode[0])
-                    tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * self.density)) * (nextNode[1] - currNode[1])
+                    tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * self.density)) * (lastNode[0] - currNode[0])
+                    tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * self.density)) * (lastNode[1] - currNode[1])
                     tempHeatmapEdges.append([tempx, tempy, value])
             else:
                 # ignore the first and last point because those are in the nodes itself
                 for i in range(1,self.density):
-                    tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * self.density)) * (nextNode[0] - currNode[0])
-                    tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * self.density)) * (nextNode[1] - currNode[1])
+                    tempx = 1.0 * currNode[0] + (i * 1.0 / (1.0 * self.density)) * (lastNode[0] - currNode[0])
+                    tempy = 1.0 * currNode[1] + (i * 1.0 / (1.0 * self.density)) * (lastNode[1] - currNode[1])
                     tempHeatmapEdges.append([tempx, tempy, value])
 
 
