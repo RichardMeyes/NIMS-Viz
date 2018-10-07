@@ -60,14 +60,18 @@ class Net(nn.Module):
                                                                                    loss.data.item()))
 
             # store weights after each epoch
+            temp_epoch_dict = dict()
             weights = self.input.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
             for i_layer in range(len(self.layers)):
                 layer = self.__getattr__("h{0}".format(i_layer+1))
                 weights = layer.weight.data.numpy().tolist()
                 self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+                temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             weights = self.output.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            temp_epoch_dict["epoch_{0}".format(epoch)].update({"output": weights})
             # return partial done epochs via socketIO (each epoch gets added to the dict)
             # create heatmap
             if(epoch > 0):
@@ -76,8 +80,8 @@ class Net(nn.Module):
             if(epoch == self.num_epochs - 1):
                 isDone = True
 
-            weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(self.weights_dict["epoch_{0}".format(epoch)], newNodeStruct)
-            emit('json',{'done': isDone, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+            weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(temp_epoch_dict["epoch_{0}".format(epoch)], newNodeStruct)
+            emit('json',{'done': isDone, 'resultWeights' : temp_epoch_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
             eventlet.sleep(0)
             print('emitted data')
 
