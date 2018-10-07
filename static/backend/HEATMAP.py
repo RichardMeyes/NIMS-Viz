@@ -46,19 +46,24 @@ class Heatmap(metaclass=Singleton):
 
         heatmapdata = {}
         addedFirstLayerNodesAlready = False
+        intesityForNodeInSingleView = 1.0
         for epochLayer in range(1,len(keyArray)):
             lastLN = self.layerObjs[epochLayer - 1]['heatmapNodes']
             currLN = self.layerObjs[epochLayer]['heatmapNodes']
             # repeat connectionCount times -> amount of connections per layer
             for currNodeIndex in range(0,len(currLN)):
+                heatmapNodeConnections = self.highlightNode(currLN[currNodeIndex], intesityForNodeInSingleView)
+                heatmapNodeData.extend(heatmapNodeConnections)
                 # print('Progress: ' + (j * 100.0 / len(currLN) + '%')
                 for lastNodeIndex in range(0,len(lastLN)):
+                    if(not addedFirstLayerNodesAlready):
+                        heatmapNodeLastConnections = self.highlightNode(lastLN[lastNodeIndex],intesityForNodeInSingleView)
+                        heatmapNodeData.extend(heatmapNodeLastConnections)
                     weightValue = weightsObj[keyArray[epochLayer]][currNodeIndex][lastNodeIndex]
-                    heatmapNormalConnections, heatmapNodeConnections = self.createConnectionBetweenCurrLayers(
-                        currLN[currNodeIndex], lastLN[lastNodeIndex], weightValue, 
-                        isFullyDrawn, not addedFirstLayerNodesAlready)
+                    heatmapNormalConnections = self.highlightConnection(
+                        currLN[currNodeIndex], lastLN[lastNodeIndex],
+                        weightValue, isFullyDrawn)
                     heatmapNormalData.extend(heatmapNormalConnections)
-                    heatmapNodeData.extend(heatmapNodeConnections)
                     
                 addedFirstLayerNodesAlready = True
         
@@ -74,14 +79,6 @@ class Heatmap(metaclass=Singleton):
         # print('heatmapNormalData', heatmapNormalData[int(len(heatmapNormalData)/2)-1])
         #print('calculation done')
         return heatmapdata
-
-    def createConnectionBetweenCurrLayers(self,currNode, lastNode, weightValue, isFullyDrawn, addedFirstLayerNodesAlready):
-        heatmapNormalConnections = self.highlightConnection(currNode, lastNode, weightValue, isFullyDrawn)
-        heatmapNodeConnections = self.highlightNode(currNode, weightValue)
-        if(not addedFirstLayerNodesAlready):
-            heatmapNodeConnections.extend(self.highlightNode(lastNode, weightValue))
-        return heatmapNormalConnections, heatmapNodeConnections
-
 
     def highlightConnection(self,currNode, lastNode, value, isFullyDrawn):
             tempHeatmapEdges = []

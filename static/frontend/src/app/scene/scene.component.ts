@@ -90,13 +90,13 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   private heatmapNodeConfig = {
-    radius: 1,
+    radius: 4,
     blur: 0,
-    minOpacity: 0.5,
-    color1: '#ff0000',
-    color1Trigger: 1.0,
-    // color2: '#00ff00',
-    // color2Trigger: 0.02,
+    minOpacity: 0.05,
+    color1: '#0000ff',
+    color1Trigger: 0.1,
+    color2: '#ff0000',
+    color2Trigger: 1.0,
     // color3: '#ff0000',
     // color3Trigger: 0.3,
     colorGradient: function () {
@@ -105,7 +105,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       // const col3TriggerInPerc = parseFloat((Math.abs(this.color3Trigger - this.weightValueMin) / diff).toFixed(2));
       // tempobj[0.0] = 'blue';
       tempobj[this.color1Trigger] = this.color1;
-      // tempobj[this.color2Trigger] = this.color2;
+      tempobj[this.color2Trigger] = this.color2;
       // tempobj[col3TriggerInPerc] = this.color3;
       return tempobj;
     }
@@ -400,6 +400,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       weights
     ).subscribe(
       data => {
+        console.log('heatmapdata: ', data);
         this.applyingDataToHeatmaps(data);
       }
     );
@@ -417,7 +418,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       deltaMinMax * 0.6).toFixed(4));
     this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
     // NodeConfig Trigger is one color for all values. That's the reason for 1.0 => 100%
-    this.heatmapNodeConfig.color1Trigger = 1.0;
+    // this.heatmapNodeConfig.color1Trigger = 1.0;
     this.heatmapNormal.clear();
     this.heatmapNodes.clear();
     // set radius and blur radius
