@@ -25,10 +25,7 @@ export class NetworkService {
   constructor(private http: HttpClient) { }
 
   public initSocket(): void {
-    console.log('b4 socket error');
     this.socket = socketIo('http://127.0.0.1:5000');
-    console.log('this.socket', this.socket);
-
   }
 
   public send(type: string, message: JSON): void {
@@ -51,7 +48,7 @@ export class NetworkService {
   public onDisconnect(): Observable<any> {
     return new Observable<string>(observer => {
       this.socket.on('disconnect', () => {
-        console.log('trying to reconnect...');
+        // console.log('trying to reconnect...');
         // this.socket.connect();
         // this.initSocket();
         observer.next();
@@ -82,8 +79,6 @@ export class NetworkService {
   // }
 
   public detectFiles() {
-    console.log('trying to detect files');
-
     return this.http.get('/setup/filesearch', httpOptions)
       .pipe(
         catchError(this.handleError)
