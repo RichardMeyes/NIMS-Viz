@@ -401,7 +401,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       weights
     ).subscribe(
       data => {
-        console.log('heatmapdata: ', data);
         this.applyingDataToHeatmaps(data);
       }
     );
