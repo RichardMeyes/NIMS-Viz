@@ -262,7 +262,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         const isDone = message['done'];
         if (isDone) {
           this.scanForFiles(true);
-          // this.createHeatmap(message);
+          // this.createHeatmap(message);          
+          if (this.playgroundForm.value.fromJson) {
+            const resultWeights = message['resultWeights'];
+            this.vizWeights = resultWeights;
+          }
         } else {
           const resultWeights = message['resultWeights'];
           const resultHeatmapData = message['resultHeatmapData'];
@@ -270,6 +274,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
           this.heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
           this.heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
           this.applyingDataToHeatmaps(resultHeatmapData);
+          // if (!this.playgroundForm.value.fromJson)
+          console.log("called");
           this.vizWeights = resultWeights;
         }
       });
@@ -599,6 +605,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
       learning_rate: ['', Validators.required],
       layerCount: [0, [Validators.required, Validators.min(0)]],
+      fromJson: [false, Validators.required],
 
       layers: this.fb.array([])
     });
@@ -610,6 +617,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       num_epochs: this.playgroundData.epoch,
 
       learning_rate: this.playgroundData.learningRates[0].value,
+      fromJson: false,
       layerCount: this.playgroundData.layerCount
     });
 

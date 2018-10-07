@@ -17,6 +17,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   @Input() topology: any;
   @Input() weights: any;
+  @Input() fromJson: boolean;
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
@@ -25,21 +26,22 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
     this.canvas.width = this.playCanvasWidth;
     this.canvas.height = this.playCanvasHeight;
-    
-    this.setupTopology(this.changesForRedraw);
+
     this.setupWeights(this.changesForRedraw);
+    this.setupTopology(this.changesForRedraw);
   }
 
   context; base;
   playCanvasWidth;
   playCanvasHeight;
   filteredLayerCount; layerSpacing; nodeRadius;
-  interpolatedColor;
 
   changesTopology; changesWeights;
   changesForRedraw;
   rawChanges: Subject<SimpleChanges>;
 
+  minMaxDiffs; prevFilteredData;
+  activities = [];
 
   constructor(private playgroundService: PlaygroundService) {
     this.rawChanges = new Subject();
@@ -54,9 +56,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.rawChanges.pipe(debounceTime(500)).subscribe(
       filteredChanges => {
         this.changesForRedraw = filteredChanges;
-        this.setupTopology(filteredChanges);
         this.setupWeights(filteredChanges);
-        // this.context.translate(200, 200);
+        this.setupTopology(filteredChanges);
       }
     );
   }
@@ -65,8 +66,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     if (changes.topology) {
       this.changesTopology = changes.topology;
       if (changes.topology.firstChange) {
-        this.setupTopology({ topology: this.changesTopology, weights: undefined });
         this.setupWeights({ topology: undefined, weights: [] });
+        this.setupTopology({ topology: this.changesTopology, weights: undefined });
       } else { this.rawChanges.next({ topology: this.changesTopology, weights: undefined }); }
     }
 
@@ -78,14 +79,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   setupTopology(filteredChanges) {
-    this.context = this.canvas.getContext('2d');
-    // this.context.translate(200, 200);
-    const customBase = document.createElement('base');
-    this.base = d3.select(customBase);
-
-    this.interpolatedColor = d3.interpolateRgb('#3F51B5', '#F44336');
-
     // topology
+    console.log(filteredChanges);
     if (filteredChanges.topology) {
       const layers = filteredChanges.topology.currentValue.layers;
 
@@ -119,52 +114,70 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   setupWeights(filteredChanges) {
+    this.context = this.canvas.getContext('2d');
+    const customBase = document.createElement('base');
+    this.base = d3.select(customBase);
+
+
     const filteredData = [];
-    let maxWeight = 0; let minWeight = 0;
+    this.minMaxDiffs = [];
 
     if (filteredChanges.weights && filteredChanges.weights.currentValue) {
       const trainingResult = filteredChanges.weights.currentValue;
 
-      let lastEpoch = Object.keys(trainingResult).pop();
-      Object.keys(trainingResult[lastEpoch]).forEach((layer, layerIndex) => {
-        if (layer !== 'output') {
-          trainingResult[lastEpoch][layer].forEach((destination, destinationIndex) => {
-            destination.forEach((source, sourceIndex) => {
-              if (sourceIndex === 0) {
-                minWeight = source;
-                maxWeight = source;
-              } else {
-                if (source < minWeight) { minWeight = source; }
-                if (source > maxWeight) { maxWeight = source; }
-              }
+      if (!this.fromJson) {
+        let lastEpoch = Object.keys(trainingResult).pop();
+        if (lastEpoch == "epoch_0") this.prevFilteredData = undefined;
 
+        Object.keys(trainingResult[lastEpoch]).forEach((layer, layerIndex) => {
+          if (layer !== 'output') {
+            this.minMaxDiffs.push({ minDiff: 0, maxDiff: 0 });
 
-              filteredData.push({
-                layer: layerIndex,
-                source: sourceIndex,
-                target: destinationIndex,
-                value: source,
-                unitSpacing: (this.canvas.height / +destination.length),
-                targetUnitSpacing: (this.canvas.height / +trainingResult[lastEpoch][layer].length)
+            trainingResult[lastEpoch][layer].forEach((destination, destinationIndex) => {
+              destination.forEach((source, sourceIndex) => {
+                let diff: number;
+                if (this.prevFilteredData && lastEpoch != "epoch_0") {
+                  for (let i = 0; i < this.prevFilteredData.length; i++) {
+                    if (this.prevFilteredData[i].layer == layerIndex && this.prevFilteredData[i].target == destinationIndex && this.prevFilteredData[i].source == sourceIndex) {
+                      diff = Math.abs(source - this.prevFilteredData[i].value);
+
+                      if (sourceIndex === 0) {
+                        this.minMaxDiffs[layerIndex].minDiff = diff;
+                        this.minMaxDiffs[layerIndex].maxDiff = diff;
+                      } else {
+                        if (diff < this.minMaxDiffs[layerIndex].minDiff) { this.minMaxDiffs[layerIndex].minDiff = diff; }
+                        if (diff > this.minMaxDiffs[layerIndex].maxDiff) { this.minMaxDiffs[layerIndex].maxDiff = diff; }
+                      }
+                      break;
+                    }
+                  }
+                }
+
+                filteredData.push({
+                  layer: layerIndex,
+                  source: sourceIndex,
+                  target: destinationIndex,
+                  value: source,
+                  diff: diff,
+                  unitSpacing: (this.canvas.height / +destination.length),
+                  targetUnitSpacing: (this.canvas.height / +trainingResult[lastEpoch][layer].length)
+                });
               });
             });
-          });
-        }
-      });
-      this.interpolatedColor = d3.scaleLinear()
-        .domain([minWeight, maxWeight])
-        .range(['rgb(63,81,181)', 'rgb(244,67,54)']);
+          }
+        });
+        if (lastEpoch != "epoch_0") this.prevFilteredData = filteredData;
+        this.activities = [];
 
-
-      this.bindWeights(filteredData);
-      this.draw();
+        this.bindWeights(filteredData);
+        console.log(this.activities);
+        this.draw();
+      }
     }
-
-    // let self = this;
-    // let t = d3.timer((elapsed) => {
-    //   self.draw();
-    //   if (elapsed > 300) { t.stop(); }
-    // }, 150);
+    else {
+      this.prevFilteredData = undefined;
+      this.activities = [];
+    }
   }
 
   bindTopology(filteredData) {
@@ -183,13 +196,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
         const cy: number = (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
         return cy;
       })
-      .attr('r', 0);
+      .attr('r', this.nodeRadius)
+      .attr('fill', function (d) { return self.generateColor(d, "topology"); });
 
     join
       .merge(enterSel)
       .transition()
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return '#3F51B5'; });
+      .attr('fill', function (d) { return self.generateColor(d, "topology"); });
 
     const exitSel = join.exit()
       .transition()
@@ -221,13 +235,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
         const y1: number = (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y1;
       })
-      .attr('stroke', function (d) { return self.interpolatedColor(d.value); });
-    // .attr('stroke', function (d) { return self.interpolatedColor((d.value + 1) / 2) });
+      .attr('stroke', function (d) { return self.generateColor(d, "weights");; });
 
     join
       .merge(enterSel)
       .transition()
-      .attr('stroke', function (d) { return self.interpolatedColor(d.value); });
+      .attr('stroke', function (d) { return self.generateColor(d, "weights");; });
     // .attr('stroke', function (d) { return "black"});
 
     const exitSel = join.exit()
@@ -241,17 +254,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
     // this.context.fillRect(0.5 * this.canvas.width, 0.5 * this.canvas.height, this.canvas.width, this.canvas.height);
 
-    let elements = this.base.selectAll('base.circle');
-    const self = this;
-    elements.each(function (d, i) {
-      const node = d3.select(this);
-      self.context.beginPath();
-      self.context.fillStyle = node.attr('fill');
-      self.context.arc(node.attr('cx'), node.attr('cy'), node.attr('r'), 0, 2 * Math.PI);
-      self.context.fill();
-    });
 
-    elements = this.base.selectAll('base.line');
+    let elements = this.base.selectAll('base.line');
+    const self = this;
     elements.each(function (d, i) {
       const node = d3.select(this);
       self.context.beginPath();
@@ -260,5 +265,66 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
       self.context.lineTo(node.attr('x2'), node.attr('y2'));
       self.context.stroke();
     });
+
+    elements = this.base.selectAll('base.circle');
+    // const self = this;
+    elements.each(function (d, i) {
+      const node = d3.select(this);
+      self.context.beginPath();
+      self.context.fillStyle = node.attr('fill');
+      self.context.arc(node.attr('cx'), node.attr('cy'), node.attr('r'), 0, 2 * Math.PI);
+      self.context.fill();
+    });
+  }
+
+  generateColor(d, mode: string): string {
+    let color = "#EEEEEE";
+    let activity = 0;
+    let recordActivities = false;
+
+    if (mode == "weights") {
+      let range = Math.abs(this.minMaxDiffs[d.layer].maxDiff - this.minMaxDiffs[d.layer].minDiff);
+      let diffPercentage = d.diff / range;
+
+      if (diffPercentage > .9) {
+        color = "#E57373";
+        activity = 1;
+        recordActivities = true;
+      }
+      else if (diffPercentage > .6) {
+        color = "#FFCDD2";
+        activity = 0.5;
+        recordActivities = true;
+      }
+
+      if (recordActivities) {
+        this.activities.push({
+          layer: d.layer,
+          source: d.source,
+          target: d.target,
+          activity: activity
+        });
+      }
+    }
+
+    if (mode == "topology") {
+      for (let i = 0; i < this.activities.length; i++) {
+        if ((this.activities[i].layer == d.layer && this.activities[i].source == d.unit) || (this.activities[i].layer == d.layer - 1 && this.activities[i].target == d.unit)) {
+          switch (this.activities[i].activity) {
+            case 1: {
+              color = "rgba(229, 115, 115, .35)";
+              break;
+            }
+            case 0.5: {
+              color = "rgba(229, 115, 115, .175)";
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    return color;
   }
 }
