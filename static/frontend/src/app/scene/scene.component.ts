@@ -37,7 +37,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() fixedTopGap: boolean;
   private scene: THREE.Scene;
   private scenes: THREE.Scene[] = [];
-  private renderer: any;
+  private renderer: THREE.WebGLRenderer;
   private controls: THREE.OrbitControls;
 
   private cube: THREE.Mesh;
@@ -232,6 +232,11 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private ioConnection: any;
   messages: string[] = [];
   trainEpochCnt = 0;
+  orbitControllerAreaStyles = {
+    'position': 'absolute',
+    'width': '0px',
+    'height': '0px'
+  };
 
   constructor(
     private networkService: NetworkService,
@@ -321,8 +326,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private scanForFiles(isNewlyCreated?: boolean) {
-    console.log('scanning for files frontend');
-
     this.networkService.detectFiles().subscribe(
       data => {
         const newFileList = [];
@@ -346,8 +349,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
               newFileValue = this.selectedFile;
             }
           }
-          console.log('newfilevalue', newFileValue);
-
           this.files = newFileList;
           this.selectedFileClick(this.files.find(element => element.value === newFileValue).value);
         } else {
@@ -444,7 +445,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.heatmapNodes.draw();
       this.heatmapCanvasNormalTexture.needsUpdate = true;
       this.heatmapCanvasNodeTexture.needsUpdate = true;
-      console.log('heatmapNormal refreshed!');
     } catch (error) {
       console.log('heatmap refresh failed', error);
     }
@@ -519,18 +519,20 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         antialias: true
       });
     } else {
-      this.renderer = new THREE.CSS3DRenderer();
+      // this.renderer = new THREE.CSS3DRenderer();
     }
     // reduced canvas size
     // this.renderer.setSize(window.innerWidth * 0.95, window.innerHeight - 67.125);
     this.renderer.setSize(window.innerWidth, window.innerHeight - 67.125);
-    console.log('this.heatCanvas', this.heatCanvas);
-    console.log('this.renderer.domElement', this.renderer.domElement);
+    // console.log('this.heatCanvas', this.heatCanvas);
+    // console.log('this.renderer.domElement', this.renderer.domElement);
 
 
     // this.renderer.setSize(this.heatCanvas.clientWidth, this.heatCanvas.clientHeight);
 
     // document.body.appendChild(this.renderer.domElement);
+    this.orbitControllerAreaStyles.width = (window.innerWidth * this.views[0].width) + 'px';
+    this.orbitControllerAreaStyles.height = (window.innerHeight * this.views[0].height) + 'px';
     document.getElementById('subAppsContainer').appendChild(this.renderer.domElement);
 
 
@@ -566,7 +568,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     // ==================================================
     // controls
     // ==================================================
-    this.controls = new THREE.OrbitControls(this.views[0]['camera'], this.renderer.domElement);
+    console.log('this.renderer.domElement', this.renderer.domElement);
+
+    this.controls = new THREE.OrbitControls(this.views[0]['camera'], document.getElementById('orbitControlArea'));
     this.controls.rotateSpeed = 1.0;
     this.controls.zoomSpeed = 1.2;
   }

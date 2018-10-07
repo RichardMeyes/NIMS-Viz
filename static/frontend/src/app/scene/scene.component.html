@@ -195,6 +195,7 @@
         </mat-accordion>
 
         <div id="subAppsContainer">
+            <div id="orbitControlArea" [ngStyle]="orbitControllerAreaStyles"></div>
             <app-playground-viz [topology]="playgroundForm.value" [weights]="vizWeights" [fromJson]="playgroundForm.value.fromJson"></app-playground-viz>
             <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')"
                 (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
