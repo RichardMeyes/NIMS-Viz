@@ -1,8 +1,9 @@
-import { Component, ViewChild, Input, OnChanges, SimpleChanges, OnInit, HostListener } from '@angular/core';
-import * as d3 from 'd3';
-import { Observable, Subject } from 'rxjs';
-import { debounceTime, take } from 'rxjs/operators';
-import { PlaygroundService } from '../../playground.service';
+import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, Output, EventEmitter, SimpleChanges } from '@angular/core';
+
+import { Subject } from 'rxjs';
+import { takeUntil, filter } from 'rxjs/operators';
+
+import * as d3 from "d3";
 
 @Component({
   selector: 'app-playground-viz',
@@ -10,214 +11,167 @@ import { PlaygroundService } from '../../playground.service';
   styleUrls: ['./playground-viz.component.scss']
 })
 export class PlaygroundVizComponent implements OnInit, OnChanges {
-  @ViewChild('playCanvas') private playCanvasRef;
-  private get canvas(): HTMLCanvasElement {
-    return this.playCanvasRef.nativeElement;
-  }
+  currEpoch: string;
+  toolbarHeight: number;
+  unsubscribe: Subject<any> = new Subject();
 
-  @Input() topology: any;
-  @Input() weights: any;
-  @Input() fromJson: boolean;
+  zoom;
+  svg; svgWidth; svgHeight;
+  vizContainer;
+
+  topology; weights; prevWeights;
+  layerSpacing; nodeRadius;
+  minMaxDiffs; activities;
+
+  runningAnimation;
+
+  @ViewChild("container") container;
+  @Input() vizOptions;
+  @Input() inputTopology;
+  @Input() inputWeights;
+  @Output() endofVisualization: EventEmitter<boolean>;
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
-    this.playCanvasWidth = 0.5 * window.innerWidth;
-    this.playCanvasHeight = 0.5 * window.innerHeight;
-
-    this.canvas.width = this.playCanvasWidth;
-    this.canvas.height = this.playCanvasHeight;
-
-    this.setupWeights(this.changesForRedraw);
-    this.setupTopology(this.changesForRedraw);
+    // TO BE IMPLEMENTED
   }
 
-  context; base;
-  playCanvasWidth;
-  playCanvasHeight;
-  filteredLayerCount; layerSpacing; nodeRadius;
-
-  changesTopology; changesWeights;
-  changesForRedraw;
-  rawChanges: Subject<SimpleChanges>;
-
-  minMaxDiffs; prevFilteredData;
-  activities = [];
-
-  constructor(private playgroundService: PlaygroundService) {
-    this.rawChanges = new Subject();
-    this.playCanvasWidth = 0.5 * window.innerWidth;
-    this.playCanvasHeight = 0.5 * window.innerHeight;
-    this.nodeRadius = 10;
-  }
-
-  ngOnInit() {
-    this.canvas.width = this.playCanvasWidth;
-    this.canvas.height = this.playCanvasHeight;
-    this.rawChanges.pipe(debounceTime(500)).subscribe(
-      filteredChanges => {
-        this.changesForRedraw = filteredChanges;
-        this.setupWeights(filteredChanges);
-        this.setupTopology(filteredChanges);
-      }
-    );
+  constructor() {
+    this.endofVisualization = new EventEmitter<boolean>();
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.topology) {
-      this.changesTopology = changes.topology;
-      if (changes.topology.firstChange) {
-        this.setupWeights({ topology: undefined, weights: [] });
-        this.setupTopology({ topology: this.changesTopology, weights: undefined });
-      } else { this.rawChanges.next({ topology: this.changesTopology, weights: undefined }); }
+    if (changes.inputTopology && changes.inputTopology.firstChange) { return; }
+
+    if (this.inputTopology) {
+      this.activities = [];
+      this.resetViz();
+
+      this.setupTopology();
+      this.bindTopology(0);
     }
 
-    if (changes.weights) {
-      this.changesWeights = changes.weights;
-      this.rawChanges.next({ topology: this.changesTopology, weights: this.changesWeights });
+    if (this.inputWeights) {
+      this.setupWeights();
+      this.runAnimation();
     }
-    // this.context.translate(200, 200);
   }
 
-  setupTopology(filteredChanges) {
-    // topology
-    console.log(filteredChanges);
-    if (filteredChanges.topology) {
-      const layers = filteredChanges.topology.currentValue.layers;
+  ngOnInit() {
+    this.svgWidth = window.innerWidth * 0.5;
+    this.svgHeight = window.innerHeight * 0.5;
+    this.nodeRadius = 10;
 
-      this.filteredLayerCount = 0;
-      const filteredData = [];
-      for (let i = 0; i < 784; i++) {
-        filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / 784) });
-      }
-      this.filteredLayerCount++;
-      layers.forEach(layer => {
-        if (layer.unitCount && layer.unitCount !== 0) {
-          for (let i = 0; i < +layer.unitCount; i++) {
-            filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / +layer.unitCount) });
-          }
-          this.filteredLayerCount++;
-        }
-      });
-      for (let i = 0; i < 10; i++) {
-        filteredData.push({ layer: this.filteredLayerCount, unit: i, unitSpacing: (this.canvas.height / 10) });
-      }
-      this.filteredLayerCount++;
-      this.layerSpacing = (this.playCanvasWidth / this.filteredLayerCount);
-      this.bindTopology(filteredData);
-    }
-
-    const self = this;
-    const t = d3.timer((elapsed) => {
-      self.draw();
-      if (elapsed > 300) { t.stop(); }
-    }, 150);
+    this.activities = [];
   }
 
-  setupWeights(filteredChanges) {
-    this.context = this.canvas.getContext('2d');
-    const customBase = document.createElement('base');
-    this.base = d3.select(customBase);
-
-
+  setupTopology() {
+    let layers: number[] = this.inputTopology.layers.map(layer => +layer.unitCount);
     const filteredData = [];
+
+    layers.forEach((layer, layerIndex) => {
+      for (let i = 0; i < layer; i++) {
+        filteredData.push({ layer: layerIndex, unit: i, unitSpacing: (this.svgHeight / layer) });
+      }
+    });
+    for (let i = 0; i < 10; i++) {
+      filteredData.push({ layer: layers.length, unit: i, unitSpacing: (this.svgHeight / 10) });
+    }
+
+    this.layerSpacing = (this.svgWidth / (layers.length + 1));
+    this.topology = filteredData;
+  }
+
+  setupWeights() {
+    let filteredData;
+    let diffsPerEpoch;
+
+    this.weights = [];
     this.minMaxDiffs = [];
 
-    if (filteredChanges.weights && filteredChanges.weights.currentValue) {
-      const trainingResult = filteredChanges.weights.currentValue;
+    Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
+      if (epoch == "epoch_0") this.prevWeights = undefined;
 
-      if (!this.fromJson) {
-        let lastEpoch = Object.keys(trainingResult).pop();
-        if (lastEpoch == "epoch_0") this.prevFilteredData = undefined;
+      filteredData = [];
+      diffsPerEpoch = [];
+      this.currEpoch = `Epoch ${+epoch.split('_').pop() + 1}`;
 
-        Object.keys(trainingResult[lastEpoch]).forEach((layer, layerIndex) => {
-          if (layer !== 'output') {
-            this.minMaxDiffs.push({ minDiff: 0, maxDiff: 0 });
+      Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
+        if (layer != "input" && layer != 'output') {
+          diffsPerEpoch.push({ layerIndex: (layerIndex - 1), minDiff: 0, maxDiff: 0 });
+          let lastDiffs = diffsPerEpoch.length - 1;
 
-            trainingResult[lastEpoch][layer].forEach((destination, destinationIndex) => {
-              destination.forEach((source, sourceIndex) => {
-                let diff: number;
-                if (this.prevFilteredData && lastEpoch != "epoch_0") {
-                  for (let i = 0; i < this.prevFilteredData.length; i++) {
-                    if (this.prevFilteredData[i].layer == layerIndex && this.prevFilteredData[i].target == destinationIndex && this.prevFilteredData[i].source == sourceIndex) {
-                      diff = Math.abs(source - this.prevFilteredData[i].value);
+          this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
+            destination.forEach((source, sourceIndex) => {
+              let diff: number;
 
-                      if (sourceIndex === 0) {
-                        this.minMaxDiffs[layerIndex].minDiff = diff;
-                        this.minMaxDiffs[layerIndex].maxDiff = diff;
-                      } else {
-                        if (diff < this.minMaxDiffs[layerIndex].minDiff) { this.minMaxDiffs[layerIndex].minDiff = diff; }
-                        if (diff > this.minMaxDiffs[layerIndex].maxDiff) { this.minMaxDiffs[layerIndex].maxDiff = diff; }
-                      }
-                      break;
+              if (this.prevWeights && epoch != "epoch_0") {
+                for (let i = 0; i < this.prevWeights.length; i++) {
+                  if (this.prevWeights[i].layer == (layerIndex - 1) && this.prevWeights[i].target == destinationIndex && this.prevWeights[i].source == sourceIndex) {
+                    diff = Math.abs(source - this.prevWeights[i].value);
+                    if (sourceIndex === 0) {
+                      diffsPerEpoch[lastDiffs].minDiff = diff;
+                      diffsPerEpoch[lastDiffs].maxDiff = diff;
+                    } else {
+                      if (diff < diffsPerEpoch[lastDiffs].minDiff) { diffsPerEpoch[lastDiffs].minDiff = diff; }
+                      if (diff > diffsPerEpoch[lastDiffs].maxDiff) { diffsPerEpoch[lastDiffs].maxDiff = diff; }
                     }
+                    break;
                   }
                 }
+              }
 
-                filteredData.push({
-                  layer: layerIndex,
-                  source: sourceIndex,
-                  target: destinationIndex,
-                  value: source,
-                  diff: diff,
-                  unitSpacing: (this.canvas.height / +destination.length),
-                  targetUnitSpacing: (this.canvas.height / +trainingResult[lastEpoch][layer].length)
-                });
+              filteredData.push({
+                layer: (layerIndex - 1),
+                source: sourceIndex,
+                target: destinationIndex,
+                value: source,
+                diff: diff,
+                unitSpacing: (this.svgHeight / +destination.length),
+                targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
               });
-            });
-          }
-        });
-        if (lastEpoch != "epoch_0") this.prevFilteredData = filteredData;
-        this.activities = [];
 
-        this.bindWeights(filteredData);
-        console.log(this.activities);
-        this.draw();
+            });
+          });
+
+        }
+      });
+
+      if (epoch != "epoch_0") this.prevWeights = filteredData;
+      this.activities = [];
+
+      this.weights.push(filteredData);
+      this.minMaxDiffs.push(diffsPerEpoch);
+
+    });
+  }
+
+  runAnimation() {
+    if (this.weights.length == this.minMaxDiffs.length) {
+      for (let i = 0; i < this.weights.length; i++) {
+        this.runningAnimation.push(setTimeout(() => {
+          this.activities = [];
+
+          this.bindWeights(i);
+          this.bindTopology(i);
+
+          if (i == this.weights.length - 1) this.endofVisualization.emit(true);
+        }, 1500 * i));
       }
     }
     else {
-      this.prevFilteredData = undefined;
-      this.activities = [];
+      this.currEpoch = "Something is wrong with the calculation. Please try again.";
+      this.endofVisualization.emit(true);
     }
   }
 
-  bindTopology(filteredData) {
-    const join = this.base.selectAll('base.circle')
-      .data(filteredData);
+  bindWeights(currEpoch: number) {
+    const line = this.vizContainer.selectAll('line')
+      .data(this.weights[currEpoch]);
 
     const self = this;
-    const enterSel = join.enter()
-      .append('base')
-      .attr('class', 'circle')
-      .attr('cx', function (d, i) {
-        const cx: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return cx;
-      })
-      .attr('cy', function (d, i) {
-        const cy: number = (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
-        return cy;
-      })
-      .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, "topology"); });
-
-    join
-      .merge(enterSel)
-      .transition()
-      .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, "topology"); });
-
-    const exitSel = join.exit()
-      .transition()
-      .attr('r', 0)
-      .remove();
-  }
-
-  bindWeights(filteredData) {
-    const join = this.base.selectAll('base.line')
-      .data(filteredData);
-
-    const self = this;
-    const enterSel = join.enter()
-      .append('base')
+    const enterSel = line.enter()
+      .append('line')
       .attr('class', 'line')
       .attr('x1', function (d, i) {
         const x1: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
@@ -235,55 +189,61 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
         const y1: number = (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y1;
       })
-      .attr('stroke', function (d) { return self.generateColor(d, "weights");; });
+      .attr('stroke', function (d) { return self.generateColor(d, "weights", currEpoch);; });
 
-    join
+    line
       .merge(enterSel)
       .transition()
-      .attr('stroke', function (d) { return self.generateColor(d, "weights");; });
-    // .attr('stroke', function (d) { return "black"});
+      .duration(250)
+      .attr('stroke', function (d) { return self.generateColor(d, "weights", currEpoch);; });
 
-    const exitSel = join.exit()
+    const exitSel = line.exit()
       .transition()
+      .duration(250)
       .attr('style', function (d) { return 'stroke:#fff; stroke-width:0'; })
       .remove();
   }
 
-  draw() {
-    this.context.fillStyle = '#fff';
-    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    // this.context.fillRect(0.5 * this.canvas.width, 0.5 * this.canvas.height, this.canvas.width, this.canvas.height);
+  bindTopology(currEpoch: number) {
+    const circles = this.vizContainer.selectAll('circle')
+      .data(this.topology);
 
-
-    let elements = this.base.selectAll('base.line');
     const self = this;
-    elements.each(function (d, i) {
-      const node = d3.select(this);
-      self.context.beginPath();
-      self.context.strokeStyle = node.attr('stroke');
-      self.context.moveTo(node.attr('x1'), node.attr('y1'));
-      self.context.lineTo(node.attr('x2'), node.attr('y2'));
-      self.context.stroke();
-    });
+    const enterSel = circles.enter()
+      .append("circle")
+      .attr('class', 'circle')
+      .attr('cx', function (d, i) {
+        const cx: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return cx;
+      })
+      .attr('cy', function (d, i) {
+        const cy: number = (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        return cy;
+      })
+      .attr('r', this.nodeRadius)
+      .attr('fill', function (d) { return self.generateColor(d, "topology", currEpoch); });
 
-    elements = this.base.selectAll('base.circle');
-    // const self = this;
-    elements.each(function (d, i) {
-      const node = d3.select(this);
-      self.context.beginPath();
-      self.context.fillStyle = node.attr('fill');
-      self.context.arc(node.attr('cx'), node.attr('cy'), node.attr('r'), 0, 2 * Math.PI);
-      self.context.fill();
-    });
+    circles
+      .merge(enterSel)
+      .transition()
+      .duration(250)
+      .attr('r', this.nodeRadius)
+      .attr('fill', function (d) { return self.generateColor(d, "topology", currEpoch); });
+
+    const exitSel = circles.exit()
+      .transition()
+      .duration(250)
+      .attr('r', 0)
+      .remove();
   }
 
-  generateColor(d, mode: string): string {
+  generateColor(d, mode: string, currEpoch: number): string {
     let color = "#EEEEEE";
     let activity = 0;
     let recordActivities = false;
 
     if (mode == "weights") {
-      let range = Math.abs(this.minMaxDiffs[d.layer].maxDiff - this.minMaxDiffs[d.layer].minDiff);
+      let range = Math.abs(this.minMaxDiffs[currEpoch][d.layer].maxDiff - this.minMaxDiffs[currEpoch][d.layer].minDiff);
       let diffPercentage = d.diff / range;
 
       if (diffPercentage > .9) {
@@ -326,5 +286,25 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     }
 
     return color;
+  }
+
+  resetViz() {
+    if (this.runningAnimation) this.runningAnimation.forEach(element => { clearTimeout(element); });
+    this.runningAnimation = [];
+
+    if (this.svg) this.svg.remove();
+    this.svg = d3.select(this.container.nativeElement)
+      .append('svg')
+      .attr('width', window.innerWidth * 0.5)
+      .attr('height', window.innerHeight * 0.5);
+    this.vizContainer = this.svg.append("g");
+
+    this.currEpoch = "";
+
+    const self = this;
+    this.zoom = d3.zoom()
+      .scaleExtent([1, 10])
+      .on("zoom", () => { self.vizContainer.attr("transform", d3.event.transform); });
+    this.svg.call(this.zoom);
   }
 }
