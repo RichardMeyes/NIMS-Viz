@@ -1,5 +1,17 @@
-#playCanvasContainer {
+.container {
     position: absolute;
+    top: 50%;
     right: 0;
+
+    width: 51%;
+    background-color: white;
+}
+
+.information {
+    position: fixed;    
     bottom: 0;
+    right: 0;
+    width: 50vw;
+    text-align: center;
+    padding-bottom: 1rem;
 }
