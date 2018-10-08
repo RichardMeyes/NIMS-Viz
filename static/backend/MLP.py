@@ -77,11 +77,12 @@ class Net(nn.Module):
             if(epoch > 0):
                 newNodeStruct = False
 
+            weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(temp_epoch_dict["epoch_{0}".format(epoch)], newNodeStruct)
             if(epoch == self.num_epochs - 1):
                 isDone = True
-
-            weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(temp_epoch_dict["epoch_{0}".format(epoch)], newNodeStruct)
-            emit('json',{'done': isDone, 'resultWeights' : temp_epoch_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+                emit('json',{'done': isDone, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+            else:
+                emit('json',{'done': isDone, 'resultWeights' : temp_epoch_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
             eventlet.sleep(0)
             print('emitted data')
 
