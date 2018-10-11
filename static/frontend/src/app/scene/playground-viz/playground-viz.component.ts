@@ -19,7 +19,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   svg; svgWidth; svgHeight;
   vizContainer;
 
-  topology; weights; prevWeights;
+  topology; weights;
   layerSpacing; nodeRadius;
   minMaxDiffs; activities;
 
@@ -58,7 +58,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
-    this.svgWidth = window.innerWidth * 0.5;
+    this.svgWidth = window.innerWidth;
     this.svgHeight = window.innerHeight * 0.5;
     this.nodeRadius = 10;
 
@@ -90,35 +90,22 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.minMaxDiffs = [];
 
     Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
-      if (epoch == "epoch_0") this.prevWeights = undefined;
-
       filteredData = [];
-      diffsPerEpoch = [];
+      diffsPerEpoch;
       this.currEpoch = `Epoch ${+epoch.split('_').pop() + 1}`;
 
       Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
         if (layer != "input" && layer != 'output') {
-          diffsPerEpoch.push({ layerIndex: (layerIndex - 1), minDiff: 0, maxDiff: 0 });
-          let lastDiffs = diffsPerEpoch.length - 1;
+          diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
 
           this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
             destination.forEach((source, sourceIndex) => {
-              let diff: number;
-
-              if (this.prevWeights && epoch != "epoch_0") {
-                for (let i = 0; i < this.prevWeights.length; i++) {
-                  if (this.prevWeights[i].layer == (layerIndex - 1) && this.prevWeights[i].target == destinationIndex && this.prevWeights[i].source == sourceIndex) {
-                    diff = Math.abs(source - this.prevWeights[i].value);
-                    if (sourceIndex === 0) {
-                      diffsPerEpoch[lastDiffs].minDiff = diff;
-                      diffsPerEpoch[lastDiffs].maxDiff = diff;
-                    } else {
-                      if (diff < diffsPerEpoch[lastDiffs].minDiff) { diffsPerEpoch[lastDiffs].minDiff = diff; }
-                      if (diff > diffsPerEpoch[lastDiffs].maxDiff) { diffsPerEpoch[lastDiffs].maxDiff = diff; }
-                    }
-                    break;
-                  }
-                }
+              if (sourceIndex === 0) {
+                diffsPerEpoch.minDiff = source;
+                diffsPerEpoch.maxDiff = source;
+              } else {
+                if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
+                if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
               }
 
               filteredData.push({
@@ -126,18 +113,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
                 source: sourceIndex,
                 target: destinationIndex,
                 value: source,
-                diff: diff,
                 unitSpacing: (this.svgHeight / +destination.length),
                 targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
               });
-
             });
           });
-
         }
       });
 
-      if (epoch != "epoch_0") this.prevWeights = filteredData;
       this.activities = [];
 
       this.weights.push(filteredData);
@@ -243,15 +226,15 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     let recordActivities = false;
 
     if (mode == "weights") {
-      let range = Math.abs(this.minMaxDiffs[currEpoch][d.layer].maxDiff - this.minMaxDiffs[currEpoch][d.layer].minDiff);
-      let diffPercentage = d.diff / range;
+      let range = Math.abs(this.minMaxDiffs[currEpoch].maxDiff - this.minMaxDiffs[currEpoch].minDiff);
+      let valuePercentage = d.value / range;
 
-      if (diffPercentage > .9) {
+      if (valuePercentage > .5) {
         color = "#E57373";
         activity = 1;
         recordActivities = true;
       }
-      else if (diffPercentage > .6) {
+      else if (valuePercentage > .35) {
         color = "#FFCDD2";
         activity = 0.5;
         recordActivities = true;
@@ -295,7 +278,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     if (this.svg) this.svg.remove();
     this.svg = d3.select(this.container.nativeElement)
       .append('svg')
-      .attr('width', window.innerWidth * 0.5)
+      .attr('width', window.innerWidth)
       .attr('height', window.innerHeight * 0.5);
     this.vizContainer = this.svg.append("g");
 
@@ -303,7 +286,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
     const self = this;
     this.zoom = d3.zoom()
-      .scaleExtent([1, 10])
+      .scaleExtent([0.1, 10])
       .on("zoom", () => { self.vizContainer.attr("transform", d3.event.transform); });
     this.svg.call(this.zoom);
   }
