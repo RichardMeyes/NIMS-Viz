@@ -91,12 +91,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
     Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
       filteredData = [];
-      diffsPerEpoch;
+      diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
       this.currEpoch = `Epoch ${+epoch.split('_').pop() + 1}`;
 
       Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
         if (layer != "input" && layer != 'output') {
-          diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
 
           this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
             destination.forEach((source, sourceIndex) => {
