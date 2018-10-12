@@ -56,7 +56,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   draw(changes: SimpleChanges) {
-    console.log(changes);
     if ((changes && changes.inputTopology) || (!changes && this.inputTopology)) {
       this.activities = [];
       this.resetViz();
