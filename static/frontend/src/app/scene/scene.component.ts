@@ -223,6 +223,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   playgroundForm: FormGroup;
   playgroundData: Playground = new Playground();
 
+  vizTopology: any;
   vizWeights: any;
 
   // Mqtt
@@ -280,7 +281,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
           this.heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
           this.applyingDataToHeatmaps(resultHeatmapData);
           // if (!this.playgroundForm.value.fromJson)
-          console.log('called');
           this.vizWeights = resultWeights;
         }
       });
@@ -404,6 +404,20 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         this.applyingDataToHeatmaps(data);
       }
     );
+
+    this.playgroundService.visualize(this.selectedFile, this.epochSliderConfig.epochValue).subscribe(val => {
+      let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf("[") + 1, this.selectedFile.indexOf("]"))
+        .replace(/\s/g, '')
+        .split(",")
+        .map(layer => +layer);
+      let currEpoch = `epoch_${this.epochSliderConfig.epochValue}`;
+
+      layers = layers.map(unitCount => { return { "unitCount": unitCount }; });
+      this.vizTopology = { "layers": layers };
+      if (val) this.vizWeights = { [currEpoch]: val };
+
+      console.log("called");
+    });
   }
 
   private applyingDataToHeatmaps(data) {
@@ -630,6 +644,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         unitCount: [1, [Validators.required, Validators.min(1)]]
       }))
     ));
+
+    this.playgroundForm.valueChanges.subscribe(val => { this.vizTopology = val; });
 
     this.resetForm();
     this.layerCountChange();

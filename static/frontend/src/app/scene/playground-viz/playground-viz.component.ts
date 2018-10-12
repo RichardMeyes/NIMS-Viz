@@ -15,7 +15,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   toolbarHeight: number;
   unsubscribe: Subject<any> = new Subject();
 
-  zoom;
+  zoom; currTransform;
   svg; svgWidth; svgHeight;
   vizContainer;
 
@@ -33,7 +33,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
-    // TO BE IMPLEMENTED
+    this.svgWidth = window.innerWidth;
+    this.svgHeight = window.innerHeight * 0.5;
+    this.draw(undefined);
   }
 
   constructor() {
@@ -42,19 +44,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.inputTopology && changes.inputTopology.firstChange) { return; }
-
-    if (this.inputTopology) {
-      this.activities = [];
-      this.resetViz();
-
-      this.setupTopology();
-      this.bindTopology(0);
-    }
-
-    if (this.inputWeights) {
-      this.setupWeights();
-      this.runAnimation();
-    }
+    this.draw(changes);
   }
 
   ngOnInit() {
@@ -63,6 +53,25 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.nodeRadius = 10;
 
     this.activities = [];
+  }
+
+  draw(changes: SimpleChanges) {
+    console.log(changes);
+    if ((changes && changes.inputTopology) || (!changes && this.inputTopology)) {
+      this.activities = [];
+      this.resetViz();
+
+      this.setupTopology();
+      this.bindTopology(0);
+
+      if (changes) this.inputWeights = undefined;
+    }
+
+    if ((changes && changes.inputWeights) || (!changes && this.inputWeights)) {
+      if (changes) this.inputWeights = changes.inputWeights.currentValue;
+      this.setupWeights();
+      this.runAnimation();
+    }
   }
 
   setupTopology() {
@@ -89,43 +98,45 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     this.weights = [];
     this.minMaxDiffs = [];
 
-    Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
-      filteredData = [];
-      diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
-      this.currEpoch = `Epoch ${+epoch.split('_').pop() + 1}`;
+    if (this.inputWeights) {
+      Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
+        filteredData = [];
+        diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
+        this.currEpoch = `Epoch ${+epoch.split('_').pop() + 1}`;
 
-      Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
-        if (layer != "input" && layer != 'output') {
+        Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
+          if (layer != "input" && layer != 'output') {
 
-          this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
-            destination.forEach((source, sourceIndex) => {
-              if (sourceIndex === 0) {
-                diffsPerEpoch.minDiff = source;
-                diffsPerEpoch.maxDiff = source;
-              } else {
-                if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
-                if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
-              }
+            this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
+              destination.forEach((source, sourceIndex) => {
+                if (sourceIndex === 0) {
+                  diffsPerEpoch.minDiff = source;
+                  diffsPerEpoch.maxDiff = source;
+                } else {
+                  if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
+                  if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
+                }
 
-              filteredData.push({
-                layer: (layerIndex - 1),
-                source: sourceIndex,
-                target: destinationIndex,
-                value: source,
-                unitSpacing: (this.svgHeight / +destination.length),
-                targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
+                filteredData.push({
+                  layer: (layerIndex - 1),
+                  source: sourceIndex,
+                  target: destinationIndex,
+                  value: source,
+                  unitSpacing: (this.svgHeight / +destination.length),
+                  targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
+                });
               });
             });
-          });
-        }
+          }
+        });
+
+        this.activities = [];
+
+        this.weights.push(filteredData);
+        this.minMaxDiffs.push(diffsPerEpoch);
+
       });
-
-      this.activities = [];
-
-      this.weights.push(filteredData);
-      this.minMaxDiffs.push(diffsPerEpoch);
-
-    });
+    }
   }
 
   runAnimation() {
@@ -277,8 +288,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     if (this.svg) this.svg.remove();
     this.svg = d3.select(this.container.nativeElement)
       .append('svg')
-      .attr('width', window.innerWidth)
-      .attr('height', window.innerHeight * 0.5);
+      .attr('width', this.svgWidth)
+      .attr('height', this.svgHeight);
     this.vizContainer = this.svg.append("g");
 
     this.currEpoch = "";
@@ -286,7 +297,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
     const self = this;
     this.zoom = d3.zoom()
       .scaleExtent([0.1, 10])
-      .on("zoom", () => { self.vizContainer.attr("transform", d3.event.transform); });
+      .on("zoom", () => { self.vizContainer.attr("transform", d3.event.transform); })
+      .on("end", () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
   }
 }

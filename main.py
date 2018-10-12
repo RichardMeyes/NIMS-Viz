@@ -118,6 +118,17 @@ def calcHeatmapFromFile():
 
     return json.dumps(heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newNodeStruct, density))
 
+@app.route("/getWeights", methods=["POST", "OPTIONS"])
+@cross_origin()
+def getWeights():
+    params = request.get_json(force=True)
+
+    with open(params['selectedFile']) as f:
+        data = json.load(f)
+    returnEpoch = 'epoch_' + str(params['currEpoch'])
+    
+    return json.dumps(data[returnEpoch])
+
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()
 def indexFolders():

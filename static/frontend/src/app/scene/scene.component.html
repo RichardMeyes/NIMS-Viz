@@ -187,7 +187,7 @@
 
         <div id="subAppsContainer">
             <div id="orbitControlArea" [ngStyle]="orbitControllerAreaStyles"></div>
-            <app-playground-viz [inputTopology]="playgroundForm.value" [inputWeights]="vizWeights"></app-playground-viz>
+            <app-playground-viz [inputTopology]="vizTopology" [inputWeights]="vizWeights"></app-playground-viz>
             <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')" (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
             <!-- <app-molecule #moleculeComponent></app-molecule> -->
         </div>
