@@ -1,0 +1,71 @@
+<mat-dialog-content>
+  <div *ngIf="router.url.includes('builder'); else archive">
+    <form [formGroup]="playgroundForm" fxLayout="row wrap">
+      <div style="margin-top: 0.5rem;">
+        <strong>Mnist Data</strong>
+      </div>
+      <div fxFlex="grow"></div>
+      <div>
+        <mat-form-field>
+          <input matInput placeholder="Batch Size Train" type="text" formControlName="batch_size_train">
+        </mat-form-field>
+        <mat-form-field>
+          <input matInput placeholder="Batch Size Test" type="text" formControlName="batch_size_test">
+        </mat-form-field>
+        <mat-form-field>
+          <input matInput placeholder="Epoch" type="text" formControlName="num_epochs">
+        </mat-form-field>
+      </div>
+      <div fxFlex="grow"></div>
+      <div style="margin-top: 0.5rem;">
+        <strong>Model</strong>
+      </div>
+      <div fxFlex="grow"></div>
+      <div>
+        <mat-form-field>
+          <input matInput placeholder="Number of Layers" type="number" min="0" formControlName="layerCount">
+        </mat-form-field>
+        <mat-form-field>
+          <input matInput placeholder="Learning Rate (Notations: 0.01 or 1e-2" type="text" formControlName="learning_rate"
+            [matAutocomplete]="auto">
+          <mat-autocomplete #auto="matAutocomplete">
+            <mat-option *ngFor="let option of playgroundData.learningRates" [value]="option.value">
+              {{option.viewValue}}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+      </div>
+      <div fxFlex="grow"></div>
+      <div style="margin-top: 0.5rem;">
+        <strong>Layers</strong>
+      </div>
+      <div fxFlex="grow"></div>
+      <div formArrayName="layers" fxLayout="row wrap">
+        <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
+          <div style="margin-top: 0.5rem;">
+            <strong> {{ i+1 | ordinal }} Layer</strong>
+          </div>
+          <div class="layers">
+            <mat-form-field>
+              <input matInput placeholder="Number of Units" type="number" min="1" formControlName="unitCount">
+            </mat-form-field>
+            <button mat-icon-button (click)="delLayer(i)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <ng-template #archive>
+    ARCHIVE
+  </ng-template>
+</mat-dialog-content>
+
+<mat-divider></mat-divider>
+
+<mat-dialog-actions>
+  <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid">Train Network
+  </button>
+  <button mat-button color="accent" (click)="reset()">Reset</button>
+</mat-dialog-actions>

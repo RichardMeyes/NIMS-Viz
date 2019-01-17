@@ -1,0 +1,12 @@
+mat-dialog-content { max-width: 710px; }
+
+mat-form-field, .form-field {
+    margin-right: 16px;
+}
+
+.layers {
+    margin-right: 1rem;
+    mat-form-field { margin-right: 0; }
+}
+
+mat-dialog-actions { flex-direction: row-reverse; }

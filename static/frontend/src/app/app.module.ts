@@ -20,6 +20,11 @@ import { PlaygroundVizComponent } from './scene/playground-viz/playground-viz.co
 import { AppComponent } from './app.component';
 import { OrdinalPipe } from './ordinal.pipe';
 
+
+import { SettingsComponent } from './settings/settings.component';
+import { BuilderComponent } from './builder/builder.component';
+import { ArchiveComponent } from './archive/archive.component';
+
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
 // export const MQTT_SERVICE_OPTIONS: IMqttServiceOptions = {
@@ -35,6 +40,9 @@ import { OrdinalPipe } from './ordinal.pipe';
     BrainComponent,
     // MoleculeComponent,
     PlaygroundVizComponent,
+    BuilderComponent,
+    ArchiveComponent,
+    SettingsComponent,
     OrdinalPipe
   ],
   imports: [
@@ -44,17 +52,20 @@ import { OrdinalPipe } from './ordinal.pipe';
     FormsModule,
     ReactiveFormsModule,
     FlexLayoutModule,
-    AppRoutingModule,
     MaterialModule,
     HttpClientModule,
     NgProgressModule.forRoot({
       color: '#ff0000',
       thick: true
     }),
-    NgProgressHttpModule.forRoot()
+    NgProgressHttpModule.forRoot(),
     // MqttModule.forRoot(MQTT_SERVICE_OPTIONS)
+    AppRoutingModule
   ],
   providers: [],
+  entryComponents: [
+    SettingsComponent
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

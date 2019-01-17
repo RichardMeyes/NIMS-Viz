@@ -5,20 +5,8 @@ mat-toolbar {
 
 h1.app-name { margin-left: 8px; }
 
-.sidenav-container {
-    flex-grow: 1;
-    flex-shrink: 1;
-    position: relative;
+.sidenav-container { height: 100vh; }
 
-    mat-sidenav-content {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-    }
-}
-  
 .sidenav {
     width: 250px;
     box-shadow: 3px 0 6px rgba(0,0,0,.24);

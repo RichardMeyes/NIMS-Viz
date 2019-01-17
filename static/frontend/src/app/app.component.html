@@ -1,11 +1,3 @@
-<!-- <mat-toolbar color="primary" class="toolbar">
-    <h1 class="app-name">Artificial Neural Network Dynamic Visualizer (ANNDV)</h1>
-    <button id="cosmeticsButton" mat-icon-button (click)="appScene.toggleSnav()">
-        <mat-icon>menu</mat-icon>
-    </button>
-</mat-toolbar>
-<app-scene #appScene [style.top.px]="mobileQuery.matches ? 56 : 64"></app-scene> -->
-
 <mat-toolbar color="primary">
     <mat-toolbar-row>
         <button mat-icon-button (click)="snav.toggle()">
@@ -19,7 +11,7 @@
     <mat-sidenav #snav class="sidenav" [fixedInViewport]="true" [fixedTopGap]="mobileQuery.matches ? 56 : 64" mode="over"
         [autoFocus]="false" opened>
         <mat-nav-list>
-            <a mat-list-item routerLink="/build" routerLinkActive="active-link" (click)="snav.close()">
+            <a mat-list-item routerLink="/builder" routerLinkActive="active-link" (click)="snav.close()">
                 <mat-icon mat-list-icon>build</mat-icon>
                 <span class="nav-text">Network Builder</span>
             </a>
@@ -37,6 +29,15 @@
 </mat-sidenav-container>
 
 
-<button mat-fab color="primary" (click)="snav.close(); showParams()">
+<button mat-fab color="primary" (click)="snav.close(); showSettings()">
     <mat-icon>settings</mat-icon>
 </button>
+
+<!-- <mat-toolbar color="primary" class="toolbar">
+    <h1 class="app-name">Artificial Neural Network Dynamic Visualizer (ANNDV)</h1>
+    <button id="cosmeticsButton" mat-icon-button (click)="appScene.toggleSnav()">
+        <mat-icon>menu</mat-icon>
+    </button>
+</mat-toolbar> -->
+<!-- <div style="height: 100px;"></div> -->
+<!-- <app-scene #appScene [style.top.px]="64"></app-scene> -->
