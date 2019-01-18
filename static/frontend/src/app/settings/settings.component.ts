@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
@@ -14,11 +15,15 @@ import { Playground } from '../playground.model';
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
   playgroundForm: FormGroup;
-  playgroundData: Playground = new Playground();
+  playgroundData: Playground;
+
+  files; selectedFile;
 
   vizTopology: any;
+
+  destroyed = new Subject<void>();
 
   constructor(
     public router: Router,
@@ -32,7 +37,14 @@ export class SettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.createForm();
+    this.playgroundData = new Playground();
+
+
+    if (this.router.url.includes('builder')) {
+      this.createForm();
+    } else {
+      this.scanForFiles();
+    }
   }
 
   createForm() {
@@ -62,7 +74,9 @@ export class SettingsComponent implements OnInit {
       }))
     ));
 
-    this.playgroundForm.valueChanges.subscribe(val => { this.vizTopology = val; });
+    this.playgroundForm.valueChanges
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.vizTopology = val; });
 
     this.resetForm();
     this.layerCountChange();
@@ -136,5 +150,58 @@ export class SettingsComponent implements OnInit {
       }));
     }
     this.resetForm();
+  }
+
+  scanForFiles(isNewlyCreated?: boolean) {
+    this.networkService.detectFiles()
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(
+        data => {
+          const newFileList = [];
+          for (const element of data['result']) {
+            newFileList.push({
+              value: element['pathName'],
+              viewValue: element['fileName'],
+              epochRange: element['epochMinMax'],
+              weightMinMax: element['weightMinMax']
+            });
+          }
+          if (isNewlyCreated) {
+            let newFileValue = '';
+            for (const currFile of newFileList) {
+              // check which file from the new filelist is not found in the old filelist
+              const isFound = this.files.find(element => element.value === currFile.value);
+              if (typeof (isFound) === 'undefined') {
+                newFileValue = currFile.value;
+                break;
+              } else {
+                newFileValue = this.selectedFile;
+              }
+            }
+            this.files = newFileList;
+            this.selectedFileClick(this.files.find(element => element.value === newFileValue).value);
+          } else {
+            this.files = newFileList;
+            this.selectedFileClick(this.files[0].value);
+          }
+        }
+      );
+  }
+
+  private selectedFileClick(filePath, isSetup?: boolean) {
+    this.selectedFile = filePath;
+    // // change slider values
+    // this.epochSliderConfig.epochRange = this.files.find(element => element.value === filePath).epochRange;
+    // this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[1];
+    // this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
+    // this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+    // if (!isSetup) {
+    //   this.createHeatmap(undefined, true);
+    //   this.createGraph(this.selectedFile);
+    // }
+  }
+
+  ngOnDestroy() {
+    this.destroyed.next();
   }
 }

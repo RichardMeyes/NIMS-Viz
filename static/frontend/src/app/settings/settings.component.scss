@@ -1,7 +1,14 @@
-mat-dialog-content { max-width: 710px; }
+mat-dialog-content {
+    max-width: 710px;
+}
 
 mat-form-field, .form-field {
     margin-right: 16px;
+}
+
+.full-width {
+    margin-right: 0;
+    width: 100%;
 }
 
 .layers {

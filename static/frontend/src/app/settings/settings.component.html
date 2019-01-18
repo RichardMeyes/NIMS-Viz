@@ -36,10 +36,6 @@
         </mat-form-field>
       </div>
       <div fxFlex="grow"></div>
-      <div style="margin-top: 0.5rem;">
-        <strong>Layers</strong>
-      </div>
-      <div fxFlex="grow"></div>
       <div formArrayName="layers" fxLayout="row wrap">
         <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
           <div style="margin-top: 0.5rem;">
@@ -58,14 +54,23 @@
     </form>
   </div>
   <ng-template #archive>
-    ARCHIVE
+    <mat-form-field class="full-width">
+      <mat-select [(value)]="selectedFile" placeholder="File">
+        <mat-option *ngFor="let file of files" [value]="file.value" (click)="selectedFileClick(file.value)">
+          {{ file.viewValue }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </ng-template>
 </mat-dialog-content>
 
 <mat-divider></mat-divider>
 
 <mat-dialog-actions>
-  <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid">Train Network
+  <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')">
+    Train Network
   </button>
-  <button mat-button color="accent" (click)="reset()">Reset</button>
+  <button mat-button color="accent" (click)="visualize()" *ngIf="router.url.includes('archive')">Visualize
+  </button>
+  <button mat-button color="accent" (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
 </mat-dialog-actions>
