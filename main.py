@@ -172,6 +172,10 @@ def mlpSocketIO(params):
 def default_error_handler(e):
     print(e)
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return angular()
+
 if __name__ == "__main__":
     # app.run(debug=True, threaded=True)
     socketio.run(app,debug=True)
