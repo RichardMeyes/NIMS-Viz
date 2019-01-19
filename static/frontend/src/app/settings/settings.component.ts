@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil, take } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { PlaygroundService } from '../playground.service';
@@ -199,6 +199,30 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     //   this.createHeatmap(undefined, true);
     //   this.createGraph(this.selectedFile);
     // }
+  }
+
+  visualize() {
+    this.dataService.vizWeights.next(null);
+    const epochRange = this.files.find(element => element.value === this.selectedFile).epochRange;
+
+    for (let i = epochRange[0]; i <= epochRange[1]; i++) {
+      this.playgroundService.visualize(this.selectedFile, i)
+        .pipe(take(1))
+        .subscribe(val => {
+          let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
+            .replace(/\s/g, '')
+            .split(',')
+            .map(layer => +layer);
+          const currEpoch = `epoch_${i}`;
+
+          layers = layers.map(unitCount => { return { 'unitCount': unitCount }; });
+
+          setTimeout(() => {
+            this.dataService.vizTopology.next({ 'layers': layers });
+            if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
+          }, i * 1000);
+        });
+    }
   }
 
   ngOnDestroy() {
