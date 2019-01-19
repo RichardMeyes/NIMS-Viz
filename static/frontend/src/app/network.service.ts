@@ -20,7 +20,7 @@ const httpOptions = {
   providedIn: 'root'
 })
 export class NetworkService {
-  private socket: SocketIOClient.Socket;
+  private socket: SocketIOClient.Socket = socketIo('http://127.0.0.1:5000');
 
   constructor(private http: HttpClient) { }
 

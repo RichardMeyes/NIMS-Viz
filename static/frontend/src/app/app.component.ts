@@ -1,6 +1,12 @@
-import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
-import { MediaMatcher } from '@angular/cdk/layout';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { MediaMatcher, BreakpointObserver } from '@angular/cdk/layout';
 import { MatDialog, MatDialogRef } from '@angular/material';
+
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+import { DataService } from './services/data.service';
+
 import { SettingsComponent } from './settings/settings.component';
 
 @Component({
@@ -8,16 +14,31 @@ import { SettingsComponent } from './settings/settings.component';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnDestroy {
-  mobileQuery: MediaQueryList;
-  private _mobileQueryListener: () => void;
+export class AppComponent implements OnInit, OnDestroy {
+  toolbarHeight: number;
   dialogFormRef: MatDialogRef<SettingsComponent>;
 
-  constructor(changeDetectorRef: ChangeDetectorRef, mediaMatcher: MediaMatcher, private dialog: MatDialog) {
-    this._mobileQueryListener = () => changeDetectorRef.detectChanges();
+  destroyed = new Subject<void>();
 
-    this.mobileQuery = mediaMatcher.matchMedia('(max-width: 600px)');
-    this.mobileQuery.addListener(this._mobileQueryListener);
+  constructor(
+    private breakpointObserver: BreakpointObserver,
+    private dialog: MatDialog,
+    private dataService: DataService
+  ) { }
+
+  ngOnInit() {
+    this.breakpointObserver.observe('(max-width: 600px)').pipe(takeUntil(this.destroyed))
+      .subscribe(result => {
+        if (result.matches) {
+          this.dataService.toolbarHeight.next(56);
+        } else {
+          this.dataService.toolbarHeight.next(64);
+        }
+      });
+
+    this.dataService.toolbarHeight
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(toolbearHeight => { this.toolbarHeight = toolbearHeight; });
   }
 
   showSettings() {
@@ -25,6 +46,6 @@ export class AppComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.mobileQuery.removeListener(this._mobileQueryListener);
+    this.destroyed.next();
   }
 }

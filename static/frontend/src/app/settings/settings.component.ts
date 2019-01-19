@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 
@@ -9,19 +9,18 @@ import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
 
 import { Playground } from '../playground.model';
+import { DataService } from '../services/data.service';
 
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit, OnDestroy {
+export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   playgroundForm: FormGroup;
   playgroundData: Playground;
 
   files; selectedFile;
-
-  vizTopology: any;
 
   destroyed = new Subject<void>();
 
@@ -29,7 +28,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     public router: Router,
     private fb: FormBuilder,
     private playgroundService: PlaygroundService,
-    private networkService: NetworkService
+    private networkService: NetworkService,
+    private dataService: DataService
   ) { }
 
   get layers(): FormArray {
@@ -46,6 +46,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.scanForFiles();
     }
   }
+
+  ngAfterViewInit() { }
 
   createForm() {
     this.playgroundForm = this.fb.group({
@@ -73,10 +75,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         unitCount: [1, [Validators.required, Validators.min(1)]]
       }))
     ));
-
-    this.playgroundForm.valueChanges
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.vizTopology = val; });
 
     this.resetForm();
     this.layerCountChange();
@@ -130,6 +128,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
       objToSend.layers.push(layer.unitCount);
     });
 
+    this.dataService.vizTopology.next(this.playgroundForm.value);
+    this.dataService.vizWeights.next(null);
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
   }
 

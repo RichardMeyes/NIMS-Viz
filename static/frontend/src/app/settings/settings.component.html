@@ -67,10 +67,11 @@
 <mat-divider></mat-divider>
 
 <mat-dialog-actions>
-  <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')">
+  <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')"
+    mat-dialog-close>
     Train Network
   </button>
-  <button mat-button color="accent" (click)="visualize()" *ngIf="router.url.includes('archive')">Visualize
+  <button mat-button color="accent" (click)="visualize()" *ngIf="router.url.includes('archive')" mat-dialog-close>Visualize
   </button>
   <button mat-button color="accent" (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
 </mat-dialog-actions>

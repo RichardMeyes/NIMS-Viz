@@ -16,6 +16,7 @@ import {
   MatSidenavModule,
   MatSliderModule,
   MatSlideToggleModule,
+  MatTabsModule,
   MatToolbarModule
 } from '@angular/material';
 
@@ -38,6 +39,7 @@ import { MccColorPickerModule } from '../../node_modules/material-community-comp
     MatSidenavModule,
     MatSliderModule,
     MatSlideToggleModule,
+    MatTabsModule,
     MatToolbarModule,
     NouisliderModule,
     MccColorPickerModule
@@ -57,6 +59,7 @@ import { MccColorPickerModule } from '../../node_modules/material-community-comp
     MatSidenavModule,
     MatSliderModule,
     MatSlideToggleModule,
+    MatTabsModule,
     MatToolbarModule,
     NouisliderModule,
     MccColorPickerModule

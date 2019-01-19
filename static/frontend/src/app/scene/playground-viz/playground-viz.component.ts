@@ -1,18 +1,19 @@
-import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, Output, EventEmitter, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, Output, EventEmitter, SimpleChanges, OnDestroy } from '@angular/core';
 
 import { Subject } from 'rxjs';
 import { takeUntil, filter } from 'rxjs/operators';
 
 import * as d3 from "d3";
+import { DataService } from 'src/app/services/data.service';
 
 @Component({
   selector: 'app-playground-viz',
   templateUrl: './playground-viz.component.html',
   styleUrls: ['./playground-viz.component.scss']
 })
-export class PlaygroundVizComponent implements OnInit, OnChanges {
+export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   currEpoch: string;
-  toolbarHeight: number;
+  toolbarHeight; tabsHeight;
   unsubscribe: Subject<any> = new Subject();
 
   zoom; currTransform;
@@ -26,19 +27,22 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   runningAnimation;
 
   @ViewChild("container") container;
-  @Input() vizOptions;
   @Input() inputTopology;
   @Input() inputWeights;
   @Output() endofVisualization: EventEmitter<boolean>;
 
+  destroyed = new Subject<void>();
+
   @HostListener('window:resize', ['$event'])
   onResize(event) {
     this.svgWidth = window.innerWidth;
-    this.svgHeight = window.innerHeight * 0.5;
+    this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
     this.draw(undefined);
   }
 
-  constructor() {
+  constructor(
+    private dataService: DataService
+  ) {
     this.endofVisualization = new EventEmitter<boolean>();
   }
 
@@ -48,8 +52,13 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
   }
 
   ngOnInit() {
+    this.dataService.toolbarHeight
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.toolbarHeight = val; });
+    this.tabsHeight = this.dataService.tabsHeight;
+
     this.svgWidth = window.innerWidth;
-    this.svgHeight = window.innerHeight * 0.5;
+    this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
     this.nodeRadius = 10;
 
     this.activities = [];
@@ -63,11 +72,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
       this.setupTopology();
       this.bindTopology(0);
 
-      if (changes) this.inputWeights = undefined;
+      if (changes) { this.inputWeights = undefined; }
     }
 
     if ((changes && changes.inputWeights) || (!changes && this.inputWeights)) {
-      if (changes) this.inputWeights = changes.inputWeights.currentValue;
+      if (changes) { this.inputWeights = changes.inputWeights.currentValue; }
       this.setupWeights();
       this.runAnimation();
     }
@@ -299,5 +308,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges {
       .on("zoom", () => { self.vizContainer.attr("transform", d3.event.transform); })
       .on("end", () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
+  }
+
+  ngOnDestroy() {
+    this.destroyed.next();
   }
 }
