@@ -203,17 +203,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       );
   }
 
-  selectedFileClick(filePath, isSetup?: boolean) {
+  selectedFileClick(filePath) {
     this.selectedFile = filePath;
-    // // change slider values
-    // this.epochSliderConfig.epochRange = this.files.find(element => element.value === filePath).epochRange;
-    // this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[1];
-    // this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
-    // this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
-    // if (!isSetup) {
-    //   this.createHeatmap(undefined, true);
-    //   this.createGraph(this.selectedFile);
-    // }
   }
 
   visualize() {
@@ -222,6 +213,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange;
     this.dataService.epochSliderConfig.next(nextEpochConfig);
+
+    this.createHeatmap(undefined, true);
 
     for (let i = nextEpochConfig.epochRange[0]; i <= nextEpochConfig.epochRange[1]; i++) {
       this.playgroundService.visualize(this.selectedFile, i)
@@ -254,11 +247,54 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
 
+  
 
+  createHeatmap(weights?, newNodeStruct?: boolean) {
+    this.networkService.createHeatmapFromFile(
+      this.selectedFile,
+      this.epochSliderConfig.epochValue,
+      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+      this.drawFully,
+      newNodeStruct,
+      this.heatmapNormalConfig.density,
+      weights
+    )
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(data => {
+        console.log(data);
+        this.applyingDataToHeatmaps(data);
+      });
+  }
 
-  createHeatmap() {
-    console.log(this.heatmapNormalConfig);
-    console.log(this.drawFully);
+  private applyingDataToHeatmaps(data) {
+    // const heatmapNodeData = data['heatmapNodeData'];
+    // const heatmapNormalData = data['heatmapNormalData'];
+    // const deltaMinMax = this.heatmapNormalConfig.weightValueMax - this.heatmapNormalConfig.weightValueMin;
+    // // Trigger 1 initial value is 40% of delta min-max
+    // this.heatmapNormalConfig.color1Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
+    //   deltaMinMax * 0.4).toFixed(4));
+    // // Trigger 2 initial value is 60% of delta min-max (effectively between 40% of trigger 1 and 60%)
+    // this.heatmapNormalConfig.color2Trigger = parseFloat((this.heatmapNormalConfig.weightValueMin +
+    //   deltaMinMax * 0.6).toFixed(4));
+    // this.heatmapNormalConfig.color3Trigger = this.heatmapNormalConfig.weightValueMax;
+    // // NodeConfig Trigger is one color for all values. That's the reason for 1.0 => 100%
+    // // this.heatmapNodeConfig.color1Trigger = 1.0;
+    // this.heatmapNormal.clear();
+    // this.heatmapNodes.clear();
+    // // set radius and blur radius
+    // this.heatmapNormal.radius(this.heatmapNormalConfig.radius, this.heatmapNormalConfig.blur);
+    // this.heatmapNormal.gradient(this.heatmapNormalConfig.colorGradient());
+    // this.heatmapNormal.data(heatmapNormalData);
+
+    // this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
+    // this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
+    // this.heatmapNodes.data(heatmapNodeData);
+    // // this.heat.draw(this.heatmapConfig.minOpacity); // leads to extreme memory leak!
+    // // this.isHeatmapChanged = true;
+    // this.heatmapNormal.draw(this.heatmapNormalConfig.minOpacity);
+    // this.heatmapNodes.draw();
+    // this.heatmapCanvasNormalTexture.needsUpdate = true;
+    // this.heatmapCanvasNodeTexture.needsUpdate = true;
   }
 
   refreshHeatmap() {

@@ -1,7 +1,10 @@
 <mat-tab-group>
     <mat-tab label="Brain">
-        <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')"
-            (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
+        <div id="subAppsContainer">
+            <div id="orbitControlArea" [ngStyle]="orbitControllerAreaStyles"></div>
+            <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')"
+                (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
+        </div>
     </mat-tab>
     <mat-tab label="Nodes">
         <app-playground-viz [inputTopology]="vizTopology" [inputWeights]="vizWeights"></app-playground-viz>
