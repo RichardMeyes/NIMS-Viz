@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaMatcher, BreakpointObserver } from '@angular/cdk/layout';
 import { MatDialog, MatDialogRef } from '@angular/material';
 
@@ -15,6 +15,8 @@ import { SettingsComponent } from './settings/settings.component';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
+  @ViewChild('snav') snav;
+
   toolbarHeight: number;
   dialogFormRef: MatDialogRef<SettingsComponent>;
 
@@ -43,6 +45,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   showSettings() {
     this.dialogFormRef = this.dialog.open(SettingsComponent);
+  }
+
+  mainNavClicked() {
+    this.snav.close();
+    this.dataService.epochSliderConfig.next(null);
   }
 
   ngOnDestroy(): void {

@@ -6,14 +6,18 @@ mat-form-field, .form-field {
     margin-right: 16px;
 }
 
-.full-width {
-    margin-right: 0;
-    width: 100%;
-}
-
 .layers {
     margin-right: 1rem;
     mat-form-field { margin-right: 0; }
+}
+
+mcc-color-picker {
+    padding-bottom: 0;
+    margin-right: 2rem;
+}
+
+.setting-item {
+    margin-bottom: 0.5rem;
 }
 
 mat-dialog-actions { flex-direction: row-reverse; }

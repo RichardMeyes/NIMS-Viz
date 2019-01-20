@@ -1,5 +1,8 @@
 <mat-tab-group>
-    <mat-tab label="Brain"> Content 1 </mat-tab>
+    <mat-tab label="Brain">
+        <app-brain #brainComponent (updatedHeatmapCanvasNormalTexture)="updateHeatmapCanvasTexture($event,'normal')"
+            (updatedHeatmapCanvasNodeTexture)="updateHeatmapCanvasTexture($event,'node')"></app-brain>
+    </mat-tab>
     <mat-tab label="Nodes">
         <app-playground-viz [inputTopology]="vizTopology" [inputWeights]="vizWeights"></app-playground-viz>
     </mat-tab>

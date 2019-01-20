@@ -10,6 +10,7 @@ import { NetworkService } from '../network.service';
 
 import { Playground } from '../playground.model';
 import { DataService } from '../services/data.service';
+import { MatTabChangeEvent } from '@angular/material';
 
 @Component({
   selector: 'app-settings',
@@ -17,10 +18,16 @@ import { DataService } from '../services/data.service';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
+  activeTab: number;
+
   playgroundForm: FormGroup;
   playgroundData: Playground;
 
   files; selectedFile;
+  epochSliderConfig;
+
+  heatmapNormalConfig;
+  drawFully;
 
   destroyed = new Subject<void>();
 
@@ -37,8 +44,16 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.playgroundData = new Playground();
+    this.activeTab = 0;
 
+    this.playgroundData = new Playground();
+    this.heatmapNormalConfig = new HeatmapConfig();
+
+    this.dataService.epochSliderConfig
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.epochSliderConfig = val; });
+
+    this.drawFully = false;
 
     if (this.router.url.includes('builder')) {
       this.createForm();
@@ -188,7 +203,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       );
   }
 
-  private selectedFileClick(filePath, isSetup?: boolean) {
+  selectedFileClick(filePath, isSetup?: boolean) {
     this.selectedFile = filePath;
     // // change slider values
     // this.epochSliderConfig.epochRange = this.files.find(element => element.value === filePath).epochRange;
@@ -203,9 +218,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   visualize() {
     this.dataService.vizWeights.next(null);
-    const epochRange = this.files.find(element => element.value === this.selectedFile).epochRange;
 
-    for (let i = epochRange[0]; i <= epochRange[1]; i++) {
+    const nextEpochConfig = new EpochConfig();
+    nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange;
+    this.dataService.epochSliderConfig.next(nextEpochConfig);
+
+    for (let i = nextEpochConfig.epochRange[0]; i <= nextEpochConfig.epochRange[1]; i++) {
       this.playgroundService.visualize(this.selectedFile, i)
         .pipe(take(1))
         .subscribe(val => {
@@ -225,7 +243,87 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  tabChanged(tabChangeEvent: MatTabChangeEvent) {
+    this.activeTab = tabChangeEvent.index;
+  }
+
+  resetOptions() {
+    this.heatmapNormalConfig = new HeatmapConfig();
+    this.drawFully = false;
+  }
+
+
+
+
+
+  createHeatmap() {
+    console.log(this.heatmapNormalConfig);
+    console.log(this.drawFully);
+  }
+
+  refreshHeatmap() {
+    console.log(this.heatmapNormalConfig);
+  }
+
+
+
+
+
   ngOnDestroy() {
     this.destroyed.next();
+  }
+}
+
+class HeatmapConfig {
+  radius;
+  blur;
+  density;
+  minOpacity;
+  weightValueMin;
+  weightValueMax;
+  color1;
+  color1Trigger;
+  color2;
+  color2Trigger;
+  color3;
+  color3Trigger;
+  colorGradient;
+
+  constructor() {
+    this.radius = 2;
+    this.blur = 8;
+    this.density = 5;
+    this.minOpacity = 0.05;
+    this.weightValueMin = -10;
+    this.weightValueMax = 10;
+    this.color1 = '#0000ff';
+    this.color1Trigger = 0.0;
+    this.color2 = '#ffffff';
+    this.color2Trigger = 0.5;
+    this.color3 = '#ff0000';
+    this.color3Trigger = 1.0;
+    this.colorGradient = function () {
+      const tempobj = {};
+      const diff = Math.abs(this.weightValueMax - this.weightValueMin);
+      const col1TriggerInPerc = parseFloat((Math.abs(this.color1Trigger - this.weightValueMin) / diff).toFixed(2));
+      const col2TriggerInPerc = parseFloat((Math.abs(this.color2Trigger - this.weightValueMin) / diff).toFixed(2));
+      const col3TriggerInPerc = parseFloat((Math.abs(this.color3Trigger - this.weightValueMin) / diff).toFixed(2));
+      tempobj[col1TriggerInPerc] = this.color1;
+      tempobj[col2TriggerInPerc] = this.color2;
+      tempobj[col3TriggerInPerc] = this.color3;
+      return tempobj;
+    }
+  }
+}
+
+class EpochConfig {
+  epochRange;
+  epochValue;
+  epochSelectedRange;
+
+  constructor() {
+    this.epochRange = [0, 1];
+    this.epochValue = 0;
+    this.epochSelectedRange = [0, 1];
   }
 }
