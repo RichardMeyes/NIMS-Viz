@@ -239,7 +239,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   generateColor(d, mode: string, currEpoch: number): string {
-    let color = "#EEEEEE";
+    let color = "#373737";
     let activity = 0;
     let recordActivities = false;
 
@@ -248,12 +248,13 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       let valuePercentage = d.value / range;
 
       if (valuePercentage > .5) {
-        color = "#E57373";
+        // color = "#E57373";
+        color = '#EF5350';
         activity = 1;
         recordActivities = true;
       }
       else if (valuePercentage > .35) {
-        color = "#FFCDD2";
+        color = '#EF9A9A';
         activity = 0.5;
         recordActivities = true;
       }

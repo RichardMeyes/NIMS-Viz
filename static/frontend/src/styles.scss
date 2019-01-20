@@ -1,11 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
-@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+// @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 @import "~nouislider/distribute/nouislider.min.css";
 @import "./nouislider.material";
 @import "./mcc";
 
-body {
-    margin: 0;
-}
+body { margin: 0; }
 
+.mat-drawer-backdrop.mat-drawer-shown { background: rgba(0, 0, 0, 0.288) !important; }
 .mat-tab-body-content { overflow: hidden !important; }
+
+.mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-bar { background-color: rgba(255, 64, 129, 0.5) !important; }
+.mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-thumb { background-color: rgb(255, 64, 129) !important; }

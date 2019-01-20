@@ -1,4 +1,4 @@
-<mat-toolbar color="primary">
+<mat-toolbar>
     <mat-toolbar-row>
         <button mat-icon-button (click)="snav.toggle()">
             <mat-icon aria-label="Menu">menu</mat-icon>
@@ -8,8 +8,8 @@
 </mat-toolbar>
 
 <mat-sidenav-container class="sidenav-container">
-    <mat-sidenav #snav class="sidenav" [fixedInViewport]="true" [fixedTopGap]="toolbarHeight" mode="over"
-        [autoFocus]="false" opened>
+    <mat-sidenav #snav class="sidenav" [fixedInViewport]="true" [fixedTopGap]="toolbarHeight" mode="over" [autoFocus]="false"
+        opened>
         <mat-nav-list>
             <a mat-list-item routerLink="/builder" routerLinkActive="active-link" (click)="mainNavClicked()">
                 <mat-icon mat-list-icon>build</mat-icon>

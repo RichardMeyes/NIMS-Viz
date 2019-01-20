@@ -150,16 +150,16 @@
 
 <mat-dialog-actions>
   <div *ngIf="activeTab == 0">
-    <button mat-button color="accent" (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
-    <button mat-button color="accent" (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')"
+    <button mat-button (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
+    <button mat-button (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')"
       mat-dialog-close>
       Train Network
     </button>
-    <button mat-button color="accent" (click)="visualize()" *ngIf="router.url.includes('archive')" mat-dialog-close>Visualize
+    <button mat-button (click)="visualize()" *ngIf="router.url.includes('archive')" mat-dialog-close>Visualize
     </button>
   </div>
   <div *ngIf="activeTab == 1">
-    <button mat-button color="accent" (click)="resetOptions()">Reset</button>
-    <button mat-button color="accent" (click)="console.log('hahaha')" mat-dialog-close>Apply</button>
+    <button mat-button (click)="resetOptions()">Reset</button>
+    <button mat-button (click)="console.log('hahaha')" mat-dialog-close>Apply</button>
   </div>
 </mat-dialog-actions>
