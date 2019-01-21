@@ -17,6 +17,8 @@ export class DataService {
   vizTopology: BehaviorSubject<any>;
   vizWeights: BehaviorSubject<any>;
 
+  activeSceneTab: BehaviorSubject<number>;
+
   constructor() {
     this.toolbarHeight = new BehaviorSubject(56);
     this.tabsHeight = 49;
@@ -43,5 +45,7 @@ export class DataService {
 
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);
+
+    this.activeSceneTab = new BehaviorSubject(0);
   }
 }

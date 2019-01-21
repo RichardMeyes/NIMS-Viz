@@ -1,5 +1,5 @@
 <mat-dialog-content>
-  <mat-tab-group (selectedTabChange)="tabChanged($event)">
+  <mat-tab-group>
     <mat-tab label="Source">
       <div *ngIf="router.url.includes('builder'); else archive">
         <form [formGroup]="playgroundForm" fxLayout="row wrap">
@@ -78,62 +78,64 @@
             [(ngModel)]="epochSliderConfig.epochValue" [tooltips]="[ true ]" style="margin-top: 4em;"></nouislider>
           <div>{{epochSliderConfig.epochRange[1]}}</div>
         </div>
-        <div>
-          <mat-form-field>
-            <input matInput placeholder="Radius" [(ngModel)]="heatmapNormalConfig.radius" type="number">
-          </mat-form-field>
-          <mat-form-field>
-            <input matInput placeholder="Blur" [(ngModel)]="heatmapNormalConfig.blur" type="number">
-          </mat-form-field>
-          <mat-form-field>
-            <input matInput placeholder="Density" [(ngModel)]="heatmapNormalConfig.density" type="number">
-          </mat-form-field>
-        </div>
-        <div fxLayout="row" fxLayoutAlign="start center">
-          <div class="form-field">Minimum Opacity:</div>
-          <nouislider [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity"></nouislider>
-          <div>{{ heatmapNormalConfig.minOpacity }}</div>
-        </div>
-        <div fxLayout="row" fxLayoutAlign="start center">
-          <label class="form-field">Color 1:</label>
-          <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'2'" [selectedColor]="heatmapNormalConfig.color1"
-            (change)="heatmapNormalConfig.color1=$event;" (selected)="heatmapNormalConfig.color1=$event;" fxFlex="10">
-            <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="5">
-            </mcc-color-picker-collection>
-          </mcc-color-picker>
-          <div class="form-field">Trigger:</div>
-          <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-            [(ngModel)]="heatmapNormalConfig.color1Trigger"></nouislider>
-          <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
-        </div>
-        <div fxLayout="row" fxLayoutAlign="start center">
-          <label class="form-field">Color 2:</label>
-          <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color2"
-            (change)="heatmapNormalConfig.color2=$event;" (selected)="heatmapNormalConfig.color2=$event;" fxFlex="10">
-            <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
-            </mcc-color-picker-collection>
-          </mcc-color-picker>
-          <div class="form-field">Trigger:</div>
-          <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-            [(ngModel)]="heatmapNormalConfig.color2Trigger"></nouislider>
-          <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
-        </div>
-        <div fxLayout="row" fxLayoutAlign="start center">
-          <label class="form-field">Color 3:</label>
-          <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color3"
-            (change)="heatmapNormalConfig.color3=$event;" (selected)="heatmapNormalConfig.color3=$event;" fxFlex="10">
-            <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
-            </mcc-color-picker-collection>
-          </mcc-color-picker>
-          <div class="form-field">Trigger:</div>
-          <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-            [(ngModel)]="heatmapNormalConfig.color3Trigger"></nouislider>
-          <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
+        <div *ngIf="activeTab == 0">
+          <div>
+            <mat-form-field>
+              <input matInput placeholder="Radius" [(ngModel)]="heatmapNormalConfig.radius" type="number">
+            </mat-form-field>
+            <mat-form-field>
+              <input matInput placeholder="Blur" [(ngModel)]="heatmapNormalConfig.blur" type="number">
+            </mat-form-field>
+            <mat-form-field>
+              <input matInput placeholder="Density" [(ngModel)]="heatmapNormalConfig.density" type="number">
+            </mat-form-field>
+          </div>
+          <div fxLayout="row" fxLayoutAlign="start center">
+            <div class="form-field">Minimum Opacity:</div>
+            <nouislider [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity"></nouislider>
+            <div>{{ heatmapNormalConfig.minOpacity }}</div>
+          </div>
+          <div fxLayout="row" fxLayoutAlign="start center">
+            <label class="form-field">Color 1:</label>
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'2'" [selectedColor]="heatmapNormalConfig.color1"
+              (change)="heatmapNormalConfig.color1=$event;" (selected)="heatmapNormalConfig.color1=$event;" fxFlex="10">
+              <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="5">
+              </mcc-color-picker-collection>
+            </mcc-color-picker>
+            <div class="form-field">Trigger:</div>
+            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
+              [(ngModel)]="heatmapNormalConfig.color1Trigger"></nouislider>
+            <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
+          </div>
+          <div fxLayout="row" fxLayoutAlign="start center">
+            <label class="form-field">Color 2:</label>
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color2"
+              (change)="heatmapNormalConfig.color2=$event;" (selected)="heatmapNormalConfig.color2=$event;" fxFlex="10">
+              <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
+              </mcc-color-picker-collection>
+            </mcc-color-picker>
+            <div class="form-field">Trigger:</div>
+            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
+              [(ngModel)]="heatmapNormalConfig.color2Trigger"></nouislider>
+            <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
+          </div>
+          <div fxLayout="row" fxLayoutAlign="start center">
+            <label class="form-field">Color 3:</label>
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color3"
+              (change)="heatmapNormalConfig.color3=$event;" (selected)="heatmapNormalConfig.color3=$event;" fxFlex="10">
+              <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
+              </mcc-color-picker-collection>
+            </mcc-color-picker>
+            <div class="form-field">Trigger:</div>
+            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
+              [(ngModel)]="heatmapNormalConfig.color3Trigger"></nouislider>
+            <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
 
-        </div>
-        <div fxLayout="row" fxLayoutAlign="start center">
-          <mat-slide-toggle [(ngModel)]="drawFully" class="setting-item">Draw
-            full map</mat-slide-toggle>
+          </div>
+          <div fxLayout="row" fxLayoutAlign="start center">
+            <mat-slide-toggle [(ngModel)]="drawFully" class="setting-item">Draw
+              full map</mat-slide-toggle>
+          </div>
         </div>
       </div>
     </mat-tab>
@@ -155,6 +157,6 @@
   </div>
   <div *ngIf="activeTab == 1">
     <button mat-button (click)="resetOptions()">Reset</button>
-    <button mat-button (click)="console.log('hahaha')" mat-dialog-close>Apply</button>
+    <button mat-button (click)="applyOptions()" mat-dialog-close>Apply</button>
   </div>
 </mat-dialog-actions>

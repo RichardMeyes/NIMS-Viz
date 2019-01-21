@@ -44,14 +44,16 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.activeTab = 0;
-
     this.playgroundData = new Playground();
     this.heatmapNormalConfig = new HeatmapConfig();
 
     this.dataService.epochSliderConfig
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.epochSliderConfig = val; });
+
+    this.dataService.activeSceneTab
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.activeTab = val; });
 
     this.drawFully = false;
 
@@ -265,21 +267,31 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  tabChanged(tabChangeEvent: MatTabChangeEvent) {
-    this.activeTab = tabChangeEvent.index;
-  }
-
   resetOptions() {
     this.heatmapNormalConfig = new HeatmapConfig();
     this.drawFully = false;
   }
 
-
-
-
-
-  refreshHeatmap() {
-    console.log(this.heatmapNormalConfig);
+  applyOptions() {
+    this.networkService.createHeatmapFromFile(
+      this.selectedFile,
+      this.epochSliderConfig.epochValue,
+      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+      this.drawFully,
+      true,
+      this.heatmapNormalConfig.density,
+      undefined
+    )
+      .pipe(take(1))
+      .subscribe(data => {
+        const param = {
+          data: data,
+          heatmapNormalConfig: this.heatmapNormalConfig
+        };
+        setTimeout(() => {
+          this.dataService.createHeatmap.next(param);
+        }, 200);
+      });
   }
 
 

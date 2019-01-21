@@ -21,6 +21,7 @@ import { Playground, TfjsLayer } from '../playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { DataService } from '../services/data.service';
+import { MatTabChangeEvent } from '@angular/material';
 // import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 
@@ -234,6 +235,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.heatmapNodes.draw();
     this.heatmapCanvasNormalTexture.needsUpdate = true;
     this.heatmapCanvasNodeTexture.needsUpdate = true;
+  }
+
+  tabChanged(tabChangeEvent: MatTabChangeEvent) {
+    this.dataService.activeSceneTab.next(tabChangeEvent.index);
   }
 
   public ngOnDestroy() {

@@ -1,4 +1,4 @@
-<mat-tab-group>
+<mat-tab-group (selectedTabChange)="tabChanged($event)">
     <mat-tab label="Brain">
         <div id="subAppsContainer">
             <div id="orbitControlArea" [ngStyle]="orbitControllerAreaStyles"></div>
