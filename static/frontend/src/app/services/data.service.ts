@@ -12,6 +12,8 @@ export class DataService {
   epochSliderConfig: BehaviorSubject<any>;
   createHeatmap: BehaviorSubject<any>;
 
+  currEpoch: BehaviorSubject<string>;
+
   vizTopology: BehaviorSubject<any>;
   vizWeights: BehaviorSubject<any>;
 
@@ -36,6 +38,8 @@ export class DataService {
     };
     this.epochSliderConfig = new BehaviorSubject(null);
     this.createHeatmap = new BehaviorSubject(null);
+
+    this.currEpoch = new BehaviorSubject('');
 
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);

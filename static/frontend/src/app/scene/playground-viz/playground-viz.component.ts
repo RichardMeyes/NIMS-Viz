@@ -12,7 +12,6 @@ import { DataService } from 'src/app/services/data.service';
   styleUrls: ['./playground-viz.component.scss']
 })
 export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
-  currEpoch: string;
   toolbarHeight; tabsHeight;
   unsubscribe: Subject<any> = new Subject();
 
@@ -110,7 +109,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
         filteredData = [];
         diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
-        this.currEpoch = `Epoch ${+epoch.split('_').pop() + 1}`;
 
         Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
           if (layer != "input" && layer != 'output') {
@@ -161,7 +159,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
     else {
-      this.currEpoch = "Something is wrong with the calculation. Please try again.";
       this.endofVisualization.emit(true);
     }
   }
@@ -300,8 +297,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('width', this.svgWidth)
       .attr('height', this.svgHeight);
     this.vizContainer = this.svg.append("g");
-
-    this.currEpoch = "";
 
     const self = this;
     this.zoom = d3.zoom()

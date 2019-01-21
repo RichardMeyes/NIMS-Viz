@@ -50,6 +50,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   vizTopology: any;
   vizWeights: any;
 
+  currEpoch: string;
+
   destroyed = new Subject<void>();
 
   constructor(
@@ -79,6 +81,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe(val => {
         if (val) { this.applyingDataToHeatmaps(val.data, val.heatmapNormalConfig); }
       });
+
+    this.dataService.currEpoch
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.currEpoch = val; });
 
     this.heatmapNodeConfig = this.dataService.heatmapNodeConfig;
 

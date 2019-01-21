@@ -50,6 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
   mainNavClicked() {
     this.snav.close();
     this.dataService.epochSliderConfig.next(null);
+    this.dataService.currEpoch.next('');
   }
 
   ngOnDestroy(): void {

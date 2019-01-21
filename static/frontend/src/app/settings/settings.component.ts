@@ -258,6 +258,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
             if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
           }, i * 1000);
         });
+
+      setTimeout(() => {
+        this.dataService.currEpoch.next(`Epoch ${i + 1}`);
+      }, i * 1000);
     }
   }
 

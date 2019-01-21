@@ -75,69 +75,64 @@
           <div class="form-field">Epoch</div>
           <div>{{epochSliderConfig.epochRange[0]}}</div>
           <nouislider [min]="epochSliderConfig.epochRange[0]" [max]="epochSliderConfig.epochRange[1]" [step]="1"
-            [(ngModel)]="epochSliderConfig.epochValue" (ngModelChange)="createHeatmap()" [tooltips]="[ true ]" style="margin-top: 4em;"></nouislider>
+            [(ngModel)]="epochSliderConfig.epochValue" [tooltips]="[ true ]" style="margin-top: 4em;"></nouislider>
           <div>{{epochSliderConfig.epochRange[1]}}</div>
         </div>
         <div>
           <mat-form-field>
-            <input matInput placeholder="Radius" [(ngModel)]="heatmapNormalConfig.radius" (input)="refreshHeatmap()"
-              type="number">
+            <input matInput placeholder="Radius" [(ngModel)]="heatmapNormalConfig.radius" type="number">
           </mat-form-field>
           <mat-form-field>
-            <input matInput placeholder="Blur" [(ngModel)]="heatmapNormalConfig.blur" (input)="refreshHeatmap()" type="number">
+            <input matInput placeholder="Blur" [(ngModel)]="heatmapNormalConfig.blur" type="number">
           </mat-form-field>
           <mat-form-field>
-            <input matInput placeholder="Density" [(ngModel)]="heatmapNormalConfig.density" (input)="createHeatmap()"
-              type="number">
+            <input matInput placeholder="Density" [(ngModel)]="heatmapNormalConfig.density" type="number">
           </mat-form-field>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
           <div class="form-field">Minimum Opacity:</div>
-          <nouislider [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity" (change)="refreshHeatmap()"></nouislider>
+          <nouislider [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity"></nouislider>
           <div>{{ heatmapNormalConfig.minOpacity }}</div>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
           <label class="form-field">Color 1:</label>
           <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'2'" [selectedColor]="heatmapNormalConfig.color1"
-            (change)="heatmapNormalConfig.color1=$event; refreshHeatmap()" (selected)="heatmapNormalConfig.color1=$event; refreshHeatmap()"
-            fxFlex="10">
+            (change)="heatmapNormalConfig.color1=$event;" (selected)="heatmapNormalConfig.color1=$event;" fxFlex="10">
             <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="5">
             </mcc-color-picker-collection>
           </mcc-color-picker>
           <div class="form-field">Trigger:</div>
           <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-            [(ngModel)]="heatmapNormalConfig.color1Trigger" (change)="refreshHeatmap()"></nouislider>
+            [(ngModel)]="heatmapNormalConfig.color1Trigger"></nouislider>
           <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
           <label class="form-field">Color 2:</label>
           <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color2"
-            (change)="heatmapNormalConfig.color2=$event; refreshHeatmap()" (selected)="heatmapNormalConfig.color2=$event; refreshHeatmap()"
-            fxFlex="10">
+            (change)="heatmapNormalConfig.color2=$event;" (selected)="heatmapNormalConfig.color2=$event;" fxFlex="10">
             <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
             </mcc-color-picker-collection>
           </mcc-color-picker>
           <div class="form-field">Trigger:</div>
           <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-            [(ngModel)]="heatmapNormalConfig.color2Trigger" (change)="refreshHeatmap()"></nouislider>
+            [(ngModel)]="heatmapNormalConfig.color2Trigger"></nouislider>
           <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
           <label class="form-field">Color 3:</label>
           <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color3"
-            (change)="heatmapNormalConfig.color3=$event; refreshHeatmap()" (selected)="heatmapNormalConfig.color3=$event; refreshHeatmap()"
-            fxFlex="10">
+            (change)="heatmapNormalConfig.color3=$event;" (selected)="heatmapNormalConfig.color3=$event;" fxFlex="10">
             <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
             </mcc-color-picker-collection>
           </mcc-color-picker>
           <div class="form-field">Trigger:</div>
           <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-            [(ngModel)]="heatmapNormalConfig.color3Trigger" (change)="refreshHeatmap()"></nouislider>
+            [(ngModel)]="heatmapNormalConfig.color3Trigger"></nouislider>
           <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
 
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
-          <mat-slide-toggle [(ngModel)]="drawFully" (change)="createHeatmap()" class="setting-item">Draw
+          <mat-slide-toggle [(ngModel)]="drawFully" class="setting-item">Draw
             full map</mat-slide-toggle>
         </div>
       </div>
