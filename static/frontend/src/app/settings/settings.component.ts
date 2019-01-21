@@ -18,7 +18,8 @@ import { MatTabChangeEvent } from '@angular/material';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
-  activeTab: number;
+  activeSceneTab: number;
+  activeSettingsTab: number;
 
   playgroundForm: FormGroup;
   playgroundData: Playground;
@@ -44,6 +45,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.activeSettingsTab = 0;
+
     this.playgroundData = new Playground();
     this.heatmapNormalConfig = new HeatmapConfig();
 
@@ -53,7 +56,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.dataService.activeSceneTab
       .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.activeTab = val; });
+      .subscribe(val => { this.activeSceneTab = val; });
 
     this.drawFully = false;
 
@@ -294,6 +297,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
+  tabChanged(tabChangeEvent: MatTabChangeEvent) {
+    this.activeSettingsTab = tabChangeEvent.index;
+  }
 
 
 
@@ -341,7 +347,7 @@ class HeatmapConfig {
       tempobj[col2TriggerInPerc] = this.color2;
       tempobj[col3TriggerInPerc] = this.color3;
       return tempobj;
-    }
+    };
   }
 }
 

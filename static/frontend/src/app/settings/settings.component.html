@@ -1,5 +1,5 @@
 <mat-dialog-content>
-  <mat-tab-group>
+  <mat-tab-group (selectedTabChange)="tabChanged($event)">
     <mat-tab label="Source">
       <div *ngIf="router.url.includes('builder'); else archive">
         <form [formGroup]="playgroundForm" fxLayout="row wrap">
@@ -78,7 +78,7 @@
             [(ngModel)]="epochSliderConfig.epochValue" [tooltips]="[ true ]" style="margin-top: 4em;"></nouislider>
           <div>{{epochSliderConfig.epochRange[1]}}</div>
         </div>
-        <div *ngIf="activeTab == 0">
+        <div *ngIf="activeSceneTab == 0">
           <div>
             <mat-form-field>
               <input matInput placeholder="Radius" [(ngModel)]="heatmapNormalConfig.radius" type="number">
@@ -146,7 +146,7 @@
 </mat-dialog-content>
 
 <mat-dialog-actions>
-  <div *ngIf="activeTab == 0">
+  <div *ngIf="activeSettingsTab == 0">
     <button mat-button (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
     <button mat-button (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')"
       mat-dialog-close>
@@ -155,7 +155,7 @@
     <button mat-button (click)="visualize()" *ngIf="router.url.includes('archive')" mat-dialog-close>Visualize
     </button>
   </div>
-  <div *ngIf="activeTab == 1">
+  <div *ngIf="activeSettingsTab == 1">
     <button mat-button (click)="resetOptions()">Reset</button>
     <button mat-button (click)="applyOptions()" mat-dialog-close>Apply</button>
   </div>
