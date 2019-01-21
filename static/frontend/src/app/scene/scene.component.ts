@@ -40,6 +40,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   heatCanvas; heatCanvasNodes;
   heatmapNormal; heatmapNodes;
+  heatmapNodeConfig;
 
   singleViewHeight; singleViewWidth; views;
   orbitControllerAreaStyles;
@@ -72,6 +73,14 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.vizWeights
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.vizWeights = val; });
+
+    this.dataService.createHeatmap
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        if (val) { this.applyingDataToHeatmaps(val.data, val.heatmapNormalConfig); }
+      });
+
+    this.heatmapNodeConfig = this.dataService.heatmapNodeConfig;
 
     this.singleViewHeight = 1;
     this.singleViewWidth = 0.5;
@@ -188,6 +197,37 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     } else if (type === 'node') {
       this.heatmapCanvasNodeTexture = updatedHeatmapCanvasTexture;
     }
+  }
+
+  applyingDataToHeatmaps(data, heatmapNormalConfig) {
+    const heatmapNodeData = data['heatmapNodeData'];
+    const heatmapNormalData = data['heatmapNormalData'];
+    const deltaMinMax = heatmapNormalConfig.weightValueMax - heatmapNormalConfig.weightValueMin;
+    // Trigger 1 initial value is 40% of delta min-max
+    heatmapNormalConfig.color1Trigger = parseFloat((heatmapNormalConfig.weightValueMin +
+      deltaMinMax * 0.4).toFixed(4));
+    // Trigger 2 initial value is 60% of delta min-max (effectively between 40% of trigger 1 and 60%)
+    heatmapNormalConfig.color2Trigger = parseFloat((heatmapNormalConfig.weightValueMin +
+      deltaMinMax * 0.6).toFixed(4));
+    heatmapNormalConfig.color3Trigger = heatmapNormalConfig.weightValueMax;
+    // NodeConfig Trigger is one color for all values. That's the reason for 1.0 => 100%
+    // this.heatmapNodeConfig.color1Trigger = 1.0;
+    this.heatmapNormal.clear();
+    this.heatmapNodes.clear();
+    // set radius and blur radius
+    this.heatmapNormal.radius(heatmapNormalConfig.radius, heatmapNormalConfig.blur);
+    this.heatmapNormal.gradient(heatmapNormalConfig.colorGradient());
+    this.heatmapNormal.data(heatmapNormalData);
+
+    this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
+    this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
+    this.heatmapNodes.data(heatmapNodeData);
+
+
+    this.heatmapNormal.draw(heatmapNormalConfig.minOpacity);
+    this.heatmapNodes.draw();
+    this.heatmapCanvasNormalTexture.needsUpdate = true;
+    this.heatmapCanvasNodeTexture.needsUpdate = true;
   }
 
   public ngOnDestroy() {
