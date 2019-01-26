@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { Playground } from '../playground.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,8 @@ export class DataService {
   readonly heatmapNodeConfig;
   epochSliderConfig: BehaviorSubject<any>;
   createHeatmap: BehaviorSubject<any>;
+
+  playgroundData: BehaviorSubject<Playground>;
 
   currEpoch: BehaviorSubject<string>;
 
@@ -40,6 +43,8 @@ export class DataService {
     };
     this.epochSliderConfig = new BehaviorSubject(null);
     this.createHeatmap = new BehaviorSubject(null);
+
+    this.playgroundData = new BehaviorSubject(new Playground());
 
     this.currEpoch = new BehaviorSubject('');
 

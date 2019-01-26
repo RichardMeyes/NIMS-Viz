@@ -1,21 +1,24 @@
 export class Playground {
-    batchSize: number;
+    batchSizeTest: number;
+    batchSizeTrain: number;
     numBatches: number;
     epoch: number;
 
-    mnistLayers: TfjsLayer[];
+    layers: TfjsLayer[];
 
     learningRates: SelectForm[];
     activation: SelectForm[];
+    selectedLearningRates: number;
 
     layerCount: number;
 
     constructor() {
-        this.batchSize = 64;
+        this.batchSizeTest = 64;
+        this.batchSizeTrain = 64;
         this.numBatches = 150;
         this.epoch = 5;
 
-        this.mnistLayers = [
+        this.layers = [
             new TfjsLayer(20, 'relu'),
             new TfjsLayer(15, 'relu'),
             new TfjsLayer(10, 'relu')
@@ -38,8 +41,9 @@ export class Playground {
             new SelectForm('relu', 'Rectified Linear Unit'),
             new SelectForm('softmax', 'Softmax')
         ];
+        this.selectedLearningRates = 0;
 
-        this.layerCount = this.mnistLayers.length;
+        this.layerCount = this.layers.length;
     }
 }
 
