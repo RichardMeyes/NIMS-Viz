@@ -191,7 +191,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
             this.selectedFileClick(this.files.find(element => element.value === newFileValue).value);
           } else {
             this.files = newFileList;
-            this.selectedFileClick(this.files[0].value);
+
+            const selectedFile = this.dataService.selectedFile.getValue();
+            if (selectedFile) {
+              this.selectedFileClick(selectedFile);
+            } else {
+              this.selectedFileClick(this.files[0].value);
+            }
           }
         }
       );
@@ -257,6 +263,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.dataService.currEpoch.next(`Epoch ${i + 1}`);
       }, i * 1000);
     }
+
+    this.dataService.selectedFile.next(this.selectedFile);
   }
 
   resetOptions() {

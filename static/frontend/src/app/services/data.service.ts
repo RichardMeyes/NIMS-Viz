@@ -14,6 +14,7 @@ export class DataService {
   createHeatmap: BehaviorSubject<any>;
 
   playgroundData: BehaviorSubject<Playground>;
+  selectedFile: BehaviorSubject<string>;
 
   currEpoch: BehaviorSubject<string>;
 
@@ -45,6 +46,7 @@ export class DataService {
     this.createHeatmap = new BehaviorSubject(null);
 
     this.playgroundData = new BehaviorSubject(new Playground());
+    this.selectedFile = new BehaviorSubject(null);
 
     this.currEpoch = new BehaviorSubject('');
 

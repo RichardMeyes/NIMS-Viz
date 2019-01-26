@@ -227,34 +227,36 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applyingDataToHeatmaps(data, heatmapNormalConfig) {
-    const heatmapNodeData = data['heatmapNodeData'];
-    const heatmapNormalData = data['heatmapNormalData'];
-    const deltaMinMax = heatmapNormalConfig.weightValueMax - heatmapNormalConfig.weightValueMin;
-    // Trigger 1 initial value is 40% of delta min-max
-    heatmapNormalConfig.color1Trigger = parseFloat((heatmapNormalConfig.weightValueMin +
-      deltaMinMax * 0.4).toFixed(4));
-    // Trigger 2 initial value is 60% of delta min-max (effectively between 40% of trigger 1 and 60%)
-    heatmapNormalConfig.color2Trigger = parseFloat((heatmapNormalConfig.weightValueMin +
-      deltaMinMax * 0.6).toFixed(4));
-    heatmapNormalConfig.color3Trigger = heatmapNormalConfig.weightValueMax;
-    // NodeConfig Trigger is one color for all values. That's the reason for 1.0 => 100%
-    // this.heatmapNodeConfig.color1Trigger = 1.0;
-    this.heatmapNormal.clear();
-    this.heatmapNodes.clear();
-    // set radius and blur radius
-    this.heatmapNormal.radius(heatmapNormalConfig.radius, heatmapNormalConfig.blur);
-    this.heatmapNormal.gradient(heatmapNormalConfig.colorGradient());
-    this.heatmapNormal.data(heatmapNormalData);
+    if (this.heatmapNormal && this.heatmapNodes) {
+      const heatmapNodeData = data['heatmapNodeData'];
+      const heatmapNormalData = data['heatmapNormalData'];
+      const deltaMinMax = heatmapNormalConfig.weightValueMax - heatmapNormalConfig.weightValueMin;
+      // Trigger 1 initial value is 40% of delta min-max
+      heatmapNormalConfig.color1Trigger = parseFloat((heatmapNormalConfig.weightValueMin +
+        deltaMinMax * 0.4).toFixed(4));
+      // Trigger 2 initial value is 60% of delta min-max (effectively between 40% of trigger 1 and 60%)
+      heatmapNormalConfig.color2Trigger = parseFloat((heatmapNormalConfig.weightValueMin +
+        deltaMinMax * 0.6).toFixed(4));
+      heatmapNormalConfig.color3Trigger = heatmapNormalConfig.weightValueMax;
+      // NodeConfig Trigger is one color for all values. That's the reason for 1.0 => 100%
+      // this.heatmapNodeConfig.color1Trigger = 1.0;
+      this.heatmapNormal.clear();
+      this.heatmapNodes.clear();
+      // set radius and blur radius
+      this.heatmapNormal.radius(heatmapNormalConfig.radius, heatmapNormalConfig.blur);
+      this.heatmapNormal.gradient(heatmapNormalConfig.colorGradient());
+      this.heatmapNormal.data(heatmapNormalData);
 
-    this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
-    this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
-    this.heatmapNodes.data(heatmapNodeData);
+      this.heatmapNodes.radius(this.heatmapNodeConfig.radius, this.heatmapNodeConfig.blur);
+      this.heatmapNodes.gradient(this.heatmapNodeConfig.colorGradient());
+      this.heatmapNodes.data(heatmapNodeData);
 
 
-    this.heatmapNormal.draw(heatmapNormalConfig.minOpacity);
-    this.heatmapNodes.draw();
-    this.heatmapCanvasNormalTexture.needsUpdate = true;
-    this.heatmapCanvasNodeTexture.needsUpdate = true;
+      this.heatmapNormal.draw(heatmapNormalConfig.minOpacity);
+      this.heatmapNodes.draw();
+      this.heatmapCanvasNormalTexture.needsUpdate = true;
+      this.heatmapCanvasNodeTexture.needsUpdate = true;
+    }
   }
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
