@@ -22,6 +22,7 @@ import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { DataService } from '../services/data.service';
 import { MatTabChangeEvent } from '@angular/material';
+import { HeatmapConfig } from '../settings/settings.component';
 // import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 
@@ -52,6 +53,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   vizWeights: any;
 
   currEpoch: string;
+  epochCounter: number;
 
   destroyed = new Subject<void>();
 
@@ -61,11 +63,29 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.epochCounter = 1;
+
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
+        const heatmapNormalConfig = new HeatmapConfig();
+        const resultHeatmapData = message['resultHeatmapData'];
+        const resultWeightMinMax = message['resultWeightMinMax'];
+        heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
+        heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
+        this.applyingDataToHeatmaps(resultHeatmapData, heatmapNormalConfig);
+
         const resultWeights = message['resultWeights'];
         this.dataService.vizWeights.next(resultWeights);
+
+        this.currEpoch = `Epoch ${this.epochCounter}`;
+
+        const isDone = message['done'];
+        if (isDone) {
+          this.epochCounter = 1;
+        } else {
+          this.epochCounter++;
+        }
       });
 
 

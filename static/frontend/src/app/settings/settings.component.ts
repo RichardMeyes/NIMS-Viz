@@ -309,7 +309,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 }
 
-class HeatmapConfig {
+export class HeatmapConfig {
   radius;
   blur;
   density;
