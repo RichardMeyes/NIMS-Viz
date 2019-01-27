@@ -4,8 +4,8 @@ export class EpochConfig {
     epochSelectedRange;
 
     constructor() {
-        this.epochRange = [0, 1];
-        this.epochValue = 0;
+        this.epochRange = [1, 2];
+        this.epochValue = 1;
         this.epochSelectedRange = [0, 1];
     }
 }

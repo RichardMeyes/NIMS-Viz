@@ -280,27 +280,39 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   applyOptions() {
     this.dataService.optionData.next({ epochSliderConfig: this.epochSliderConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
 
-    if (this.epochSliderConfig) {
-      this.networkService.createHeatmapFromFile(
-        this.selectedFile,
-        (this.epochSliderConfig.epochValue - 1),
-        [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-        this.drawFully,
-        true,
-        this.heatmapNormalConfig.density,
-        undefined
-      )
-        .pipe(take(1))
-        .subscribe(data => {
-          const param = {
-            data: data,
-            heatmapNormalConfig: this.heatmapNormalConfig
-          };
-          setTimeout(() => {
-            this.dataService.createHeatmap.next(param);
-            this.dataService.currEpoch.next(`Epoch ${this.epochSliderConfig.epochValue}`);
-          }, 200);
-        });
+    if (this.router.url.includes('builder')) {
+      if (this.dataService.lastTraining.getValue()) {
+        const param = {
+          data: this.dataService.lastTraining.getValue(),
+          heatmapNormalConfig: this.heatmapNormalConfig
+        };
+        setTimeout(() => {
+          this.dataService.createHeatmap.next(param);
+        }, 200);
+      }
+    } else {
+      if (this.epochSliderConfig) {
+        this.networkService.createHeatmapFromFile(
+          this.selectedFile,
+          (this.epochSliderConfig.epochValue - 1),
+          [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+          this.drawFully,
+          true,
+          this.heatmapNormalConfig.density,
+          undefined
+        )
+          .pipe(take(1))
+          .subscribe(data => {
+            const param = {
+              data: data,
+              heatmapNormalConfig: this.heatmapNormalConfig
+            };
+            setTimeout(() => {
+              this.dataService.createHeatmap.next(param);
+              this.dataService.currEpoch.next(`Epoch ${this.epochSliderConfig.epochValue}`);
+            }, 200);
+          });
+      }
     }
   }
 

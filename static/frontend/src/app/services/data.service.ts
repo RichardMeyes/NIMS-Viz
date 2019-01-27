@@ -25,6 +25,8 @@ export class DataService {
 
   activeSceneTab: BehaviorSubject<number>;
 
+  lastTraining: BehaviorSubject<any>;
+
   constructor() {
     this.toolbarHeight = new BehaviorSubject(56);
     this.tabsHeight = 49;
@@ -56,5 +58,7 @@ export class DataService {
     this.vizWeights = new BehaviorSubject(null);
 
     this.activeSceneTab = new BehaviorSubject(0);
+
+    this.lastTraining = new BehaviorSubject(null);
   }
 }

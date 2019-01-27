@@ -69,7 +69,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
-        const heatmapNormalConfig = new HeatmapConfig();
+        const heatmapNormalConfig = this.dataService.optionData.getValue().heatmapNormalConfig;
         const resultHeatmapData = message['resultHeatmapData'];
         const resultWeightMinMax = message['resultWeightMinMax'];
         heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
@@ -84,8 +84,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         const isDone = message['done'];
         if (isDone) {
           this.epochCounter = 1;
+          this.dataService.lastTraining.next(resultHeatmapData);
         } else {
           this.epochCounter++;
+          this.dataService.lastTraining.next(null);
         }
       });
 
