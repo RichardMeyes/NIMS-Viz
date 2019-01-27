@@ -10,7 +10,9 @@ import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
 import { DataService } from '../services/data.service';
 
-import { Playground, TfjsLayer } from '../playground.model';
+import { Playground, TfjsLayer } from '../models/playground.model';
+import { HeatmapConfig } from '../models/heatmap-config.model';
+import { EpochConfig } from '../models/epoch-config.model';
 
 @Component({
   selector: 'app-settings',
@@ -25,8 +27,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   playgroundData: Playground;
 
   files; selectedFile;
-  epochSliderConfig;
 
+  epochSliderConfig;
   heatmapNormalConfig;
   drawFully;
 
@@ -48,9 +50,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeSettingsTab = 0;
     this.heatmapNormalConfig = new HeatmapConfig();
 
-    this.dataService.epochSliderConfig
+    this.dataService.optionData
       .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.epochSliderConfig = val; });
+      .subscribe(val => { this.epochSliderConfig = val.epochSliderConfig; });
 
     this.dataService.activeSceneTab
       .pipe(takeUntil(this.destroyed))
@@ -211,13 +213,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.vizWeights.next(null);
 
     const nextEpochConfig = new EpochConfig();
-    nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange;
-    this.dataService.epochSliderConfig.next(nextEpochConfig);
+    nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
+    this.dataService.optionData.next({ epochSliderConfig: nextEpochConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
 
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
 
-    for (let i = nextEpochConfig.epochRange[0]; i <= nextEpochConfig.epochRange[1]; i++) {
+    for (let i = (nextEpochConfig.epochRange[0] - 1); i <= (nextEpochConfig.epochRange[1] - 1); i++) {
       let newNodeStruct = false;
       if (i === 0) { newNodeStruct = true; }
 
@@ -273,9 +275,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applyOptions() {
+
     this.networkService.createHeatmapFromFile(
       this.selectedFile,
-      this.epochSliderConfig.epochValue,
+      (this.epochSliderConfig.epochValue - 1),
       [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
       this.drawFully,
       true,
@@ -290,6 +293,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         };
         setTimeout(() => {
           this.dataService.createHeatmap.next(param);
+          this.dataService.currEpoch.next(`Epoch ${this.epochSliderConfig.epochValue}`);
         }, 200);
       });
   }
@@ -303,59 +307,5 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     this.destroyed.next();
-  }
-}
-
-export class HeatmapConfig {
-  radius;
-  blur;
-  density;
-  minOpacity;
-  weightValueMin;
-  weightValueMax;
-  color1;
-  color1Trigger;
-  color2;
-  color2Trigger;
-  color3;
-  color3Trigger;
-  colorGradient;
-
-  constructor() {
-    this.radius = 2;
-    this.blur = 8;
-    this.density = 5;
-    this.minOpacity = 0.05;
-    this.weightValueMin = -10;
-    this.weightValueMax = 10;
-    this.color1 = '#0000ff';
-    this.color1Trigger = 0.0;
-    this.color2 = '#ffffff';
-    this.color2Trigger = 0.5;
-    this.color3 = '#ff0000';
-    this.color3Trigger = 1.0;
-    this.colorGradient = function () {
-      const tempobj = {};
-      const diff = Math.abs(this.weightValueMax - this.weightValueMin);
-      const col1TriggerInPerc = parseFloat((Math.abs(this.color1Trigger - this.weightValueMin) / diff).toFixed(2));
-      const col2TriggerInPerc = parseFloat((Math.abs(this.color2Trigger - this.weightValueMin) / diff).toFixed(2));
-      const col3TriggerInPerc = parseFloat((Math.abs(this.color3Trigger - this.weightValueMin) / diff).toFixed(2));
-      tempobj[col1TriggerInPerc] = this.color1;
-      tempobj[col2TriggerInPerc] = this.color2;
-      tempobj[col3TriggerInPerc] = this.color3;
-      return tempobj;
-    };
-  }
-}
-
-class EpochConfig {
-  epochRange;
-  epochValue;
-  epochSelectedRange;
-
-  constructor() {
-    this.epochRange = [0, 1];
-    this.epochValue = 0;
-    this.epochSelectedRange = [0, 1];
   }
 }

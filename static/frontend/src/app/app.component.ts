@@ -8,7 +8,8 @@ import { takeUntil } from 'rxjs/operators';
 import { DataService } from './services/data.service';
 
 import { SettingsComponent } from './settings/settings.component';
-import { Playground } from './playground.model';
+import { Playground } from './models/playground.model';
+import { Option } from './models/option.model';
 
 @Component({
   selector: 'app-root',
@@ -50,11 +51,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mainNavClicked() {
     this.snav.close();
-    this.dataService.epochSliderConfig.next(null);
     this.dataService.currEpoch.next('');
 
     this.dataService.playgroundData.next(new Playground());
     this.dataService.selectedFile.next(null);
+    this.dataService.optionData.next(new Option(null, null, false));
   }
 
   ngOnDestroy(): void {

@@ -17,12 +17,13 @@ import 'three/examples/js/controls/OrbitControls';
 import { PlaygroundService } from '../playground.service';
 import { generate, Subscription, Subject } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
-import { Playground, TfjsLayer } from '../playground.model';
+import { Playground, TfjsLayer } from '../models/playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { DataService } from '../services/data.service';
 import { MatTabChangeEvent } from '@angular/material';
-import { HeatmapConfig } from '../settings/settings.component';
+import { HeatmapConfig } from '../models/heatmap-config.model';
+
 // import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 

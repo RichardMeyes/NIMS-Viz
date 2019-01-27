@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Playground } from '../playground.model';
+import { Playground } from '../models/playground.model';
+import { Option } from '../models/option.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,11 +11,11 @@ export class DataService {
   readonly tabsHeight: number;
 
   readonly heatmapNodeConfig;
-  epochSliderConfig: BehaviorSubject<any>;
   createHeatmap: BehaviorSubject<any>;
 
   playgroundData: BehaviorSubject<Playground>;
   selectedFile: BehaviorSubject<string>;
+  optionData: BehaviorSubject<Option>;
 
   currEpoch: BehaviorSubject<string>;
 
@@ -42,11 +43,11 @@ export class DataService {
         return tempobj;
       }
     };
-    this.epochSliderConfig = new BehaviorSubject(null);
     this.createHeatmap = new BehaviorSubject(null);
 
     this.playgroundData = new BehaviorSubject(new Playground());
     this.selectedFile = new BehaviorSubject(null);
+    this.optionData = new BehaviorSubject(new Option(null, null, false));
 
     this.currEpoch = new BehaviorSubject('');
 
