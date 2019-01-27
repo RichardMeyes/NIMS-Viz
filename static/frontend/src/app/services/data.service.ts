@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Playground } from '../models/playground.model';
 import { Option } from '../models/option.model';
+import { HeatmapConfig } from '../models/heatmap-config.model';
 
 @Injectable({
   providedIn: 'root'
@@ -47,7 +48,7 @@ export class DataService {
 
     this.playgroundData = new BehaviorSubject(new Playground());
     this.selectedFile = new BehaviorSubject(null);
-    this.optionData = new BehaviorSubject(new Option(null, null, false));
+    this.optionData = new BehaviorSubject(new Option(null, new HeatmapConfig(), false));
 
     this.currEpoch = new BehaviorSubject('');
 

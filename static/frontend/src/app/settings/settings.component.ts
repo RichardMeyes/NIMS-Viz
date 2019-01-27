@@ -13,6 +13,7 @@ import { DataService } from '../services/data.service';
 import { Playground, TfjsLayer } from '../models/playground.model';
 import { HeatmapConfig } from '../models/heatmap-config.model';
 import { EpochConfig } from '../models/epoch-config.model';
+import { Option } from '../models/option.model';
 
 @Component({
   selector: 'app-settings',
@@ -48,17 +49,18 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.activeSettingsTab = 0;
-    this.heatmapNormalConfig = new HeatmapConfig();
 
     this.dataService.optionData
       .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.epochSliderConfig = val.epochSliderConfig; });
+      .subscribe(val => {
+        this.epochSliderConfig = val.epochSliderConfig;
+        this.heatmapNormalConfig = val.heatmapNormalConfig;
+        this.drawFully = val.drawFully;
+      });
 
     this.dataService.activeSceneTab
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.activeSceneTab = val; });
-
-    this.drawFully = false;
 
     if (this.router.url.includes('builder')) {
       this.dataService.playgroundData
@@ -214,10 +216,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
-    this.dataService.optionData.next({ epochSliderConfig: nextEpochConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
 
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+
+    this.dataService.optionData.next({ epochSliderConfig: nextEpochConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
 
     for (let i = (nextEpochConfig.epochRange[0] - 1); i <= (nextEpochConfig.epochRange[1] - 1); i++) {
       let newNodeStruct = false;
@@ -270,32 +273,35 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   resetOptions() {
-    this.heatmapNormalConfig = new HeatmapConfig();
-    this.drawFully = false;
+    if (this.epochSliderConfig) { this.epochSliderConfig.epochValue = 1 }
+    this.dataService.optionData.next(new Option(this.epochSliderConfig, new HeatmapConfig(), false));
   }
 
   applyOptions() {
+    this.dataService.optionData.next({ epochSliderConfig: this.epochSliderConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
 
-    this.networkService.createHeatmapFromFile(
-      this.selectedFile,
-      (this.epochSliderConfig.epochValue - 1),
-      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-      this.drawFully,
-      true,
-      this.heatmapNormalConfig.density,
-      undefined
-    )
-      .pipe(take(1))
-      .subscribe(data => {
-        const param = {
-          data: data,
-          heatmapNormalConfig: this.heatmapNormalConfig
-        };
-        setTimeout(() => {
-          this.dataService.createHeatmap.next(param);
-          this.dataService.currEpoch.next(`Epoch ${this.epochSliderConfig.epochValue}`);
-        }, 200);
-      });
+    if (this.epochSliderConfig) {
+      this.networkService.createHeatmapFromFile(
+        this.selectedFile,
+        (this.epochSliderConfig.epochValue - 1),
+        [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+        this.drawFully,
+        true,
+        this.heatmapNormalConfig.density,
+        undefined
+      )
+        .pipe(take(1))
+        .subscribe(data => {
+          const param = {
+            data: data,
+            heatmapNormalConfig: this.heatmapNormalConfig
+          };
+          setTimeout(() => {
+            this.dataService.createHeatmap.next(param);
+            this.dataService.currEpoch.next(`Epoch ${this.epochSliderConfig.epochValue}`);
+          }, 200);
+        });
+    }
   }
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
