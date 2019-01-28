@@ -1,9 +1,9 @@
 import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, Output, EventEmitter, SimpleChanges, OnDestroy } from '@angular/core';
 
 import { Subject } from 'rxjs';
-import { takeUntil, filter } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 
-import * as d3 from "d3";
+import * as d3 from 'd3';
 import { DataService } from 'src/app/services/data.service';
 
 @Component({
@@ -18,6 +18,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   zoom; currTransform;
   svg; svgWidth; svgHeight;
   vizContainer;
+  conMenuItems;
 
   topology; weights;
   layerSpacing; nodeRadius;
@@ -61,6 +62,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.nodeRadius = 10;
 
     this.activities = [];
+
+    this.conMenuItems = ['view details', 'detach node'];
   }
 
   draw(changes: SimpleChanges) {
@@ -219,7 +222,25 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         return cy;
       })
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, "topology", currEpoch); });
+      .attr('fill', function (d) { return self.generateColor(d, "topology", currEpoch); })
+      .on('contextmenu', function (d, i) {
+        d3.event.preventDefault();
+        d3.select('.context-menu').remove();
+
+        // console.log(d);
+        // console.log(this);
+        // console.log(d3.mouse(this));
+
+        // self.vizContainer.append('rect')
+        //   .attr('class', 'context-menu')
+        //   .attr('x', d3.mouse(this)[0])
+        //   .attr('y', d3.mouse(this)[1])
+        //   .attr('width', 100)
+        //   .attr('height', 25)
+        //   .attr('fill', 'indianred');
+
+        self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
+      });
 
     circles
       .merge(enterSel)
@@ -296,14 +317,38 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .append('svg')
       .attr('width', this.svgWidth)
       .attr('height', this.svgHeight);
-    this.vizContainer = this.svg.append("g");
+    this.vizContainer = this.svg.append('g');
 
     const self = this;
     this.zoom = d3.zoom()
       .scaleExtent([0.1, 10])
-      .on("zoom", () => { self.vizContainer.attr("transform", d3.event.transform); })
+      .on("zoom", () => {
+        self.vizContainer.attr('transform', d3.event.transform);
+        d3.select('.context-menu').remove();
+      })
       .on("end", () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
+
+    this.svg
+      .on('click', () => { d3.select('.context-menu').remove(); });
+  }
+
+  bindConMenu(mouseX, mouseY) {
+    const conMenuContainer = this.vizContainer
+      .append('g').attr('class', 'context-menu')
+      .selectAll('tmp')
+      .data(this.conMenuItems)
+      .enter()
+      .append('g').attr('class', 'menu-entry');
+
+    conMenuContainer.append('rect')
+      .attr('x', mouseX)
+      .attr('y', function (d, i) { return mouseY + (i * 25); });
+
+    conMenuContainer.append('text')
+      .text(function (d) { return d; })
+      .attr('x', mouseX)
+      .attr('y', function (d, i) { return mouseY + (i * 25); })
   }
 
   ngOnDestroy() {
