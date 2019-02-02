@@ -5,6 +5,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import * as d3 from 'd3';
 import { DataService } from 'src/app/services/data.service';
+import { style } from '@angular/animations';
 
 @Component({
   selector: 'app-playground-viz',
@@ -18,7 +19,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   zoom; currTransform;
   svg; svgWidth; svgHeight;
   vizContainer;
-  conMenuItems;
+  conMenuItems; conMenuConfig;
 
   topology; weights;
   layerSpacing; nodeRadius;
@@ -62,8 +63,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.nodeRadius = 10;
 
     this.activities = [];
-
-    this.conMenuItems = ['view details', 'detach node'];
   }
 
   draw(changes: SimpleChanges) {
@@ -227,18 +226,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         d3.event.preventDefault();
         d3.select('.context-menu').remove();
 
-        // console.log(d);
-        // console.log(this);
-        // console.log(d3.mouse(this));
-
-        // self.vizContainer.append('rect')
-        //   .attr('class', 'context-menu')
-        //   .attr('x', d3.mouse(this)[0])
-        //   .attr('y', d3.mouse(this)[1])
-        //   .attr('width', 100)
-        //   .attr('height', 25)
-        //   .attr('fill', 'indianred');
-
+        self.setupConMenu();
         self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
       });
 
@@ -333,22 +321,68 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .on('click', () => { d3.select('.context-menu').remove(); });
   }
 
+  setupConMenu() {
+    if (this.conMenuConfig === undefined) {
+
+      this.conMenuItems = ['view details', 'detach node'];
+      this.conMenuConfig = {
+        width: [],
+        height: [],
+        margin: 0.15
+      };
+
+      const self = this;
+
+      this.vizContainer.selectAll('.tmp')
+        .data(this.conMenuItems)
+        .enter()
+        .append('text')
+        .text(function (d) { return d; })
+        .attr('class', 'tmp')
+        .each(function (d, i) {
+          const bbox = this.getBBox();
+          self.conMenuConfig.width.push(bbox.width);
+          self.conMenuConfig.height.push(bbox.height);
+        });
+
+      d3.selectAll('.tmp').remove();
+
+      this.conMenuConfig.width = Math.max(...this.conMenuConfig.width);
+      this.conMenuConfig.height = Math.max(...this.conMenuConfig.height);
+    }
+  }
+
   bindConMenu(mouseX, mouseY) {
+    const self = this;
+
     const conMenuContainer = this.vizContainer
       .append('g').attr('class', 'context-menu')
       .selectAll('tmp')
       .data(this.conMenuItems)
       .enter()
-      .append('g').attr('class', 'menu-entry');
+      .append('g').attr('class', 'menu-entry')
+      .on('mouseover', function (d) {
+        d3.select(this).select('rect')
+          .style('fill', '#3a3a3a');
+      })
+      .on('mouseout', function (d) {
+        d3.select(this).select('rect')
+          .style('fill', '#424242');
+      });
 
     conMenuContainer.append('rect')
       .attr('x', mouseX)
-      .attr('y', function (d, i) { return mouseY + (i * 25); });
+      .attr('y', function (d, i) { return mouseY + (i * (self.conMenuConfig.height * (1 + self.conMenuConfig.margin * 2))); })
+      .attr('width', this.conMenuConfig.width * (1 + this.conMenuConfig.margin * 2))
+      .attr('height', this.conMenuConfig.height * (1 + this.conMenuConfig.margin * 2))
+      .style('fill', '#424242');
 
     conMenuContainer.append('text')
       .text(function (d) { return d; })
-      .attr('x', mouseX)
-      .attr('y', function (d, i) { return mouseY + (i * 25); })
+      .attr('x', mouseX + this.conMenuConfig.width * this.conMenuConfig.margin)
+      .attr('y', function (d, i) { return mouseY + (i * (self.conMenuConfig.height * (1 + self.conMenuConfig.margin * 2))); })
+      .attr('dy', function (d, i) { return self.conMenuConfig.height; })
+      .attr('fill', 'white');
   }
 
   ngOnDestroy() {
