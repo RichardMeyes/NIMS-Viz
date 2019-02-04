@@ -71,7 +71,7 @@
       <div>
         <div style="height: 0.5rem;">
         </div>
-        <div fxLayout="row wrap" fxLayoutAlign="start center" *ngIf="epochSliderConfig && epochSliderConfig.epochRange[0] != epochSliderConfig.epochRange[1]">
+        <div fxLayout="row wrap" fxLayoutAlign="start center" *ngIf="false">
           <div class="form-field">Epoch</div>
           <div>{{epochSliderConfig.epochRange[0]}}</div>
           <nouislider [min]="epochSliderConfig.epochRange[0]" [max]="epochSliderConfig.epochRange[1]" [step]="1"

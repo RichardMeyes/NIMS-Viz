@@ -5,7 +5,6 @@ import { takeUntil } from 'rxjs/operators';
 
 import * as d3 from 'd3';
 import { DataService } from 'src/app/services/data.service';
-import { style } from '@angular/animations';
 
 @Component({
   selector: 'app-playground-viz',

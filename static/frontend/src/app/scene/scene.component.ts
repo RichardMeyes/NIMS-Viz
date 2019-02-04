@@ -19,10 +19,11 @@ import { generate, Subscription, Subject } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
 import { Playground, TfjsLayer } from '../models/playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil, take } from 'rxjs/operators';
 import { DataService } from '../services/data.service';
 import { MatTabChangeEvent } from '@angular/material';
 import { HeatmapConfig } from '../models/heatmap-config.model';
+import { Router } from '@angular/router';
 
 // import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
@@ -53,14 +54,19 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   vizTopology: any;
   vizWeights: any;
 
-  currEpoch: string;
   epochCounter: number;
+  epochSliderConfig;
+  heatmapNormalConfig;
+  drawFully;
+
+  selectedFile;
 
   destroyed = new Subject<void>();
 
   constructor(
     private dataService: DataService,
-    private networkService: NetworkService
+    private networkService: NetworkService,
+    public router: Router
   ) { }
 
   ngOnInit() {
@@ -79,7 +85,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         const resultWeights = message['resultWeights'];
         this.dataService.vizWeights.next(resultWeights);
 
-        this.currEpoch = `Epoch ${this.epochCounter}`;
+        // this.epochSliderConfig.epochValue = this.epochCounter;
 
         const isDone = message['done'];
         if (isDone) {
@@ -106,9 +112,26 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         if (val) { this.applyingDataToHeatmaps(val.data, val.heatmapNormalConfig); }
       });
 
+    this.dataService.optionData
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        this.epochSliderConfig = val.epochSliderConfig;
+        this.heatmapNormalConfig = val.heatmapNormalConfig;
+        this.drawFully = val.drawFully;
+      });
+
     this.dataService.currEpoch
       .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.currEpoch = val; });
+      .subscribe(val => {
+        if (this.epochSliderConfig) {
+          this.epochSliderConfig.epochValue = +val.split(' ')[1];
+          if (this.epochSliderConfig.epochValue === 1) { this.createHeatmap(); }
+        }
+      });
+
+    this.dataService.selectedFile
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.selectedFile = val; });
 
     this.heatmapNodeConfig = this.dataService.heatmapNodeConfig;
 
@@ -264,6 +287,29 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
     this.dataService.activeSceneTab.next(tabChangeEvent.index);
+  }
+
+  createHeatmap() {
+    let newNodeStruct = false;
+    if ((this.epochSliderConfig.epochValue - 1) === 0) { newNodeStruct = true; }
+
+    this.networkService.createHeatmapFromFile(
+      this.selectedFile,
+      (this.epochSliderConfig.epochValue - 1),
+      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+      this.drawFully,
+      newNodeStruct,
+      this.heatmapNormalConfig.density,
+      undefined
+    )
+      .pipe(take(1))
+      .subscribe(data => {
+        const param = {
+          data: data,
+          heatmapNormalConfig: this.heatmapNormalConfig
+        };
+        this.dataService.createHeatmap.next(param);
+      });
   }
 
   public ngOnDestroy() {
