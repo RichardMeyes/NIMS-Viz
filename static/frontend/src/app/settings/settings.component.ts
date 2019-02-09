@@ -50,13 +50,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.activeSettingsTab = 0;
 
-    this.dataService.optionData
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        this.epochSliderConfig = val.epochSliderConfig;
-        this.heatmapNormalConfig = val.heatmapNormalConfig;
-        this.drawFully = val.drawFully;
-      });
+    const currOption = this.dataService.optionData.getValue();
+    this.epochSliderConfig = currOption.epochSliderConfig;
+    this.heatmapNormalConfig = currOption.heatmapNormalConfig;
+    this.drawFully = currOption.drawFully;
 
     this.dataService.activeSceneTab
       .pipe(takeUntil(this.destroyed))
@@ -220,33 +217,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
     this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
 
-    this.dataService.optionData.next({ epochSliderConfig: nextEpochConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
+    this.dataService.optionData.next({
+      epochSliderConfig: nextEpochConfig,
+      heatmapNormalConfig: this.heatmapNormalConfig,
+      drawFully: this.drawFully
+    });
 
     for (let i = (nextEpochConfig.epochRange[0] - 1); i <= (nextEpochConfig.epochRange[1] - 1); i++) {
-      // let newNodeStruct = false;
-      // if (i === 0) { newNodeStruct = true; }
-
-      // this.networkService.createHeatmapFromFile(
-      //   this.selectedFile,
-      //   i,
-      //   [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-      //   this.drawFully,
-      //   newNodeStruct,
-      //   this.heatmapNormalConfig.density,
-      //   undefined
-      // )
-      //   .pipe(take(1))
-      //   .subscribe(data => {
-      //     const param = {
-      //       data: data,
-      //       heatmapNormalConfig: this.heatmapNormalConfig
-      //     };
-      //     setTimeout(() => {
-      //       this.dataService.createHeatmap.next(param);
-      //     }, i * 1000);
-      //   });
-
-
       this.playgroundService.visualize(this.selectedFile, i)
         .pipe(take(1))
         .subscribe(val => {
@@ -273,12 +250,15 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   resetOptions() {
-    // if (this.epochSliderConfig) { this.epochSliderConfig.epochValue = 1; }
     this.dataService.optionData.next(new Option(this.epochSliderConfig, new HeatmapConfig(), false));
   }
 
   applyOptions() {
-    this.dataService.optionData.next({ epochSliderConfig: this.epochSliderConfig, heatmapNormalConfig: this.heatmapNormalConfig, drawFully: this.drawFully });
+    this.dataService.optionData.next({
+      epochSliderConfig: this.epochSliderConfig,
+      heatmapNormalConfig: this.heatmapNormalConfig,
+      drawFully: this.drawFully
+    });
 
     if (this.router.url.includes('builder')) {
       if (this.dataService.lastTraining.getValue()) {
@@ -309,7 +289,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
             };
             setTimeout(() => {
               this.dataService.createHeatmap.next(param);
-              // this.dataService.currEpoch.next(`Epoch ${this.epochSliderConfig.epochValue}`);
             }, 200);
           });
       }

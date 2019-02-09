@@ -4,7 +4,6 @@ import {
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
-import * as Stats from 'stats.js/build/stats.min.js';
 import * as simpleheat from 'simpleheat/simpleheat.js';
 import * as tf from '@tensorflow/tfjs';
 import { Chart } from 'chart.js';
@@ -289,7 +288,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.activeSceneTab.next(tabChangeEvent.index);
   }
 
-  createHeatmap() {
+  createHeatmap() { console.log(this.epochSliderConfig.epochValue);
     let newNodeStruct = false;
     if ((this.epochSliderConfig.epochValue - 1) === 0) { newNodeStruct = true; }
 

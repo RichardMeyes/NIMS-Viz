@@ -41,33 +41,10 @@ nouislider {
     width: 166px;
 }
 
-// mcc-color-picker {
-//     width: 80%;
-//     padding: 0;
-// }
-
-// .color-config {
-//     > div:nth-child(1) {
-//         width: 45vw;
-//     }
-
-//     > div::nth-child(2) {
-//         width: 50vw;
-//     }
-// }
-
 .spacer {
     display: inline-block;
     width: 16px;
 }
-
-
-
-// canvas {
-//     width: 100vw;
-//     height: 100vh;
-//     z-index: -1;
-// }
 
 .setting-label {
     white-space: nowrap;
@@ -92,19 +69,6 @@ mat-form-field.slider-value {
     z-index: 5;
 }
 
-// .example-container {
-//     width: 500px;
-//     height: 300px;
-//     border: 1px solid rgba(0, 0, 0, 0.5);
-//   }
-  
-//   .example-sidenav-content {
-//     display: flex;
-//     height: 100%;
-//     align-items: center;
-//     justify-content: center;
-//   }
-
 .example-sidenav {
     // display: flex;
     // align-items: center;
@@ -117,24 +81,14 @@ mat-form-field.slider-value {
     padding: 20px;
   }
 
-//   .example-container {
-//     position: absolute;
-//     top: 0;
-//     bottom: 0;
-//     left: 0;
-//     right: 0;
-//     background: #eee;
-//   }
-
-// md-disable-backdrop
-// md-backdrop.md-sidenav-backdrop{
-//     display:none
-// }
-
 .information {
     position: absolute;    
     bottom: 3rem;
     width: 100vw;
     height: 75px;
     z-index: 10;
+}
+
+mat-icon.player {
+    padding-right: .5rem;
 }
