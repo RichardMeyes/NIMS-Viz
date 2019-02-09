@@ -1,12 +1,17 @@
 import {
   Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, ChangeDetectorRef, OnDestroy, ViewEncapsulation
 } from '@angular/core';
+import { Router } from '@angular/router';
+import { MatTabChangeEvent } from '@angular/material';
+
+import { Subject } from 'rxjs';
+import { takeUntil, take } from 'rxjs/operators';
+
+import { DataService } from '../services/data.service';
 import { NetworkService } from '../network.service';
 
 import * as THREE from 'three';
 import * as simpleheat from 'simpleheat/simpleheat.js';
-import * as tf from '@tensorflow/tfjs';
-import { Chart } from 'chart.js';
 
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/renderers/CSS3DRenderer.js';
@@ -14,16 +19,13 @@ import 'three/examples/js/controls/OrbitControls';
 
 // import { BrainComponent } from './brain/brain.component';
 import { PlaygroundService } from '../playground.service';
-import { generate, Subscription, Subject } from 'rxjs';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
 import { Playground, TfjsLayer } from '../models/playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
-import { debounceTime, takeUntil, take } from 'rxjs/operators';
-import { DataService } from '../services/data.service';
-import { MatTabChangeEvent } from '@angular/material';
 import { HeatmapConfig } from '../models/heatmap-config.model';
-import { Router } from '@angular/router';
-
+import { isPlatformBrowser } from '@angular/common';
+import * as tf from '@tensorflow/tfjs';
+import { Chart } from 'chart.js';
 // import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 
@@ -59,6 +61,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   drawFully;
 
   selectedFile;
+  isPlaying: boolean;
 
   destroyed = new Subject<void>();
 
@@ -70,6 +73,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.epochCounter = 1;
+    this.isPlaying = false;
 
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
@@ -117,15 +121,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         this.epochSliderConfig = val.epochSliderConfig;
         this.heatmapNormalConfig = val.heatmapNormalConfig;
         this.drawFully = val.drawFully;
-      });
-
-    this.dataService.currEpoch
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (this.epochSliderConfig) {
-          this.epochSliderConfig.epochValue = +val.split(' ')[1];
-          if (this.epochSliderConfig.epochValue === 1) { this.createHeatmap(); }
-        }
       });
 
     this.dataService.selectedFile
@@ -288,7 +283,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.activeSceneTab.next(tabChangeEvent.index);
   }
 
-  createHeatmap() { console.log(this.epochSliderConfig.epochValue);
+  createHeatmap() {
+    console.log(this.epochSliderConfig.epochValue);
     let newNodeStruct = false;
     if ((this.epochSliderConfig.epochValue - 1) === 0) { newNodeStruct = true; }
 
@@ -309,6 +305,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         };
         this.dataService.createHeatmap.next(param);
       });
+  }
+
+  toggleAnimation() {
+    this.isPlaying = !this.isPlaying;
   }
 
   public ngOnDestroy() {

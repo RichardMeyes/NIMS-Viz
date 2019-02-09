@@ -13,7 +13,10 @@
 
 <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="router.url.includes('archive') && epochSliderConfig && epochSliderConfig.epochRange[0] != epochSliderConfig.epochRange[1]"
     class="information">
-    <mat-icon class="player">play_circle_outline</mat-icon>
+    <button mat-icon-button (click)="toggleAnimation()">
+        <mat-icon *ngIf="!isPlaying">play_circle_outline</mat-icon>
+        <mat-icon *ngIf="isPlaying">pause_circle_outline</mat-icon>
+    </button>
     <div class="form-field">Epoch</div>
     <div>{{epochSliderConfig.epochRange[0]}}</div>
     <nouislider [min]="epochSliderConfig.epochRange[0]" [max]="epochSliderConfig.epochRange[1]" [step]="1" [(ngModel)]="epochSliderConfig.epochValue"

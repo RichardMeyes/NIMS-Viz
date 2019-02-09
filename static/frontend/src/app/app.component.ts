@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MediaMatcher, BreakpointObserver } from '@angular/cdk/layout';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { MatDialog, MatDialogRef } from '@angular/material';
 
 import { Subject } from 'rxjs';
@@ -52,7 +52,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   mainNavClicked() {
     this.snav.close();
-    this.dataService.currEpoch.next('');
 
     this.dataService.playgroundData.next(new Playground());
     this.dataService.selectedFile.next(null);

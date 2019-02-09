@@ -18,8 +18,6 @@ export class DataService {
   selectedFile: BehaviorSubject<string>;
   optionData: BehaviorSubject<Option>;
 
-  currEpoch: BehaviorSubject<string>;
-
   vizTopology: BehaviorSubject<any>;
   vizWeights: BehaviorSubject<any>;
 
@@ -51,8 +49,6 @@ export class DataService {
     this.playgroundData = new BehaviorSubject(new Playground());
     this.selectedFile = new BehaviorSubject(null);
     this.optionData = new BehaviorSubject(new Option(null, new HeatmapConfig(), false));
-
-    this.currEpoch = new BehaviorSubject('');
 
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);

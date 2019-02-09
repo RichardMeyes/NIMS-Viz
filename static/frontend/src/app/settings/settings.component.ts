@@ -223,28 +223,21 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       drawFully: this.drawFully
     });
 
-    for (let i = (nextEpochConfig.epochRange[0] - 1); i <= (nextEpochConfig.epochRange[1] - 1); i++) {
-      this.playgroundService.visualize(this.selectedFile, i)
-        .pipe(take(1))
-        .subscribe(val => {
-          let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
-            .replace(/\s/g, '')
-            .split(',')
-            .map(layer => +layer);
-          const currEpoch = `epoch_${i}`;
+    this.createHeatmap(0, true);
+    this.playgroundService.visualize(this.selectedFile, 0)
+      .pipe(take(1))
+      .subscribe(val => {
+        let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
+          .replace(/\s/g, '')
+          .split(',')
+          .map(layer => +layer);
+        const currEpoch = `epoch_0`;
 
-          layers = layers.map(unitCount => { return { 'unitCount': unitCount }; });
+        layers = layers.map(unitCount => { return { 'unitCount': unitCount }; });
 
-          setTimeout(() => {
-            this.dataService.vizTopology.next({ 'layers': layers });
-            if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
-          }, i * 1000);
-        });
-
-      setTimeout(() => {
-        this.dataService.currEpoch.next(`Epoch ${i + 1}`);
-      }, i * 1000);
-    }
+        this.dataService.vizTopology.next({ 'layers': layers });
+        if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
+      });
 
     this.dataService.selectedFile.next(this.selectedFile);
   }
@@ -272,25 +265,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     } else {
       if (this.epochSliderConfig) {
-        this.networkService.createHeatmapFromFile(
-          this.selectedFile,
-          (this.epochSliderConfig.epochValue - 1),
-          [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-          this.drawFully,
-          true,
-          this.heatmapNormalConfig.density,
-          undefined
-        )
-          .pipe(take(1))
-          .subscribe(data => {
-            const param = {
-              data: data,
-              heatmapNormalConfig: this.heatmapNormalConfig
-            };
-            setTimeout(() => {
-              this.dataService.createHeatmap.next(param);
-            }, 200);
-          });
+        this.createHeatmap(this.epochSliderConfig.epochValue - 1, false);
       }
     }
   }
@@ -299,8 +274,25 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeSettingsTab = tabChangeEvent.index;
   }
 
-
-
+  createHeatmap(epoch, newFile) {
+    this.networkService.createHeatmapFromFile(
+      this.selectedFile,
+      epoch,
+      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+      this.drawFully,
+      newFile,
+      this.heatmapNormalConfig.density,
+      undefined
+    )
+      .pipe(take(1))
+      .subscribe(data => {
+        const param = {
+          data: data,
+          heatmapNormalConfig: this.heatmapNormalConfig
+        };
+        this.dataService.createHeatmap.next(param);
+      });
+  }
 
   ngOnDestroy() {
     this.destroyed.next();
