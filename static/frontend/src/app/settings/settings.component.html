@@ -67,11 +67,11 @@
         </mat-form-field>
       </ng-template>
     </mat-tab>
-    <mat-tab label="Options">
+    <mat-tab label="Options" *ngIf="activeSceneTab == 0">
       <div>
         <div style="height: 0.5rem;">
         </div>
-        <div *ngIf="activeSceneTab == 0">
+        <div>
           <div>
             <mat-form-field>
               <input matInput placeholder="Radius" [(ngModel)]="heatmapNormalConfig.radius" type="number">

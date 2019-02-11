@@ -9,6 +9,7 @@ import { takeUntil, take } from 'rxjs/operators';
 
 import { DataService } from '../services/data.service';
 import { NetworkService } from '../network.service';
+import { PlaygroundService } from '../playground.service';
 
 import * as THREE from 'three';
 import * as simpleheat from 'simpleheat/simpleheat.js';
@@ -18,7 +19,6 @@ import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/controls/OrbitControls';
 
 // import { BrainComponent } from './brain/brain.component';
-import { PlaygroundService } from '../playground.service';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
 import { Playground, TfjsLayer } from '../models/playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
@@ -62,18 +62,21 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   selectedFile;
   isPlaying: boolean;
+  animationIntervals;
 
   destroyed = new Subject<void>();
 
   constructor(
     private dataService: DataService,
     private networkService: NetworkService,
+    private playgroundService: PlaygroundService,
     public router: Router
   ) { }
 
   ngOnInit() {
     this.epochCounter = 1;
     this.isPlaying = false;
+    this.animationIntervals = [];
 
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
@@ -284,16 +287,12 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   createHeatmap() {
-    console.log(this.epochSliderConfig.epochValue);
-    let newNodeStruct = false;
-    if ((this.epochSliderConfig.epochValue - 1) === 0) { newNodeStruct = true; }
-
     this.networkService.createHeatmapFromFile(
       this.selectedFile,
       (this.epochSliderConfig.epochValue - 1),
       [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
       this.drawFully,
-      newNodeStruct,
+      false,
       this.heatmapNormalConfig.density,
       undefined
     )
@@ -305,10 +304,42 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         };
         this.dataService.createHeatmap.next(param);
       });
+
+
+    this.playgroundService.visualize(this.selectedFile, (this.epochSliderConfig.epochValue - 1))
+      .pipe(take(1))
+      .subscribe(val => {
+        let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
+          .replace(/\s/g, '')
+          .split(',')
+          .map(layer => +layer);
+        const currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
+
+        layers = layers.map(unitCount => { return { 'unitCount': unitCount }; });
+
+        this.dataService.vizTopology.next({ 'layers': layers });
+        if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
+      });
   }
 
   toggleAnimation() {
     this.isPlaying = !this.isPlaying;
+
+    if (this.isPlaying) {
+      this.animationIntervals.push(setInterval(() => {
+        if (this.epochSliderConfig.epochValue < this.epochSliderConfig.epochRange[1]) {
+          this.epochSliderConfig.epochValue++;
+        } else {
+          this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[0];
+        }
+        this.createHeatmap();
+      }, 1000));
+    } else {
+      this.animationIntervals.forEach(animationInterval => {
+        clearInterval(animationInterval);
+      });
+      this.animationIntervals = [];
+    }
   }
 
   public ngOnDestroy() {
