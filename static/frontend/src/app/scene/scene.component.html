@@ -23,3 +23,6 @@
         (change)="createHeatmap()" [tooltips]="[ true ]" style="margin-top: 4em;"></nouislider>
     <div>{{epochSliderConfig.epochRange[1]}}</div>
 </div>
+<div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="router.url.includes('builder') && epochCounter > 0" class="information">
+    Epoch {{epochCounter}}
+</div>

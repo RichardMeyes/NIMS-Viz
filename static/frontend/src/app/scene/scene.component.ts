@@ -55,7 +55,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   vizTopology: any;
   vizWeights: any;
 
-  epochCounter: number;
+  epochCounter: number; resetCounter;
   epochSliderConfig;
   heatmapNormalConfig;
   drawFully;
@@ -74,7 +74,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.epochCounter = 1;
+    this.epochCounter = 0;
+    this.resetCounter = false;
     this.isPlaying = false;
     this.animationIntervals = [];
 
@@ -88,18 +89,24 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
         this.applyingDataToHeatmaps(resultHeatmapData, heatmapNormalConfig);
 
-        const resultWeights = message['resultWeights'];
-        this.dataService.vizWeights.next(resultWeights);
-
         // this.epochSliderConfig.epochValue = this.epochCounter;
+        const resultWeights = message['resultWeights'];
+        if (this.resetCounter) { this.epochCounter = 0; }
+        this.epochCounter++;
 
         const isDone = message['done'];
         if (isDone) {
-          this.epochCounter = 1;
+          const lastEpoch = Object.keys(resultWeights)[Object.keys(resultWeights).length - 1];
+
+          this.dataService.vizWeights.next({ lastEpoch: resultWeights[lastEpoch] });
           this.dataService.lastTraining.next(resultHeatmapData);
+
+          this.resetCounter = true;
         } else {
-          this.epochCounter++;
+          this.dataService.vizWeights.next(resultWeights);
           this.dataService.lastTraining.next(null);
+
+          this.resetCounter = false;
         }
       });
 

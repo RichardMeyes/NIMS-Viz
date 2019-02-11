@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, Output, EventEmitter, SimpleChanges, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, EventEmitter, SimpleChanges, OnDestroy } from '@angular/core';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -18,7 +18,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   zoom; currTransform;
   svg; svgWidth; svgHeight;
   vizContainer;
+
   conMenuItems; conMenuConfig;
+  conMenuSelected;
 
   topology; weights;
   layerSpacing; nodeRadius;
@@ -26,10 +28,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
   runningAnimation;
 
-  @ViewChild("container") container;
+  @ViewChild('container') container;
   @Input() inputTopology;
   @Input() inputWeights;
-  @Output() endofVisualization: EventEmitter<boolean>;
 
   destroyed = new Subject<void>();
 
@@ -42,9 +43,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private dataService: DataService
-  ) {
-    this.endofVisualization = new EventEmitter<boolean>();
-  }
+  ) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.inputTopology && changes.inputTopology.firstChange) { return; }
@@ -112,7 +111,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
 
         Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
-          if (layer != "input" && layer != 'output') {
+          if (layer != 'input' && layer != 'output') {
 
             this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
               destination.forEach((source, sourceIndex) => {
@@ -154,13 +153,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
           this.bindWeights(i);
           this.bindTopology(i);
-
-          if (i == this.weights.length - 1) this.endofVisualization.emit(true);
         }, 1500 * i));
       }
-    }
-    else {
-      this.endofVisualization.emit(true);
     }
   }
 
@@ -188,13 +182,13 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         const y1: number = (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y1;
       })
-      .attr('stroke', function (d) { return self.generateColor(d, "weights", currEpoch);; });
+      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); });
 
     line
       .merge(enterSel)
       .transition()
       .duration(250)
-      .attr('stroke', function (d) { return self.generateColor(d, "weights", currEpoch);; });
+      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); });
 
     const exitSel = line.exit()
       .transition()
@@ -209,7 +203,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     const self = this;
     const enterSel = circles.enter()
-      .append("circle")
+      .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d, i) {
         const cx: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
@@ -220,13 +214,15 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         return cy;
       })
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, "topology", currEpoch); })
+      .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); })
       .on('contextmenu', function (d, i) {
         d3.event.preventDefault();
         d3.select('.context-menu').remove();
 
         self.setupConMenu();
         self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
+
+        self.conMenuSelected = d;
       });
 
     circles
@@ -234,7 +230,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .transition()
       .duration(250)
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, "topology", currEpoch); });
+      .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); });
 
     const exitSel = circles.exit()
       .transition()
@@ -244,21 +240,20 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   generateColor(d, mode: string, currEpoch: number): string {
-    let color = "#373737";
+    let color = '#373737';
     let activity = 0;
     let recordActivities = false;
 
-    if (mode == "weights") {
+    if (mode == 'weights') {
       let range = Math.abs(this.minMaxDiffs[currEpoch].maxDiff - this.minMaxDiffs[currEpoch].minDiff);
       let valuePercentage = d.value / range;
 
       if (valuePercentage > .5) {
-        // color = "#E57373";
+        // color = '#E57373';
         color = '#EF5350';
         activity = 1;
         recordActivities = true;
-      }
-      else if (valuePercentage > .35) {
+      } else if (valuePercentage > .35) {
         color = '#EF9A9A';
         activity = 0.5;
         recordActivities = true;
@@ -274,16 +269,17 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
 
-    if (mode == "topology") {
+    if (mode == 'topology') {
       for (let i = 0; i < this.activities.length; i++) {
-        if ((this.activities[i].layer == d.layer && this.activities[i].source == d.unit) || (this.activities[i].layer == d.layer - 1 && this.activities[i].target == d.unit)) {
+        if ((this.activities[i].layer == d.layer && this.activities[i].source == d.unit) ||
+          (this.activities[i].layer == d.layer - 1 && this.activities[i].target == d.unit)) {
           switch (this.activities[i].activity) {
             case 1: {
-              color = "rgba(229, 115, 115, .35)";
+              color = 'rgba(229, 115, 115, .35)';
               break;
             }
             case 0.5: {
-              color = "rgba(229, 115, 115, .175)";
+              color = 'rgba(229, 115, 115, .175)';
               break;
             }
           }
@@ -296,10 +292,10 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   resetViz() {
-    if (this.runningAnimation) this.runningAnimation.forEach(element => { clearTimeout(element); });
+    if (this.runningAnimation) { this.runningAnimation.forEach(element => { clearTimeout(element); }); }
     this.runningAnimation = [];
 
-    if (this.svg) this.svg.remove();
+    if (this.svg) { this.svg.remove(); }
     this.svg = d3.select(this.container.nativeElement)
       .append('svg')
       .attr('width', this.svgWidth)
@@ -309,11 +305,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     const self = this;
     this.zoom = d3.zoom()
       .scaleExtent([0.1, 10])
-      .on("zoom", () => {
+      .on('zoom', () => {
         self.vizContainer.attr('transform', d3.event.transform);
         d3.select('.context-menu').remove();
       })
-      .on("end", () => { this.currTransform = d3.event.transform; });
+      .on('end', () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
 
     this.svg
@@ -367,6 +363,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .on('mouseout', function (d) {
         d3.select(this).select('rect')
           .style('fill', '#424242');
+      })
+      .on('click', function (d) {
+        console.log(self.conMenuSelected, d);
       });
 
     conMenuContainer.append('rect')
