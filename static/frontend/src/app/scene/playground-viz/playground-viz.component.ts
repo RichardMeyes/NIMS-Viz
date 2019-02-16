@@ -26,8 +26,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   layerSpacing; nodeRadius;
   minMaxDiffs; activities;
 
-  runningAnimation;
-
   @ViewChild('container') container;
   @Input() inputTopology;
   @Input() inputWeights;
@@ -76,8 +74,17 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     if ((changes && changes.inputWeights) || (!changes && this.inputWeights)) {
       if (changes) { this.inputWeights = changes.inputWeights.currentValue; }
-      this.setupWeights();
-      this.runAnimation();
+
+      if (this.inputWeights) {
+        this.setupWeights();
+
+        if (this.weights.length == this.minMaxDiffs.length) {
+          this.activities = [];
+
+          this.bindWeights(0);
+          this.bindTopology(0);
+        }
+      }
     }
   }
 
@@ -105,57 +112,43 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.weights = [];
     this.minMaxDiffs = [];
 
-    if (this.inputWeights) {
-      Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
-        filteredData = [];
-        diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
+    Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
+      filteredData = [];
+      diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
 
-        Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
-          if (layer != 'input' && layer != 'output') {
+      Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
+        if (layer != 'input' && layer != 'output') {
 
-            this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
-              destination.forEach((source, sourceIndex) => {
-                if (sourceIndex === 0) {
-                  diffsPerEpoch.minDiff = source;
-                  diffsPerEpoch.maxDiff = source;
-                } else {
-                  if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
-                  if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
-                }
+          this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
+            destination.forEach((source, sourceIndex) => {
+              if (sourceIndex === 0) {
+                diffsPerEpoch.minDiff = source;
+                diffsPerEpoch.maxDiff = source;
+              } else {
+                if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
+                if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
+              }
 
-                filteredData.push({
-                  layer: (layerIndex - 1),
-                  source: sourceIndex,
-                  target: destinationIndex,
-                  value: source,
-                  unitSpacing: (this.svgHeight / +destination.length),
-                  targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
-                });
+              filteredData.push({
+                layer: (layerIndex - 1),
+                source: sourceIndex,
+                target: destinationIndex,
+                value: source,
+                unitSpacing: (this.svgHeight / +destination.length),
+                targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
               });
             });
-          }
-        });
-
-        this.activities = [];
-
-        this.weights.push(filteredData);
-        this.minMaxDiffs.push(diffsPerEpoch);
-
+          });
+        }
       });
-    }
-  }
 
-  runAnimation() {
-    if (this.weights.length == this.minMaxDiffs.length) {
-      for (let i = 0; i < this.weights.length; i++) {
-        this.runningAnimation.push(setTimeout(() => {
-          this.activities = [];
+      this.activities = [];
 
-          this.bindWeights(i);
-          this.bindTopology(i);
-        }, 1500 * i));
-      }
-    }
+      this.weights.push(filteredData);
+      this.minMaxDiffs.push(diffsPerEpoch);
+
+    });
+
   }
 
   bindWeights(currEpoch: number) {
@@ -292,9 +285,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   resetViz() {
-    if (this.runningAnimation) { this.runningAnimation.forEach(element => { clearTimeout(element); }); }
-    this.runningAnimation = [];
-
     if (this.svg) { this.svg.remove(); }
     this.svg = d3.select(this.container.nativeElement)
       .append('svg')
