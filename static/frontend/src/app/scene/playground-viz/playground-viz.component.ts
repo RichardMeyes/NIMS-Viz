@@ -26,6 +26,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   layerSpacing; nodeRadius;
   minMaxDiffs; activities;
 
+  detachedNodes;
+
   @ViewChild('container') container;
   @Input() inputTopology;
   @Input() inputWeights;
@@ -59,6 +61,10 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.nodeRadius = 10;
 
     this.activities = [];
+
+    this.dataService.selectedFile
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(() => { this.detachedNodes = []; });
   }
 
   draw(changes: SimpleChanges) {
@@ -175,13 +181,15 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         const y1: number = (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y1;
       })
-      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); });
+      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); })
+      .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
 
     line
       .merge(enterSel)
       .transition()
       .duration(250)
-      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); });
+      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); })
+      .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
 
     const exitSel = line.exit()
       .transition()
@@ -208,6 +216,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       })
       .attr('r', this.nodeRadius)
       .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); })
+      .attr('opacity', function (d) { return self.generateOpacity(d, 'topology'); })
       .on('contextmenu', function (d, i) {
         d3.event.preventDefault();
         d3.select('.context-menu').remove();
@@ -223,7 +232,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .transition()
       .duration(250)
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); });
+      .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); })
+      .attr('opacity', function (d) { return self.generateOpacity(d, 'topology'); });
 
     const exitSel = circles.exit()
       .transition()
@@ -237,7 +247,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     let activity = 0;
     let recordActivities = false;
 
-    if (mode == 'weights') {
+    if (mode === 'weights') {
       let range = Math.abs(this.minMaxDiffs[currEpoch].maxDiff - this.minMaxDiffs[currEpoch].minDiff);
       let valuePercentage = d.value / range;
 
@@ -260,9 +270,17 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
           activity: activity
         });
       }
+
+      for (let i = 0; i < this.detachedNodes.length; i++) {
+        if ((this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.source) ||
+          ((this.detachedNodes[i].layer - 1) === d.layer && this.detachedNodes[i].unit === d.target)) {
+            color = '#373737';
+          break;
+        }
+      }
     }
 
-    if (mode == 'topology') {
+    if (mode === 'topology') {
       for (let i = 0; i < this.activities.length; i++) {
         if ((this.activities[i].layer == d.layer && this.activities[i].source == d.unit) ||
           (this.activities[i].layer == d.layer - 1 && this.activities[i].target == d.unit)) {
@@ -279,9 +297,39 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
           break;
         }
       }
+
+      for (let i = 0; i < this.detachedNodes.length; i++) {
+        if (this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.unit) {
+          color = '#373737';
+          break;
+        }
+      }
     }
 
     return color;
+  }
+
+  generateOpacity(d, mode: string) {
+    let opacity = 1;
+
+    for (let i = 0; i < this.detachedNodes.length; i++) {
+      if (mode === 'weights') {
+        if ((this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.source) ||
+          ((this.detachedNodes[i].layer - 1) === d.layer && this.detachedNodes[i].unit === d.target)) {
+          opacity = 0.25;
+          break;
+        }
+      }
+
+      if (mode === 'topology') {
+        if (this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.unit) {
+          opacity = 0.25;
+          break;
+        }
+      }
+    }
+
+    return opacity;
   }
 
   resetViz() {
@@ -354,8 +402,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         d3.select(this).select('rect')
           .style('fill', '#424242');
       })
-      .on('click', function (d) {
-        console.log(self.conMenuSelected, d);
+      .on('click', function (d, i) {
+        if (i === 1) { self.detachedNodes.push(self.conMenuSelected); }
+
+        self.bindWeights(0);
+        self.bindTopology(0);
       });
 
     conMenuContainer.append('rect')
