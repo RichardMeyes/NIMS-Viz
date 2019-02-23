@@ -221,10 +221,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         d3.event.preventDefault();
         d3.select('.context-menu').remove();
 
+        self.conMenuSelected = d;
+
         self.setupConMenu();
         self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
 
-        self.conMenuSelected = d;
       });
 
     circles
@@ -274,7 +275,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       for (let i = 0; i < this.detachedNodes.length; i++) {
         if ((this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.source) ||
           ((this.detachedNodes[i].layer - 1) === d.layer && this.detachedNodes[i].unit === d.target)) {
-            color = '#373737';
+          color = '#373737';
           break;
         }
       }
@@ -355,34 +356,42 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   setupConMenu() {
-    if (this.conMenuConfig === undefined) {
+    this.conMenuItems = ['view details', 'detach node'];
 
-      this.conMenuItems = ['view details', 'detach node'];
-      this.conMenuConfig = {
-        width: [],
-        height: [],
-        margin: 0.15
-      };
-
-      const self = this;
-
-      this.vizContainer.selectAll('.tmp')
-        .data(this.conMenuItems)
-        .enter()
-        .append('text')
-        .text(function (d) { return d; })
-        .attr('class', 'tmp')
-        .each(function (d, i) {
-          const bbox = this.getBBox();
-          self.conMenuConfig.width.push(bbox.width);
-          self.conMenuConfig.height.push(bbox.height);
-        });
-
-      d3.selectAll('.tmp').remove();
-
-      this.conMenuConfig.width = Math.max(...this.conMenuConfig.width);
-      this.conMenuConfig.height = Math.max(...this.conMenuConfig.height);
+    for (let i = 0; i < this.detachedNodes.length; i++) {
+      if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
+        this.conMenuItems.splice(-1);
+        this.conMenuItems.push('reattach node');
+        break;
+      }
     }
+
+
+    this.conMenuConfig = {
+      width: [],
+      height: [],
+      margin: 0.15
+    };
+
+    const self = this;
+
+    this.vizContainer.selectAll('.tmp')
+      .data(this.conMenuItems)
+      .enter()
+      .append('text')
+      .text(function (d) { return d; })
+      .attr('class', 'tmp')
+      .each(function (d, i) {
+        const bbox = this.getBBox();
+        self.conMenuConfig.width.push(bbox.width);
+        self.conMenuConfig.height.push(bbox.height);
+      });
+
+    d3.selectAll('.tmp').remove();
+
+    this.conMenuConfig.width = Math.max(...this.conMenuConfig.width);
+    this.conMenuConfig.height = Math.max(...this.conMenuConfig.height);
+
   }
 
   bindConMenu(mouseX, mouseY) {
@@ -402,8 +411,17 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         d3.select(this).select('rect')
           .style('fill', '#424242');
       })
-      .on('click', function (d, i) {
-        if (i === 1) { self.detachedNodes.push(self.conMenuSelected); }
+      .on('click', function (d) {
+        if (d === 'detach node') {
+          self.detachedNodes.push(self.conMenuSelected);
+        } else if (d === 'reattach node') {
+          for (let i = 0; i < self.detachedNodes.length; i++) {
+            if (self.detachedNodes[i].layer === self.conMenuSelected.layer && self.detachedNodes[i].unit === self.conMenuSelected.unit) {
+              self.detachedNodes.splice(i, 1);
+              break;
+            }
+          }
+        }
 
         self.bindWeights(0);
         self.bindTopology(0);
