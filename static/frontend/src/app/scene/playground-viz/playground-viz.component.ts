@@ -100,11 +100,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     layers.forEach((layer, layerIndex) => {
       for (let i = 0; i < layer; i++) {
-        filteredData.push({ layer: layerIndex, unit: i, unitSpacing: (this.svgHeight / layer) });
+        filteredData.push({ layer: layerIndex, unit: i, unitSpacing: (this.svgHeight / layer), isOutput: false });
       }
     });
     for (let i = 0; i < 10; i++) {
-      filteredData.push({ layer: layers.length, unit: i, unitSpacing: (this.svgHeight / 10) });
+      filteredData.push({ layer: layers.length, unit: i, unitSpacing: (this.svgHeight / 10), isOutput: true });
     }
 
     this.layerSpacing = (this.svgWidth / (layers.length + 1));
@@ -223,9 +223,10 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
         self.conMenuSelected = d;
 
-        self.setupConMenu();
-        self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
-
+        if (!d.isOutput) {
+          self.setupConMenu();
+          self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
+        }
       });
 
     circles
