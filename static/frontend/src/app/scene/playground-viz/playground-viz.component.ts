@@ -14,6 +14,7 @@ import { DataService } from 'src/app/services/data.service';
 })
 export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   toolbarHeight; tabsHeight;
+  minWidthHeight;
 
   zoom; currTransform;
   svg; svgWidth; svgHeight;
@@ -23,6 +24,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   conMenuSelected;
 
   topology; weights;
+  topMargin; leftMargin;
   layerSpacing; nodeRadius;
   minMaxDiffs; activities;
 
@@ -43,6 +45,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       this.svgWidth = window.innerWidth / 2;
       this.svgHeight = window.innerHeight - (this.toolbarHeight);
     }
+
+    this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
+    this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
     this.draw(undefined);
   }
@@ -70,6 +75,10 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       this.svgWidth = window.innerWidth / 2;
       this.svgHeight = window.innerHeight - (this.toolbarHeight);
     }
+
+    this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
+    this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
+    this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
     this.nodeRadius = 10;
 
@@ -108,14 +117,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     layers.forEach((layer, layerIndex) => {
       for (let i = 0; i < layer; i++) {
-        filteredData.push({ layer: layerIndex, unit: i, unitSpacing: (this.svgHeight / layer), isOutput: false });
+        filteredData.push({ layer: layerIndex, unit: i, unitSpacing: (this.minWidthHeight / layer), isOutput: false });
       }
     });
     for (let i = 0; i < 10; i++) {
-      filteredData.push({ layer: layers.length, unit: i, unitSpacing: (this.svgHeight / 10), isOutput: true });
+      filteredData.push({ layer: layers.length, unit: i, unitSpacing: (this.minWidthHeight / 10), isOutput: true });
     }
 
-    this.layerSpacing = (this.svgWidth / (layers.length + 1));
+    this.layerSpacing = this.minWidthHeight / (layers.length + 1);
     this.topology = filteredData;
 
     this.topology.forEach(el => { el.fill = this.generateColor(el, 'topology'); });
@@ -147,8 +156,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
                 source: sourceIndex,
                 target: destinationIndex,
                 value: source,
-                unitSpacing: (this.svgHeight / +destination.length),
-                targetUnitSpacing: (this.svgHeight / +this.inputWeights[epoch][layer].length)
+                unitSpacing: (this.minWidthHeight / +destination.length),
+                targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[epoch][layer].length)
               });
             });
           });
@@ -183,20 +192,20 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .append('line')
       .attr('class', 'line')
       .attr('x1', function (d, i) {
-        const x1: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return x1;
       })
       .attr('y1', function (d, i) {
-        const y1: number = (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
         return y1;
       })
       .attr('x2', function (d, i) {
-        const x1: number = (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
-        return x1;
+        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        return x2;
       })
       .attr('y2', function (d, i) {
-        const y1: number = (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
-        return y1;
+        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        return y2;
       })
       .attr('stroke', function (d) { return d.stroke; })
       .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
@@ -216,6 +225,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   bindTopology() {
+    d3.selectAll('circle').remove();
+
     const circles = this.vizContainer.selectAll('circle')
       .data(this.topology);
 
@@ -224,11 +235,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d, i) {
-        const cx: number = (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return cx;
       })
       .attr('cy', function (d, i) {
-        const cy: number = (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
         return cy;
       })
       .attr('r', this.nodeRadius)
