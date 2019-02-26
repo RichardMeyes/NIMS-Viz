@@ -24,6 +24,7 @@ import { OrdinalPipe } from './ordinal.pipe';
 import { SettingsComponent } from './settings/settings.component';
 import { BuilderComponent } from './builder/builder.component';
 import { ArchiveComponent } from './archive/archive.component';
+import { AblationComponent } from './ablation/ablation.component';
 
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
@@ -42,6 +43,7 @@ import { ArchiveComponent } from './archive/archive.component';
     PlaygroundVizComponent,
     BuilderComponent,
     ArchiveComponent,
+    AblationComponent,
     SettingsComponent,
     OrdinalPipe
   ],

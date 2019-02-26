@@ -68,7 +68,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         });
 
       setTimeout(() => { this.layerCountChange(); }, 0);
-    } else {
+    } else if (this.router.url.includes('archive') || this.router.url.includes('ablation')) {
       this.scanForFiles();
     }
   }
@@ -213,18 +213,24 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
+    let epochToVisualize = nextEpochConfig.epochRange[1] - 1;
 
-    this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
-    this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+    if (this.router.url.includes('archive')) {
 
-    this.dataService.optionData.next({
-      epochSliderConfig: nextEpochConfig,
-      heatmapNormalConfig: this.heatmapNormalConfig,
-      drawFully: this.drawFully
-    });
+      this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
+      this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
 
-    this.createHeatmap(0, true);
-    this.playgroundService.visualize(this.selectedFile, 0)
+      this.dataService.optionData.next({
+        epochSliderConfig: nextEpochConfig,
+        heatmapNormalConfig: this.heatmapNormalConfig,
+        drawFully: this.drawFully
+      });
+
+      this.createHeatmap(0, true);
+      epochToVisualize = 0;
+    }
+
+    this.playgroundService.visualize(this.selectedFile, epochToVisualize)
       .pipe(take(1))
       .subscribe(val => {
         let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
@@ -263,7 +269,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.dataService.createHeatmap.next(param);
         }, 200);
       }
-    } else {
+    } else if (this.router.url.includes('archive')) {
       if (this.epochSliderConfig) {
         this.createHeatmap(this.epochSliderConfig.epochValue - 1, false);
       }

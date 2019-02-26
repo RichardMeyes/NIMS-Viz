@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, EventEmitter, SimpleChanges, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -38,11 +39,18 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   onResize(event) {
     this.svgWidth = window.innerWidth;
     this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
+
+    if (this.router.url.includes('ablation')) {
+      this.svgWidth = window.innerWidth / 2;
+      this.svgHeight = window.innerHeight - (this.toolbarHeight);
+    }
+
     this.draw(undefined);
   }
 
   constructor(
-    private dataService: DataService
+    private dataService: DataService,
+    private router: Router
   ) { }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -58,6 +66,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     this.svgWidth = window.innerWidth;
     this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
+
+    if (this.router.url.includes('ablation')) {
+      this.svgWidth = window.innerWidth / 2;
+      this.svgHeight = window.innerHeight - (this.toolbarHeight);
+    }
+
     this.nodeRadius = 10;
 
     this.dataService.selectedFile

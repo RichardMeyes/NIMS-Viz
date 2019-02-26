@@ -1,7 +1,7 @@
 <mat-dialog-content>
   <mat-tab-group (selectedTabChange)="tabChanged($event)">
     <mat-tab label="Source">
-      <div *ngIf="router.url.includes('builder'); else archive">
+      <div *ngIf="router.url.includes('builder')">
         <form [formGroup]="playgroundForm" fxLayout="row wrap">
           <div style="margin-top: 0.5rem;">
             <strong>Mnist Data</strong>
@@ -55,7 +55,7 @@
           </div>
         </form>
       </div>
-      <ng-template #archive>
+      <div *ngIf="router.url.includes('archive') || router.url.includes('ablation')">
         <div style="height: 0.5rem;">
         </div>
         <mat-form-field>
@@ -65,9 +65,9 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-      </ng-template>
+      </div>
     </mat-tab>
-    <mat-tab label="Options" *ngIf="activeSceneTab == 0">
+    <mat-tab label="Options" *ngIf="activeSceneTab == 0 && !router.url.includes('ablation')">
       <div>
         <div style="height: 0.5rem;">
         </div>
@@ -145,7 +145,7 @@
       mat-dialog-close>
       Train Network
     </button>
-    <button mat-button (click)="visualize()" *ngIf="router.url.includes('archive')" mat-dialog-close>Visualize
+    <button mat-button (click)="visualize()" *ngIf="router.url.includes('archive') || router.url.includes('ablation')" mat-dialog-close>Visualize
     </button>
   </div>
   <div *ngIf="activeSettingsTab == 1">
