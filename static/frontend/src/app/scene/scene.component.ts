@@ -25,7 +25,6 @@ import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { HeatmapConfig } from '../models/heatmap-config.model';
 import { isPlatformBrowser } from '@angular/common';
 import * as tf from '@tensorflow/tfjs';
-import { Chart } from 'chart.js';
 // import { MqttService, IMqttMessage } from 'ngx-mqtt';
 
 

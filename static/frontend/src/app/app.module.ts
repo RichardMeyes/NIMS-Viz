@@ -25,6 +25,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { BuilderComponent } from './builder/builder.component';
 import { ArchiveComponent } from './archive/archive.component';
 import { AblationComponent } from './ablation/ablation.component';
+import { AccuracyPlotComponent } from './ablation/accuracy-plot/accuracy-plot.component';
 
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
@@ -44,6 +45,7 @@ import { AblationComponent } from './ablation/ablation.component';
     BuilderComponent,
     ArchiveComponent,
     AblationComponent,
+    AccuracyPlotComponent,
     SettingsComponent,
     OrdinalPipe
   ],

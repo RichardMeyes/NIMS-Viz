@@ -14,7 +14,6 @@ import { DataService } from 'src/app/services/data.service';
 })
 export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   toolbarHeight; tabsHeight;
-  unsubscribe: Subject<any> = new Subject();
 
   zoom; currTransform;
   svg; svgWidth; svgHeight;

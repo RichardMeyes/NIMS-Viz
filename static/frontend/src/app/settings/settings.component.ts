@@ -216,7 +216,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     let epochToVisualize = nextEpochConfig.epochRange[1] - 1;
 
     if (this.router.url.includes('archive')) {
-
       this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
       this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
 
@@ -228,6 +227,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.createHeatmap(0, true);
       epochToVisualize = 0;
+    }
+
+    if (this.router.url.includes('ablation')) {
+      this.dataService.plotAccuracies.next(true);
     }
 
     this.playgroundService.visualize(this.selectedFile, epochToVisualize)
