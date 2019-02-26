@@ -60,20 +60,19 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
     this.nodeRadius = 10;
 
-    this.activities = [];
-
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
       .subscribe(() => { this.detachedNodes = []; });
   }
 
   draw(changes: SimpleChanges) {
+    this.activities = [];
+
     if ((changes && changes.inputTopology) || (!changes && this.inputTopology)) {
-      this.activities = [];
       this.resetViz();
 
       this.setupTopology();
-      this.bindTopology(0);
+      this.bindTopology();
 
       if (changes) { this.inputWeights = undefined; }
     }
@@ -84,12 +83,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       if (this.inputWeights) {
         this.setupWeights();
 
-        if (this.weights.length == this.minMaxDiffs.length) {
-          this.activities = [];
-
-          this.bindWeights(0);
-          this.bindTopology(0);
-        }
+        this.bindWeights();
+        this.bindTopology();
       }
     }
   }
@@ -109,16 +104,15 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     this.layerSpacing = (this.svgWidth / (layers.length + 1));
     this.topology = filteredData;
+
+    this.topology.forEach(el => { el.fill = this.generateColor(el, 'topology'); });
   }
 
   setupWeights() {
     let filteredData;
     let diffsPerEpoch;
 
-    this.weights = [];
-    this.minMaxDiffs = [];
-
-    Object.keys(this.inputWeights).forEach((epoch, epochIndex) => {
+    Object.keys(this.inputWeights).forEach((epoch) => {
       filteredData = [];
       diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
 
@@ -148,18 +142,28 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         }
       });
 
-      this.activities = [];
+      this.weights = filteredData;
+      this.minMaxDiffs = diffsPerEpoch;
 
-      this.weights.push(filteredData);
-      this.minMaxDiffs.push(diffsPerEpoch);
+      this.weights.forEach(el => { el.stroke = this.generateColor(el, 'weights'); });
+      this.topology.forEach(el => { el.fill = this.generateColor(el, 'topology'); });
 
+      this.weights.sort((a, b) => {
+        const strokeA = a.stroke;
+        const strokeB = b.stroke;
+
+        if (strokeA < strokeB) { return -1; }
+        if (strokeA > strokeB) { return 1; }
+
+        return 0;
+      });
     });
 
   }
 
-  bindWeights(currEpoch: number) {
+  bindWeights() {
     const line = this.vizContainer.selectAll('line')
-      .data(this.weights[currEpoch]);
+      .data(this.weights);
 
     const self = this;
     const enterSel = line.enter()
@@ -181,14 +185,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         const y1: number = (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y1;
       })
-      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); })
+      .attr('stroke', function (d) { return d.stroke; })
       .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
 
     line
       .merge(enterSel)
       .transition()
       .duration(250)
-      .attr('stroke', function (d) { return self.generateColor(d, 'weights', currEpoch); })
+      .attr('stroke', function (d) { return d.stroke; })
       .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
 
     const exitSel = line.exit()
@@ -198,7 +202,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .remove();
   }
 
-  bindTopology(currEpoch: number) {
+  bindTopology() {
     const circles = this.vizContainer.selectAll('circle')
       .data(this.topology);
 
@@ -215,7 +219,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         return cy;
       })
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); })
+      .attr('fill', function (d) { return d.fill; })
       .attr('opacity', function (d) { return self.generateOpacity(d, 'topology'); })
       .on('contextmenu', function (d, i) {
         d3.event.preventDefault();
@@ -234,7 +238,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .transition()
       .duration(250)
       .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return self.generateColor(d, 'topology', currEpoch); })
+      .attr('fill', function (d) { return d.fill; })
       .attr('opacity', function (d) { return self.generateOpacity(d, 'topology'); });
 
     const exitSel = circles.exit()
@@ -244,14 +248,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .remove();
   }
 
-  generateColor(d, mode: string, currEpoch: number): string {
+  generateColor(el, mode: string): string {
     let color = '#373737';
     let activity = 0;
     let recordActivities = false;
 
     if (mode === 'weights') {
-      let range = Math.abs(this.minMaxDiffs[currEpoch].maxDiff - this.minMaxDiffs[currEpoch].minDiff);
-      let valuePercentage = d.value / range;
+      let range = Math.abs(this.minMaxDiffs.maxDiff - this.minMaxDiffs.minDiff);
+      let valuePercentage = el.value / range;
 
       if (valuePercentage > .5) {
         // color = '#E57373';
@@ -266,16 +270,16 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
       if (recordActivities) {
         this.activities.push({
-          layer: d.layer,
-          source: d.source,
-          target: d.target,
+          layer: el.layer,
+          source: el.source,
+          target: el.target,
           activity: activity
         });
       }
 
       for (let i = 0; i < this.detachedNodes.length; i++) {
-        if ((this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.source) ||
-          ((this.detachedNodes[i].layer - 1) === d.layer && this.detachedNodes[i].unit === d.target)) {
+        if ((this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.source) ||
+          ((this.detachedNodes[i].layer - 1) === el.layer && this.detachedNodes[i].unit === el.target)) {
           color = '#373737';
           break;
         }
@@ -284,8 +288,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     if (mode === 'topology') {
       for (let i = 0; i < this.activities.length; i++) {
-        if ((this.activities[i].layer == d.layer && this.activities[i].source == d.unit) ||
-          (this.activities[i].layer == d.layer - 1 && this.activities[i].target == d.unit)) {
+        if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
+          (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
           switch (this.activities[i].activity) {
             case 1: {
               color = 'rgba(229, 115, 115, .35)';
@@ -301,7 +305,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       }
 
       for (let i = 0; i < this.detachedNodes.length; i++) {
-        if (this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.unit) {
+        if (this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.unit) {
           color = '#373737';
           break;
         }
@@ -424,8 +428,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
           }
         }
 
-        self.bindWeights(0);
-        self.bindTopology(0);
+        self.setupWeights();
+        self.bindWeights();
+        self.bindTopology();
       });
 
     conMenuContainer.append('rect')
