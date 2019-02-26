@@ -127,7 +127,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.layerSpacing = this.minWidthHeight / (layers.length + 1);
     this.topology = filteredData;
 
-    this.topology.forEach(el => { el.fill = this.generateColor(el, 'topology'); });
+    this.topology.forEach(el => {
+      const nodeColor = this.generateNodesColor(el);
+      el.fill = nodeColor.color;
+      el.opacity = nodeColor.opacity;
+    });
   }
 
   setupWeights() {
@@ -167,8 +171,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       this.weights = filteredData;
       this.minMaxDiffs = diffsPerEpoch;
 
-      this.weights.forEach(el => { el.stroke = this.generateColor(el, 'weights'); });
-      this.topology.forEach(el => { el.fill = this.generateColor(el, 'topology'); });
+      this.weights.forEach(el => { el.stroke = this.generateWightsColor(el); });
+      this.topology.forEach(el => {
+        const nodeColor = this.generateNodesColor(el);
+        el.fill = nodeColor.color;
+        el.opacity = nodeColor.opacity;
+      });
 
       this.weights.sort((a, b) => {
         const strokeA = a.stroke;
@@ -244,7 +252,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       })
       .attr('r', this.nodeRadius)
       .attr('fill', function (d) { return d.fill; })
-      .attr('opacity', function (d) { return self.generateOpacity(d, 'topology'); })
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return d.fill; })
+      .attr('stroke-width', .15 * this.nodeRadius)
       .on('contextmenu', function (d, i) {
         d3.event.preventDefault();
         d3.select('.context-menu').remove();
@@ -263,7 +273,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .duration(250)
       .attr('r', this.nodeRadius)
       .attr('fill', function (d) { return d.fill; })
-      .attr('opacity', function (d) { return self.generateOpacity(d, 'topology'); });
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return d.fill; })
+      .attr('stroke-width', .15 * this.nodeRadius);
 
     const exitSel = circles.exit()
       .transition()
@@ -272,71 +284,77 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .remove();
   }
 
-  generateColor(el, mode: string): string {
+  generateWightsColor(el) {
     let color = '#373737';
     let activity = 0;
     let recordActivities = false;
 
-    if (mode === 'weights') {
-      let range = Math.abs(this.minMaxDiffs.maxDiff - this.minMaxDiffs.minDiff);
-      let valuePercentage = el.value / range;
+    const range = Math.abs(this.minMaxDiffs.maxDiff - this.minMaxDiffs.minDiff);
+    const valuePercentage = el.value / range;
 
-      if (valuePercentage > .5) {
-        // color = '#E57373';
-        color = '#EF5350';
-        activity = 1;
-        recordActivities = true;
-      } else if (valuePercentage > .35) {
-        color = '#EF9A9A';
-        activity = 0.5;
-        recordActivities = true;
-      }
-
-      if (recordActivities) {
-        this.activities.push({
-          layer: el.layer,
-          source: el.source,
-          target: el.target,
-          activity: activity
-        });
-      }
-
-      for (let i = 0; i < this.detachedNodes.length; i++) {
-        if ((this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.source) ||
-          ((this.detachedNodes[i].layer - 1) === el.layer && this.detachedNodes[i].unit === el.target)) {
-          color = '#373737';
-          break;
-        }
-      }
+    if (valuePercentage > .5) {
+      color = '#EF5350';
+      activity = 1;
+      recordActivities = true;
+    } else if (valuePercentage > .35) {
+      color = '#EF9A9A';
+      activity = 0.5;
+      recordActivities = true;
     }
 
-    if (mode === 'topology') {
-      for (let i = 0; i < this.activities.length; i++) {
-        if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
-          (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
-          switch (this.activities[i].activity) {
-            case 1: {
-              color = 'rgba(229, 115, 115, .35)';
-              break;
-            }
-            case 0.5: {
-              color = 'rgba(229, 115, 115, .175)';
-              break;
-            }
-          }
-          break;
-        }
-      }
+    if (recordActivities) {
+      this.activities.push({
+        layer: el.layer,
+        source: el.source,
+        target: el.target,
+        activity: activity
+      });
+    }
 
-      for (let i = 0; i < this.detachedNodes.length; i++) {
-        if (this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.unit) {
-          color = '#373737';
-          break;
-        }
+    for (let i = 0; i < this.detachedNodes.length; i++) {
+      if ((this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.source) ||
+        ((this.detachedNodes[i].layer - 1) === el.layer && this.detachedNodes[i].unit === el.target)) {
+        color = '#373737';
+        break;
       }
     }
 
     return color;
+  }
+
+  generateNodesColor(el) {
+    let color = '#373737';
+    let opacity = 1;
+
+    for (let i = 0; i < this.activities.length; i++) {
+      if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
+        (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
+        color = 'rgba(229, 115, 115, 1)';
+        switch (this.activities[i].activity) {
+          case 1: {
+            opacity = .35;
+            break;
+          }
+          case 0.5: {
+            opacity = .175;
+            break;
+          }
+        }
+        break;
+      }
+    }
+
+    for (let i = 0; i < this.detachedNodes.length; i++) {
+      if (this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.unit) {
+        color = '#373737';
+        break;
+      }
+    }
+
+    return {
+      'color': color,
+      'opacity': opacity
+    };
   }
 
   generateOpacity(d, mode: string) {
