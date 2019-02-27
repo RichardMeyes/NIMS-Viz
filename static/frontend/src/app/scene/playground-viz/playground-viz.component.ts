@@ -253,9 +253,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('r', this.nodeRadius)
       .attr('fill', function (d) { return d.fill; })
       .attr('fill-opacity', function (d) { return d.opacity; })
-      .attr('stroke', function (d) { return d.fill; })
-      .attr('stroke-width', .15 * this.nodeRadius)
-      .on('contextmenu', function (d, i) {
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+      .attr('stroke-width', .15 * this.nodeRadius);
+
+    if (this.router.url.includes('ablation')) {
+      enterSel.on('contextmenu', function (d, i) {
         d3.event.preventDefault();
         d3.select('.context-menu').remove();
 
@@ -266,6 +268,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
           self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
         }
       });
+    }
 
     circles
       .merge(enterSel)
@@ -274,7 +277,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('r', this.nodeRadius)
       .attr('fill', function (d) { return d.fill; })
       .attr('fill-opacity', function (d) { return d.opacity; })
-      .attr('stroke', function (d) { return d.fill; })
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
       .attr('stroke-width', .15 * this.nodeRadius);
 
     const exitSel = circles.exit()
@@ -294,11 +297,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     if (valuePercentage > .5) {
       color = '#EF5350';
-      activity = 1;
+      activity = valuePercentage;
       recordActivities = true;
     } else if (valuePercentage > .35) {
       color = '#EF9A9A';
-      activity = 0.5;
+      activity = valuePercentage;
       recordActivities = true;
     }
 
@@ -323,25 +326,21 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   generateNodesColor(el) {
+    const allActivities = [];
+
     let color = '#373737';
     let opacity = 1;
 
     for (let i = 0; i < this.activities.length; i++) {
       if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
         (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
-        color = 'rgba(229, 115, 115, 1)';
-        switch (this.activities[i].activity) {
-          case 1: {
-            opacity = .35;
-            break;
-          }
-          case 0.5: {
-            opacity = .175;
-            break;
-          }
-        }
-        break;
+        color = '#FF7373';
+        allActivities.push(this.activities[i].activity);
       }
+    }
+
+    if (allActivities.length > 0) {
+      opacity = allActivities.reduce((a, b) => a + b) / allActivities.length;
     }
 
     for (let i = 0; i < this.detachedNodes.length; i++) {
