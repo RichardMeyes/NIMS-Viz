@@ -23,12 +23,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   conMenuItems; conMenuConfig;
   conMenuSelected;
 
-  topology; weights;
+  topology; edges; weights;
   topMargin; leftMargin;
-  layerSpacing; nodeRadius;
+  layerSpacing;
   minMaxDiffs; activities;
 
   detachedNodes;
+
+  defaultSettings;
 
   @ViewChild('container') container;
   @Input() inputTopology;
@@ -49,7 +51,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
     this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
-    this.draw(undefined);
+    this.draw();
   }
 
   constructor(
@@ -57,10 +59,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     private router: Router
   ) { }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes.inputTopology && changes.inputTopology.firstChange) { return; }
-    this.draw(changes);
-  }
+  ngOnChanges() { this.draw(); }
 
   ngOnInit() {
     this.dataService.toolbarHeight
@@ -80,63 +79,76 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
     this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
-    this.nodeRadius = 10;
-
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
       .subscribe(() => { this.detachedNodes = []; });
+
+    this.defaultSettings = {
+      nodeRadius: 10,
+      color: '#373737',
+      nodeOpacity: .5,
+      nodeStroke: 0
+    };
   }
 
-  draw(changes: SimpleChanges) {
+  draw() {
     this.activities = [];
 
-    if ((changes && changes.inputTopology) || (!changes && this.inputTopology)) {
+    if (this.inputTopology) {
       this.resetViz();
 
       this.setupTopology();
       this.bindTopology();
-
-      if (changes) { this.inputWeights = undefined; }
     }
 
-    if ((changes && changes.inputWeights) || (!changes && this.inputWeights)) {
-      if (changes) { this.inputWeights = changes.inputWeights.currentValue; }
+    // if ((changes && changes.inputWeights) || (!changes && this.inputWeights)) {
+    //   if (changes) { this.inputWeights = changes.inputWeights.currentValue; }
 
-      if (this.inputWeights) {
-        this.setupWeights();
+    //   if (this.inputWeights) {
+    //     this.setupWeights();
 
-        this.bindWeights();
-        this.bindTopology();
-      }
-    }
+    //     this.bindWeights();
+    //     this.bindTopology();
+    //   }
+    // }
   }
 
   setupTopology() {
-    let layers: number[] = this.inputTopology.layers.map(layer => +layer.unitCount);
-    const filteredData = [];
+    const layers: number[] = this.inputTopology.layers.map(layer => +layer.unitCount);
+    layers.push(10);
+    const filteredTopology = [];
+    const filteredEdges = [];
 
     layers.forEach((layer, layerIndex) => {
+      const nextLayer = layers[layerIndex + 1];
+      const isOutput = (layerIndex < layers.length - 1) ? false : true;
+
       for (let i = 0; i < layer; i++) {
-        filteredData.push({ layer: layerIndex, unit: i, unitSpacing: (this.minWidthHeight / layer), isOutput: false });
+        filteredTopology.push({ layer: layerIndex, unit: i, unitSpacing: (this.minWidthHeight / layer), isOutput: isOutput });
+
+
+        if (!isOutput) {
+          for (let j = 0; j < nextLayer; j++) {
+            filteredEdges.push({
+              layer: layerIndex,
+              source: i,
+              target: j,
+              unitSpacing: (this.minWidthHeight / layer),
+              targetUnitSpacing: (this.minWidthHeight / nextLayer)
+            });
+          }
+        }
       }
     });
-    for (let i = 0; i < 10; i++) {
-      filteredData.push({ layer: layers.length, unit: i, unitSpacing: (this.minWidthHeight / 10), isOutput: true });
-    }
 
-    this.layerSpacing = this.minWidthHeight / (layers.length + 1);
-    this.topology = filteredData;
-
-    this.topology.forEach(el => {
-      const nodeColor = this.generateNodesColor(el);
-      el.fill = nodeColor.color;
-      el.opacity = nodeColor.opacity;
-    });
+    this.layerSpacing = this.minWidthHeight / layers.length;
+    this.topology = filteredTopology;
+    this.edges = filteredEdges;
   }
 
   setupWeights() {
     let filteredData;
-    let diffsPerEpoch;
+    let diffsPerEpoch; console.log(this.inputWeights);
 
     Object.keys(this.inputWeights).forEach((epoch) => {
       filteredData = [];
@@ -199,19 +211,19 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     const enterSel = line.enter()
       .append('line')
       .attr('class', 'line')
-      .attr('x1', function (d, i) {
+      .attr('x1', function (d) {
         const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return x1;
       })
-      .attr('y1', function (d, i) {
+      .attr('y1', function (d) {
         const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
         return y1;
       })
-      .attr('x2', function (d, i) {
+      .attr('x2', function (d) {
         const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
         return x2;
       })
-      .attr('y2', function (d, i) {
+      .attr('y2', function (d) {
         const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y2;
       })
@@ -234,6 +246,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
   bindTopology() {
     d3.selectAll('circle').remove();
+    d3.selectAll('line').remove();
+
 
     const circles = this.vizContainer.selectAll('circle')
       .data(this.topology);
@@ -250,20 +264,20 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
         return cy;
       })
-      .attr('r', this.nodeRadius)
-      .attr('fill', '#373737')
-      .attr('fill-opacity', .5)
-      .attr('stroke', '#373737')
-      .attr('stroke-width', 0);
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', this.defaultSettings.color)
+      .attr('stroke-width', this.defaultSettings.nodeStroke);
 
-    enterSel
-      .transition()
-      .duration(750)
-      .delay(function (d) { return 750 * d.layer; })
-      .attr('fill', function (d) { return d.fill; })
-      .attr('fill-opacity', function (d) { return d.opacity; })
-      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
-      .attr('stroke-width', .15 * this.nodeRadius);
+    // enterSel
+    //   .transition()
+    //   .duration(750)
+    //   .delay(function (d) { return 750 * d.layer; })
+    //   .attr('fill', function (d) { return d.fill; })
+    //   .attr('fill-opacity', function (d) { return d.opacity; })
+    //   .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+    //   .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
 
     if (this.router.url.includes('ablation')) {
       enterSel.on('contextmenu', function (d, i) {
@@ -278,6 +292,31 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         }
       });
     }
+
+
+    const line = this.vizContainer.selectAll('line')
+      .data(this.edges);
+
+    line.enter()
+      .append('line')
+      .attr('class', 'line')
+      .attr('x1', function (d) {
+        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return x1;
+      })
+      .attr('y1', function (d) {
+        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        return y1;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        return y2;
+      })
+      .attr('stroke', this.defaultSettings.color);
   }
 
   generateWightsColor(el) {
