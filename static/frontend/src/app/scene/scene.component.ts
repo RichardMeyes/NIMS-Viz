@@ -331,6 +331,8 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleAnimation() {
     this.isPlaying = !this.isPlaying;
 
+    console.log(this.vizTopology);
+
     if (this.isPlaying) {
       this.animationIntervals.push(setInterval(() => {
         if (this.epochSliderConfig.epochValue < this.epochSliderConfig.epochRange[1]) {
@@ -339,7 +341,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
           this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[0];
         }
         this.createHeatmap();
-      }, 1000));
+      }, 750 * (this.vizTopology.layers.length + 1) + 250));
     } else {
       this.animationIntervals.forEach(animationInterval => {
         clearInterval(animationInterval);

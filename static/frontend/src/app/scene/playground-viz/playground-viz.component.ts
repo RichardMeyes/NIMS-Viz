@@ -251,6 +251,15 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         return cy;
       })
       .attr('r', this.nodeRadius)
+      .attr('fill', '#373737')
+      .attr('fill-opacity', .5)
+      .attr('stroke', '#373737')
+      .attr('stroke-width', 0);
+
+    enterSel
+      .transition()
+      .duration(750)
+      .delay(function (d) { return 750 * d.layer; })
       .attr('fill', function (d) { return d.fill; })
       .attr('fill-opacity', function (d) { return d.opacity; })
       .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
@@ -269,22 +278,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         }
       });
     }
-
-    circles
-      .merge(enterSel)
-      .transition()
-      .duration(250)
-      .attr('r', this.nodeRadius)
-      .attr('fill', function (d) { return d.fill; })
-      .attr('fill-opacity', function (d) { return d.opacity; })
-      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
-      .attr('stroke-width', .15 * this.nodeRadius);
-
-    const exitSel = circles.exit()
-      .transition()
-      .duration(250)
-      .attr('r', 0)
-      .remove();
   }
 
   generateWightsColor(el) {
