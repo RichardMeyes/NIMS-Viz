@@ -87,30 +87,27 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       nodeRadius: 10,
       color: '#373737',
       nodeOpacity: .5,
-      nodeStroke: 0
+      nodeStroke: 0,
+      duration: 500
     };
   }
 
   draw() {
-    this.activities = [];
+    if (this.defaultSettings) {
+      this.activities = [];
 
-    if (this.inputTopology) {
-      this.resetViz();
+      if (this.inputTopology) {
+        this.resetViz();
 
-      this.setupTopology();
-      this.bindTopology();
+        this.setupTopology();
+        this.bindTopology();
+      }
+
+      if (this.inputWeights) {
+        this.setupWeights();
+        this.bindWeights();
+      }
     }
-
-    // if ((changes && changes.inputWeights) || (!changes && this.inputWeights)) {
-    //   if (changes) { this.inputWeights = changes.inputWeights.currentValue; }
-
-    //   if (this.inputWeights) {
-    //     this.setupWeights();
-
-    //     this.bindWeights();
-    //     this.bindTopology();
-    //   }
-    // }
   }
 
   setupTopology() {
@@ -147,106 +144,52 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   setupWeights() {
-    let filteredData;
-    let diffsPerEpoch; console.log(this.inputWeights);
+    const filteredData = [];
+    const diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
+    const currEpoch = Object.keys(this.inputWeights)[0];
 
-    Object.keys(this.inputWeights).forEach((epoch) => {
-      filteredData = [];
-      diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
+    Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
+      if (layer !== 'input' && layer !== 'output') {
 
-      Object.keys(this.inputWeights[epoch]).forEach((layer, layerIndex) => {
-        if (layer != 'input' && layer != 'output') {
+        this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
+          destination.forEach((source, sourceIndex) => {
+            if (sourceIndex === 0) {
+              diffsPerEpoch.minDiff = source;
+              diffsPerEpoch.maxDiff = source;
+            } else {
+              if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
+              if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
+            }
 
-          this.inputWeights[epoch][layer].forEach((destination, destinationIndex) => {
-            destination.forEach((source, sourceIndex) => {
-              if (sourceIndex === 0) {
-                diffsPerEpoch.minDiff = source;
-                diffsPerEpoch.maxDiff = source;
-              } else {
-                if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
-                if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
-              }
-
-              filteredData.push({
-                layer: (layerIndex - 1),
-                source: sourceIndex,
-                target: destinationIndex,
-                value: source,
-                unitSpacing: (this.minWidthHeight / +destination.length),
-                targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[epoch][layer].length)
-              });
+            filteredData.push({
+              layer: (layerIndex - 1),
+              source: sourceIndex,
+              target: destinationIndex,
+              value: source,
+              unitSpacing: (this.minWidthHeight / +destination.length),
+              targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length)
             });
           });
-        }
-      });
-
-      this.weights = filteredData;
-      this.minMaxDiffs = diffsPerEpoch;
-
-      this.weights.forEach(el => { el.stroke = this.generateWightsColor(el); });
-      this.topology.forEach(el => {
-        const nodeColor = this.generateNodesColor(el);
-        el.fill = nodeColor.color;
-        el.opacity = nodeColor.opacity;
-      });
-
-      this.weights.sort((a, b) => {
-        const strokeA = a.stroke;
-        const strokeB = b.stroke;
-
-        if (strokeA < strokeB) { return -1; }
-        if (strokeA > strokeB) { return 1; }
-
-        return 0;
-      });
+        });
+      }
     });
 
-  }
+    this.weights = filteredData;
+    this.minMaxDiffs = diffsPerEpoch;
 
-  bindWeights() {
-    const line = this.vizContainer.selectAll('line')
-      .data(this.weights);
+    this.weights.forEach(el => { el.stroke = this.generateWeightsColor(el); });
+    this.topology.forEach(el => {
+      const nodeColor = this.generateNodesColor(el);
+      el.fill = nodeColor.color;
+      el.opacity = nodeColor.opacity;
+    });
 
-    const self = this;
-    const enterSel = line.enter()
-      .append('line')
-      .attr('class', 'line')
-      .attr('x1', function (d) {
-        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return x1;
-      })
-      .attr('y1', function (d) {
-        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
-        return y1;
-      })
-      .attr('x2', function (d) {
-        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
-        return x2;
-      })
-      .attr('y2', function (d) {
-        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
-        return y2;
-      })
-      .attr('stroke', function (d) { return d.stroke; })
-      .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
-
-    line
-      .merge(enterSel)
-      .transition()
-      .duration(250)
-      .attr('stroke', function (d) { return d.stroke; })
-      .attr('stroke-opacity', function (d) { return self.generateOpacity(d, 'weights'); });
-
-    const exitSel = line.exit()
-      .transition()
-      .duration(250)
-      .attr('style', function (d) { return 'stroke:#fff; stroke-width:0'; })
-      .remove();
+    this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
   }
 
   bindTopology() {
     d3.selectAll('circle').remove();
-    d3.selectAll('line').remove();
+    d3.selectAll('.edges').remove();
 
 
     const circles = this.vizContainer.selectAll('circle')
@@ -256,11 +199,11 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     const enterSel = circles.enter()
       .append('circle')
       .attr('class', 'circle')
-      .attr('cx', function (d, i) {
+      .attr('cx', function (d) {
         const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return cx;
       })
-      .attr('cy', function (d, i) {
+      .attr('cy', function (d) {
         const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
         return cy;
       })
@@ -269,15 +212,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity)
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
-
-    // enterSel
-    //   .transition()
-    //   .duration(750)
-    //   .delay(function (d) { return 750 * d.layer; })
-    //   .attr('fill', function (d) { return d.fill; })
-    //   .attr('fill-opacity', function (d) { return d.opacity; })
-    //   .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
-    //   .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
 
     if (this.router.url.includes('ablation')) {
       enterSel.on('contextmenu', function (d, i) {
@@ -294,12 +228,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     }
 
 
-    const line = this.vizContainer.selectAll('line')
+    const line = this.vizContainer.selectAll('.edges')
       .data(this.edges);
 
     line.enter()
       .append('line')
-      .attr('class', 'line')
+      .attr('class', 'edges')
       .attr('x1', function (d) {
         const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return x1;
@@ -319,8 +253,90 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('stroke', this.defaultSettings.color);
   }
 
-  generateWightsColor(el) {
-    let color = '#373737';
+  bindWeights() {
+    d3.selectAll('circle').remove();
+    d3.selectAll('.weights').remove();
+
+
+    const circles = this.vizContainer.selectAll('circle')
+      .data(this.topology);
+
+    const self = this;
+    const enterCircles = circles.enter()
+      .append('circle')
+      .attr('class', 'circle')
+      .attr('cx', function (d) {
+        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return cx;
+      })
+      .attr('cy', function (d) {
+        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        return cy;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', this.defaultSettings.color)
+      .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+    enterCircles
+      .transition()
+      .duration(this.defaultSettings.duration)
+      .delay(function (d) {
+        const nodesDelay = self.defaultSettings.duration * d.layer;
+        const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+        return nodesDelay + weightsDelay;
+      })
+      .attr('fill', function (d) { return d.fill; })
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
+
+
+    const line = this.vizContainer.selectAll('.weights')
+      .data(this.weights);
+
+    const enterWeights = line.enter()
+      .append('line')
+      .attr('class', '.weights')
+      .attr('x1', function (d) {
+        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return x1;
+      })
+      .attr('y1', function (d) {
+        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        return y1;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        return y2;
+      })
+      .attr('stroke', function (d) { return d.stroke; });
+
+    enterWeights
+      .transition()
+      .duration(2.5 * this.defaultSettings.duration)
+      .delay(function (d) {
+        const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
+        const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+        return nodesDelay + weightsDelay;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        return y2;
+      });
+  }
+
+  generateWeightsColor(el) {
+    let color = this.defaultSettings.color;
     let activity = 0;
     let recordActivities = false;
 
@@ -360,7 +376,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   generateNodesColor(el) {
     const allActivities = [];
 
-    let color = '#373737';
+    let color = this.defaultSettings.color;
     let opacity = 1;
 
     for (let i = 0; i < this.activities.length; i++) {

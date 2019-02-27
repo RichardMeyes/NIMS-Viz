@@ -339,7 +339,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
           this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[0];
         }
         this.createHeatmap();
-      }, 750 * (this.vizTopology.layers.length + 1) + 250));
+      }, 3.5 * 500 * (this.vizTopology.layers.length + 1) + 150));
     } else {
       this.animationIntervals.forEach(animationInterval => {
         clearInterval(animationInterval);
