@@ -1,9 +1,11 @@
 import { Component, OnInit, ViewChild, OnDestroy, } from '@angular/core';
 import { Chart } from 'chart.js';
 
-import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, take } from 'rxjs/operators';
+
+import { DataService } from 'src/app/services/data.service';
+import { NetworkService } from 'src/app/network.service';
 
 @Component({
   selector: 'app-accuracy-plot',
@@ -17,49 +19,39 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   chart; barChartData;
 
   constructor(
-    private dataService: DataService
+    private dataService: DataService,
+    private networkService: NetworkService
   ) { }
 
   ngOnInit() {
     this.dataService.plotAccuracies
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
-        if (val) { this.plotAccuracies(); }
+        if (val) {
+          this.networkService.ablationTest()
+            .pipe(take(1))
+            .subscribe((anotherVal: any) => {
+              this.barChartData = {
+                labels: anotherVal.labels,
+                datasets: [{
+                  label: 'Value 1',
+                  backgroundColor: 'rgba(205, 92, 92, .5)',
+                  borderColor: 'rgba(205, 92, 92, 1)',
+                  borderWidth: 1,
+                  data: anotherVal.values1
+                }, {
+                  label: 'Value 2',
+                  backgroundColor: 'rgba(70, 130, 180, .5)',
+                  borderColor: 'rgba(70, 130, 180, 1)',
+                  borderWidth: 1,
+                  data: anotherVal.values2
+                }]
+              };
+
+              this.plotAccuracies();
+            });
+        }
       });
-
-    this.barChartData = {
-      labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-      datasets: [{
-        label: 'Dataset 1',
-        backgroundColor: 'rgba(205, 92, 92, .5)',
-        borderColor: 'rgba(205, 92, 92, 1)',
-        borderWidth: 1,
-        data: [
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor()
-        ]
-      }, {
-        label: 'Dataset 2',
-        backgroundColor: 'rgba(70, 130, 180, .5)',
-        borderColor: 'rgba(70, 130, 180, 1)',
-        borderWidth: 1,
-        data: [
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor(),
-          this.randomScalingFactor()
-        ]
-      }]
-
-    };
   }
 
   plotAccuracies() {
@@ -73,14 +65,24 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         },
         title: {
           display: true,
-          text: 'Chart.js Bar Chart'
+          text: 'Test Results'
+        },
+        scales: {
+          xAxes: [{
+            scaleLabel: {
+              display: true,
+              labelString: 'Class Label'
+            }
+          }],
+          yAxes: [{
+            scaleLabel: {
+              display: true,
+              labelString: 'Accuracy [%]'
+            }
+          }]
         }
       }
     });
-  }
-
-  randomScalingFactor() {
-    return Math.round(Math.random() * 100 + 1);
   }
 
   ngOnDestroy() {

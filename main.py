@@ -179,6 +179,17 @@ def reattachNodes():
 
     return ''
 
+@app.route("/ablationTest", methods=["GET"])
+@cross_origin()
+def ablationTest():
+    results = {
+      "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+      "values1": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+      "values2": [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0]
+    }
+
+    return json.dumps(results)
+
 @socketio.on('mlp')
 def mlpSocketIO(params):
     # print(params)

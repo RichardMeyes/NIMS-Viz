@@ -131,4 +131,9 @@ export class NetworkService {
       .pipe(catchError(this.handleError))
       .subscribe();
   }
+
+  public ablationTest() {
+    return this.http.get('/ablationTest')
+      .pipe(catchError(this.handleError));
+  }
 }
