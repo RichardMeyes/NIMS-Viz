@@ -464,7 +464,10 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.conMenuConfig = {
       width: [],
       height: [],
-      margin: 0.15
+      margin: 0.15,
+      fill: '#2b2b2b',
+      hover: '#414141',
+      color: '#ffffff'
     };
 
     const self = this;
@@ -488,19 +491,39 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   bindConMenu(mouseX, mouseY) {
     const self = this;
 
-    const conMenuContainer = this.vizContainer
-      .append('g').attr('class', 'context-menu')
-      .selectAll('tmp')
+
+    const menuEntry = this.vizContainer.append('g')
+      .attr('class', 'context-menu')
+      .selectAll('.menu-entry')
       .data(this.conMenuItems)
       .enter()
-      .append('g').attr('class', 'menu-entry')
-      .on('mouseover', function (d) {
-        d3.select(this).select('rect')
-          .style('fill', '#3a3a3a');
+      .append('g')
+      .attr('class', 'menu-entry');
+
+
+    const rect = menuEntry.append('rect')
+      .attr('x', mouseX)
+      .attr('y', (d, i) => {
+        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        return mouseY + i * (this.conMenuConfig.height + margin);
       })
-      .on('mouseout', function (d) {
-        d3.select(this).select('rect')
-          .style('fill', '#424242');
+      .attr('width', () => {
+        const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
+        return this.conMenuConfig.width + margin;
+      })
+      .attr('height', () => {
+        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        return this.conMenuConfig.height + margin;
+      });
+
+    rect.style('fill', this.conMenuConfig.fill);
+
+    rect
+      .on('mouseover', function () {
+        d3.select(this).style('fill', self.conMenuConfig.hover);
+      })
+      .on('mouseout', function () {
+        d3.select(this).style('fill', self.conMenuConfig.fill);
       })
       .on('click', function (d) {
         if (d === 'detach node') {
@@ -514,24 +537,24 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
           }
         }
 
-        self.setupWeights();
-        self.bindWeights();
-        self.bindTopology();
+        // self.setupWeights();
+        // self.bindWeights();
+        // self.bindTopology();
       });
 
-    conMenuContainer.append('rect')
-      .attr('x', mouseX)
-      .attr('y', function (d, i) { return mouseY + (i * (self.conMenuConfig.height * (1 + self.conMenuConfig.margin * 2))); })
-      .attr('width', this.conMenuConfig.width * (1 + this.conMenuConfig.margin * 2))
-      .attr('height', this.conMenuConfig.height * (1 + this.conMenuConfig.margin * 2))
-      .style('fill', '#424242');
 
-    conMenuContainer.append('text')
+    menuEntry.append('text')
       .text(function (d) { return d; })
-      .attr('x', mouseX + this.conMenuConfig.width * this.conMenuConfig.margin)
-      .attr('y', function (d, i) { return mouseY + (i * (self.conMenuConfig.height * (1 + self.conMenuConfig.margin * 2))); })
-      .attr('dy', function (d, i) { return self.conMenuConfig.height; })
-      .attr('fill', 'white');
+      .attr('x', () => {
+        const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 1.5;
+        return mouseX + margin;
+      })
+      .attr('y', (d, i) => {
+        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        return mouseY + (i * (self.conMenuConfig.height + margin));
+      })
+      .attr('dy', this.conMenuConfig.height)
+      .attr('fill', this.conMenuConfig.color);
   }
 
   ngOnDestroy() {
