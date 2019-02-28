@@ -5,7 +5,9 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import * as d3 from 'd3';
+
 import { DataService } from 'src/app/services/data.service';
+import { NetworkService } from 'src/app/network.service';
 
 @Component({
   selector: 'app-playground-viz',
@@ -56,6 +58,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private dataService: DataService,
+    private networkService: NetworkService,
     private router: Router
   ) { }
 
@@ -514,6 +517,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .on('click', function (d) {
         if (d === 'detach node') {
           self.detachedNodes.push(self.conMenuSelected);
+          self.networkService.detachNodes(self.conMenuSelected);
         } else if (d === 'reattach node') {
           for (let i = 0; i < self.detachedNodes.length; i++) {
             if (self.detachedNodes[i].layer === self.conMenuSelected.layer && self.detachedNodes[i].unit === self.conMenuSelected.unit) {
@@ -521,6 +525,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
               break;
             }
           }
+          self.networkService.reattachNodes(self.conMenuSelected);
         }
 
         self.setupWeights();

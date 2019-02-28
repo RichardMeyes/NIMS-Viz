@@ -154,6 +154,31 @@ def indexFolders():
     
     return json.dumps({'result':validFiles})
 
+
+@app.route("/detachNodes", methods=["POST", "OPTIONS"])
+@cross_origin()
+def detachNodes():
+    params = request.get_json()
+    # print('params')
+    # print(params)
+
+    layer = params['layer']
+    unit = params['unit']
+
+    return ''
+
+@app.route("/reattachNodes", methods=["POST", "OPTIONS"])
+@cross_origin()
+def reattachNodes():
+    params = request.get_json()
+    # print('params')
+    # print(params)
+
+    layer = params['layer']
+    unit = params['unit']
+
+    return ''
+
 @socketio.on('mlp')
 def mlpSocketIO(params):
     # print(params)
