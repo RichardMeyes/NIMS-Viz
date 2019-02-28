@@ -105,7 +105,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
       if (this.inputWeights) {
         this.setupWeights();
-        this.bindWeights();
+        this.bindWeights(true);
       }
     }
   }
@@ -239,7 +239,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('stroke-width', this.defaultSettings.nodeStroke);
   }
 
-  bindWeights() {
+  bindWeights(runAnimation) {
     d3.selectAll('.weights').remove();
     d3.selectAll('circle').remove();
     const self = this;
@@ -248,7 +248,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     const line = this.vizContainer.selectAll('.weights')
       .data(this.weights);
 
-    const enterWeights = line.enter()
+    let enterWeights = line.enter()
       .append('line')
       .attr('class', 'weights')
       .attr('x1', function (d) {
@@ -269,14 +269,16 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       })
       .attr('stroke', function (d) { return d.stroke; });
 
+    if (runAnimation) {
+      enterWeights = enterWeights.transition()
+        .duration(2.5 * this.defaultSettings.duration)
+        .delay(function (d) {
+          const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          return nodesDelay + weightsDelay;
+        });
+    }
     enterWeights
-      .transition()
-      .duration(2.5 * this.defaultSettings.duration)
-      .delay(function (d) {
-        const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
-        const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-        return nodesDelay + weightsDelay;
-      })
       .attr('x2', function (d) {
         const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
         return x2;
@@ -290,7 +292,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     const circles = this.vizContainer.selectAll('circle')
       .data(this.topology);
 
-    const enterCircles = circles.enter()
+    let enterCircles = circles.enter()
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
@@ -307,19 +309,6 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
-    enterCircles
-      .transition()
-      .duration(this.defaultSettings.duration)
-      .delay(function (d) {
-        const nodesDelay = self.defaultSettings.duration * d.layer;
-        const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-        return nodesDelay + weightsDelay;
-      })
-      .attr('fill', function (d) { return d.fill; })
-      .attr('fill-opacity', function (d) { return d.opacity; })
-      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
-      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
-
     if (this.router.url.includes('ablation')) {
       enterCircles.on('contextmenu', function (d) {
         d3.select('.context-menu').remove();
@@ -332,6 +321,21 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         }
       });
     }
+
+    if (runAnimation) {
+      enterCircles = enterCircles.transition()
+        .duration(this.defaultSettings.duration)
+        .delay(function (d) {
+          const nodesDelay = self.defaultSettings.duration * d.layer;
+          const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          return nodesDelay + weightsDelay;
+        });
+    }
+    enterCircles
+      .attr('fill', function (d) { return d.fill; })
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
   }
 
   generateWeightsColor(el) {
@@ -364,7 +368,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     for (let i = 0; i < this.detachedNodes.length; i++) {
       if ((this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.source) ||
         ((this.detachedNodes[i].layer - 1) === el.layer && this.detachedNodes[i].unit === el.target)) {
-        color = '#373737';
+        color = this.defaultSettings.color;
         break;
       }
     }
@@ -392,7 +396,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     for (let i = 0; i < this.detachedNodes.length; i++) {
       if (this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.unit) {
-        color = '#373737';
+        color = this.defaultSettings.color;
         break;
       }
     }
@@ -500,30 +504,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .append('g')
       .attr('class', 'menu-entry');
 
-
-    const rect = menuEntry.append('rect')
-      .attr('x', mouseX)
-      .attr('y', (d, i) => {
-        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        return mouseY + i * (this.conMenuConfig.height + margin);
-      })
-      .attr('width', () => {
-        const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
-        return this.conMenuConfig.width + margin;
-      })
-      .attr('height', () => {
-        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        return this.conMenuConfig.height + margin;
-      });
-
-    rect.style('fill', this.conMenuConfig.fill);
-
-    rect
+    menuEntry
       .on('mouseover', function () {
-        d3.select(this).style('fill', self.conMenuConfig.hover);
+        d3.select(this).select('rect').style('fill', self.conMenuConfig.hover);
       })
       .on('mouseout', function () {
-        d3.select(this).style('fill', self.conMenuConfig.fill);
+        d3.select(this).select('rect').style('fill', self.conMenuConfig.fill);
       })
       .on('click', function (d) {
         if (d === 'detach node') {
@@ -537,10 +523,26 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
           }
         }
 
-        // self.setupWeights();
-        // self.bindWeights();
-        // self.bindTopology();
+        self.setupWeights();
+        self.bindWeights(false);
       });
+
+
+    menuEntry.append('rect')
+      .attr('x', mouseX)
+      .attr('y', (d, i) => {
+        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        return mouseY + i * (this.conMenuConfig.height + margin);
+      })
+      .attr('width', () => {
+        const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
+        return this.conMenuConfig.width + margin;
+      })
+      .attr('height', () => {
+        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        return this.conMenuConfig.height + margin;
+      })
+      .style('fill', this.conMenuConfig.fill);
 
 
     menuEntry.append('text')
