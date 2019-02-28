@@ -188,44 +188,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   bindTopology() {
-    d3.selectAll('circle').remove();
     d3.selectAll('.edges').remove();
-
-
-    const circles = this.vizContainer.selectAll('circle')
-      .data(this.topology);
-
+    d3.selectAll('circle').remove();
     const self = this;
-    const enterSel = circles.enter()
-      .append('circle')
-      .attr('class', 'circle')
-      .attr('cx', function (d) {
-        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return cx;
-      })
-      .attr('cy', function (d) {
-        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
-        return cy;
-      })
-      .attr('r', this.defaultSettings.nodeRadius)
-      .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
-
-    if (this.router.url.includes('ablation')) {
-      enterSel.on('contextmenu', function (d, i) {
-        d3.event.preventDefault();
-        d3.select('.context-menu').remove();
-
-        self.conMenuSelected = d;
-
-        if (!d.isOutput) {
-          self.setupConMenu();
-          self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
-        }
-      });
-    }
 
 
     const line = this.vizContainer.selectAll('.edges')
@@ -251,18 +216,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         return y2;
       })
       .attr('stroke', this.defaultSettings.color);
-  }
-
-  bindWeights() {
-    d3.selectAll('circle').remove();
-    d3.selectAll('.weights').remove();
 
 
     const circles = this.vizContainer.selectAll('circle')
       .data(this.topology);
 
-    const self = this;
-    const enterCircles = circles.enter()
+    circles.enter()
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
@@ -278,19 +237,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity)
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
+  }
 
-    enterCircles
-      .transition()
-      .duration(this.defaultSettings.duration)
-      .delay(function (d) {
-        const nodesDelay = self.defaultSettings.duration * d.layer;
-        const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-        return nodesDelay + weightsDelay;
-      })
-      .attr('fill', function (d) { return d.fill; })
-      .attr('fill-opacity', function (d) { return d.opacity; })
-      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
-      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
+  bindWeights() {
+    d3.selectAll('.weights').remove();
+    d3.selectAll('circle').remove();
+    const self = this;
 
 
     const line = this.vizContainer.selectAll('.weights')
@@ -298,7 +250,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     const enterWeights = line.enter()
       .append('line')
-      .attr('class', '.weights')
+      .attr('class', 'weights')
       .attr('x1', function (d) {
         const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return x1;
@@ -333,6 +285,53 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
         const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y2;
       });
+
+
+    const circles = this.vizContainer.selectAll('circle')
+      .data(this.topology);
+
+    const enterCircles = circles.enter()
+      .append('circle')
+      .attr('class', 'circle')
+      .attr('cx', function (d) {
+        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return cx;
+      })
+      .attr('cy', function (d) {
+        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        return cy;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', this.defaultSettings.color)
+      .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+    enterCircles
+      .transition()
+      .duration(this.defaultSettings.duration)
+      .delay(function (d) {
+        const nodesDelay = self.defaultSettings.duration * d.layer;
+        const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+        return nodesDelay + weightsDelay;
+      })
+      .attr('fill', function (d) { return d.fill; })
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
+
+    if (this.router.url.includes('ablation')) {
+      enterCircles.on('contextmenu', function (d) {
+        d3.select('.context-menu').remove();
+
+        self.conMenuSelected = d;
+
+        if (!d.isOutput) {
+          self.setupConMenu();
+          self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
+        }
+      });
+    }
   }
 
   generateWeightsColor(el) {
@@ -445,13 +444,14 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .on('end', () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
 
-    this.svg
-      .on('click', () => { d3.select('.context-menu').remove(); });
+    this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
+    if (this.router.url.includes('ablation')) {
+      this.svg.on('click', () => { d3.select('.context-menu').remove(); });
+    }
   }
 
   setupConMenu() {
     this.conMenuItems = ['view details', 'detach node'];
-
     for (let i = 0; i < this.detachedNodes.length; i++) {
       if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
         this.conMenuItems.splice(-1);
@@ -468,24 +468,21 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     const self = this;
-
     this.vizContainer.selectAll('.tmp')
       .data(this.conMenuItems)
       .enter()
       .append('text')
       .text(function (d) { return d; })
       .attr('class', 'tmp')
-      .each(function (d, i) {
+      .each(function () {
         const bbox = this.getBBox();
         self.conMenuConfig.width.push(bbox.width);
         self.conMenuConfig.height.push(bbox.height);
       });
-
     d3.selectAll('.tmp').remove();
 
     this.conMenuConfig.width = Math.max(...this.conMenuConfig.width);
     this.conMenuConfig.height = Math.max(...this.conMenuConfig.height);
-
   }
 
   bindConMenu(mouseX, mouseY) {
