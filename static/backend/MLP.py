@@ -16,7 +16,7 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, layers, num_epochs):
+    def __init__(self, layers, num_epochs=1):
         self.layers = layers
         self.num_epochs = num_epochs
         self.weights_dict = dict()
@@ -91,7 +91,7 @@ class Net(nn.Module):
             json.dump(self.weights_dict, f)
 
         # save trained net
-        torch.save(self.state_dict(), 'MLP.pt')
+        torch.save(self.state_dict(), '../data/models/MLP_{0}.pt'.format(self.layers))
 
     def test_net(self, device, testloader, criterion):
         # test the net
@@ -146,7 +146,30 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
     net.train_net(device, trainloader, criterion, optimizer)
     acc = net.test_net(device, testloader, criterion)
 
-    return acc, net.weights_dict
+    return net, acc, net.weights_dict
+
+
+def mlp_ablation(network, ko_layers, ko_units):
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    layers = network.split('_')[-1]
+
+    net = Net(layers)
+    net.load_state_dict(torch.load("../nets/MNIST_MLP_{0}_trained.pt".format(layers)))
+    net.eval()
+    criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
+
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
+
+    # ToDo: fix that it only works for the first layer for now (zeros(784))
+    for i_layer, i_unit in zip(ko_layers, ko_units):
+        net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(784)
+        net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
+    acc, labels_ko, acc_class, _ = net.test_net(criterion, testloader, device)
+    return acc
+
 
 # def mlpContinue():
 #     net.train_net(device, trainloader, criterion, optimizer)
@@ -155,5 +178,5 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
 
 if __name__ == "__main__":
 
-    acc, _ = mlp(layers=(40, 40, 40), learning_rate=0.001, batch_size_train=64, batch_size_test=16, num_epochs=10)
+    net, acc, _ = mlp(layers=(40, 40, 40), learning_rate=0.001, batch_size_train=64, batch_size_test=16, num_epochs=10)
     print(acc)

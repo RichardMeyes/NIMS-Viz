@@ -85,9 +85,10 @@ def mlp():
     batch_size_test = params['batch_size_test']
     num_epochs = params['num_epochs']
 
-    acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
+    net, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
 
     return json.dumps(weights)
+
 
 @app.route("/calc/heatmapfromfile", methods=["POST", "OPTIONS"])
 @cross_origin()
@@ -118,6 +119,7 @@ def calcHeatmapFromFile():
 
     return json.dumps(heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newNodeStruct, density))
 
+
 @app.route("/getWeights", methods=["POST", "OPTIONS"])
 @cross_origin()
 def getWeights():
@@ -128,6 +130,7 @@ def getWeights():
     returnEpoch = 'epoch_' + str(params['currEpoch'])
     
     return json.dumps(data[returnEpoch])
+
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()
@@ -162,10 +165,14 @@ def detachNodes():
     # print('params')
     # print(params)
 
+    network = params['network']
     layer = params['layer']
     unit = params['unit']
 
-    return ''
+    acc = MLP.mlp_ablation(network, layer, unit)
+
+    return json.dumps(acc)
+
 
 @app.route("/reattachNodes", methods=["POST", "OPTIONS"])
 @cross_origin()
@@ -174,10 +181,12 @@ def reattachNodes():
     # print('params')
     # print(params)
 
+    network = params['network']
     layer = params['layer']
     unit = params['unit']
 
     return ''
+
 
 @app.route("/ablationTest", methods=["GET"])
 @cross_origin()
@@ -190,6 +199,7 @@ def ablationTest():
 
     return json.dumps(results)
 
+
 @socketio.on('mlp')
 def mlpSocketIO(params):
     # print(params)
@@ -201,16 +211,19 @@ def mlpSocketIO(params):
     batch_size_test = params['batch_size_test']
     num_epochs = params['num_epochs']
 
-    acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
+    net, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
     print('final json send')
+
 
 @socketio.on_error_default  # handles all namespaces without an explicit error handler
 def default_error_handler(e):
     print(e)
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     return angular()
+
 
 if __name__ == "__main__":
     # app.run(debug=True, threaded=True)
