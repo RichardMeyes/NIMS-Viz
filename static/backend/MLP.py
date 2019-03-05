@@ -3,6 +3,7 @@
 """
 import json
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -16,23 +17,26 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, layers, num_epochs=1):
+    def __init__(self, layers):
         self.layers = layers
-        self.num_epochs = num_epochs
-        self.weights_dict = dict()
 
         # create Net
         super(Net, self).__init__()
-        self.input = nn.Linear(28 * 28, self.layers[0])
+
+        # build input layer
+        self.h0 = nn.Linear(28 * 28, self.layers[0])
+
+        # build hidden layers 1, n-1
         for i_layer in range(len(layers)-1):
-            self.__setattr__("h{0}".format(i_layer+1), nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
-        self.__setattr__("h{0}".format(len(self.layers)), nn.Linear(self.layers[-1], self.layers[-1]))
+            self.__setattr__("h{0}".format(i_layer+1),
+                             nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
+
+        # build output layer
         self.output = nn.Linear(self.layers[-1], 10)
 
     def forward(self, x):
-        x = F.relu(self.input(x))
         for i_layer in range(len(self.layers)):
-            x = F.relu(self.__getattr__("h{0}".format(i_layer+1))(x))
+            x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         return x
 
@@ -93,27 +97,40 @@ class Net(nn.Module):
         # save trained net
         torch.save(self.state_dict(), '../data/models/MLP_{0}.pt'.format(self.layers))
 
-    def test_net(self, device, testloader, criterion):
+    def test_net(self, criterion, testloader, device):
         # test the net
         test_loss = 0
         correct = 0
-        for data, target in testloader:
+        correct_class = np.zeros(10)
+        correct_labels = np.array([], dtype=int)
+        class_labels = np.array([], dtype=int)
+        for i_batch, (data, target) in enumerate(testloader):
             data, target = Variable(data), Variable(target)
-            if device == "cuda:0":
-                data, target = data.to(device), target.to(device)
+            data, target = data.to(device), target.to(device)
             data = data.view(-1, 28 * 28)
             net_out = self(data)
             # sum up batch loss
             test_loss += criterion(net_out, target).data.item()
             pred = net_out.data.max(1)[1]  # get the index of the max log-probability
-            correct += pred.eq(target.data).sum().item()
+            batch_labels = pred.eq(target.data)
+            correct_labels = np.append(correct_labels, batch_labels)
+            class_labels = np.append(class_labels, target.data)
+            for i_label in range(len(target)):
+                label = target[i_label].item()
+                correct_class[label] += batch_labels[i_label].item()
+            correct += batch_labels.sum()
         test_loss /= len(testloader.dataset)
         print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(test_loss, correct,
                                                                                      len(testloader.dataset),
-                                                                                     100. * correct / len(
+                                                                                     100. * correct.item() / len(
                                                                                          testloader.dataset)))
-        accuracy = 100. * correct / len(testloader.dataset)
-        return accuracy
+        acc = 100. * correct.item() / len(testloader.dataset)
+        # calculate class_acc
+        acc_class = np.zeros(10)
+        for i_label in range(10):
+            num = (testloader.dataset.test_labels.numpy() == i_label).sum()
+            acc_class[i_label] = correct_class[i_label] / num
+        return acc, correct_labels, acc_class, class_labels
     
     def calcHeatmapFromFile(self, epochWeights, newNodeStruct):
         drawFully = False
@@ -163,16 +180,16 @@ def mlp_ablation(network, ko_layers, ko_units):
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
-    acc_full, labels, acc_class_full, _ = net.test_net(criterion, testloader, device)
+    acc_full, labels_full, acc_class_full, class_labels = net.test_net(criterion, testloader, device)
 
     for i_layer, i_unit in zip(ko_layers, ko_units):
         print("knockout layer {0}, unit {1}".format(i_layer, i_unit))
         n_inputs = layers[i_layer - 1] if i_layer != 0 else 784
         net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
         net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
-    acc, _, acc_class , _ = net.test_net(criterion, testloader, device)
+    acc, labels_ablated, acc_class , _ = net.test_net(criterion, testloader, device)
 
-    return acc_full, acc_class_full, acc, acc_class
+    return acc_full, acc_class_full, acc, acc_class, labels_full, labels_ablated, class_labels
 
 
 # def mlpContinue():

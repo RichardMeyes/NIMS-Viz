@@ -167,16 +167,19 @@ def ablationTest():
     layers = params['layer']
     units = params['unit']
 
-    acc_full, acc_class_full, acc, acc_class = MLP.mlp_ablation(network, layers, units)
+    acc_full, acc_class_full, acc, acc_class, labels_full, labels_ablated, class_labels = MLP.mlp_ablation(network, layers, units)
 
     result = {"labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+              "class labels": class_labels.tolist(),
               "trained": {"averaged accuracy": acc_full,
-                          "class specific accuracy": acc_class_full.tolist()},
+                          "class specific accuracy": acc_class_full.tolist(),
+                          "color labels": labels_full.tolist()},
               "ablated": {"averaged accuracy": acc,
-                          "class specific accuracy": acc_class.tolist()}}
+                          "class specific accuracy": acc_class.tolist(),
+                          "color labels": labels_ablated.tolist()}}
 
     # DUMMY FOR TEST
-    results = {
+    result = {
       "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
       "values1": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
       "values2": [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0]
