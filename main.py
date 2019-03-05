@@ -158,46 +158,31 @@ def indexFolders():
     return json.dumps({'result':validFiles})
 
 
-@app.route("/detachNodes", methods=["POST", "OPTIONS"])
-@cross_origin()
-def detachNodes():
-    params = request.get_json()
-    # print('params')
-    # print(params)
-
-    network = params['network']
-    layer = params['layer']
-    unit = params['unit']
-
-    acc = MLP.mlp_ablation(network, layer, unit)
-
-    return json.dumps(acc)
-
-
-@app.route("/reattachNodes", methods=["POST", "OPTIONS"])
-@cross_origin()
-def reattachNodes():
-    params = request.get_json()
-    # print('params')
-    # print(params)
-
-    network = params['network']
-    layer = params['layer']
-    unit = params['unit']
-
-    return ''
-
-
-@app.route("/ablationTest", methods=["GET"])
+@app.route("/ablationTest", methods=["POST", "OPTIONS"])
 @cross_origin()
 def ablationTest():
+    params = request.get_json()
+
+    network = params['network']
+    layers = params['layer']
+    units = params['unit']
+
+    acc_full, acc_class_full, acc, acc_class = MLP.mlp_ablation(network, layers, units)
+
+    result = {"labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+              "trained": {"averaged accuracy": acc_full,
+                          "class specific accuracy": acc_class_full.tolist()},
+              "ablated": {"averaged accuracy": acc,
+                          "class specific accuracy": acc_class.tolist()}}
+
+    # DUMMY FOR TEST
     results = {
       "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
       "values1": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
       "values2": [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0]
     }
 
-    return json.dumps(results)
+    return json.dumps(result)
 
 
 @socketio.on('mlp')
