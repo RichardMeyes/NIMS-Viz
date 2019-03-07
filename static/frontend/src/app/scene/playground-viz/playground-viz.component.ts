@@ -153,8 +153,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     const currEpoch = Object.keys(this.inputWeights)[0];
 
     Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
-      if (layer !== 'input' && layer !== 'output') {
-
+      if (layer !== 'input') {
         this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
           destination.forEach((source, sourceIndex) => {
             if (sourceIndex === 0) {

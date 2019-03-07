@@ -70,7 +70,7 @@ class Net(nn.Module):
             weights = self.h0.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
             temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
-            for i_layer in range(len(self.layers)):
+            for i_layer in range(len(self.layers)-1):
                 layer = self.__getattr__("h{0}".format(i_layer+1))
                 weights = layer.weight.data.numpy().tolist()
                 self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
@@ -173,7 +173,7 @@ def mlp_ablation(network, ko_layers, ko_units):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     layers = network.split('_')[-1]
 
-    net = Net(layers)
+    net = Net(layers, 0)
     net.load_state_dict(torch.load("../nets/MNIST_MLP_{0}_trained.pt".format(layers)))
     net.eval()
     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
