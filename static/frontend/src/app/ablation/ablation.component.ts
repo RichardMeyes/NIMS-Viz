@@ -40,7 +40,8 @@ export class AblationComponent implements OnInit, OnDestroy {
   }
 
   testNetwork() {
-    const network = this.selectedFile.split('\\')[1].split('.')[0].replace('[', '(').replace(']', ')');
+    const network = this.selectedFile.split('\\')[1]
+      .split('.')[0];
     console.log(network);
     console.log(this.selectedFile);
 

@@ -97,7 +97,7 @@ class Net(nn.Module):
             json.dump(self.weights_dict, f)
 
         # save trained net
-        torch.save(self.state_dict(), '../data/models/MLP_{0}.pt'.format(self.layers))
+        torch.save(self.state_dict(), 'static/data/models/MLP_{0}_trained.pt'.format(self.layers))
 
     def test_net(self, criterion, testloader, device):
         # test the net
@@ -174,7 +174,7 @@ def mlp_ablation(network, ko_layers, ko_units):
     layers = network.split('_')[-1]
 
     net = Net(layers, 0)
-    net.load_state_dict(torch.load("../nets/MNIST_MLP_{0}_trained.pt".format(layers)))
+    net.load_state_dict(torch.load("static/data/models/MLP_{0}_trained.pt".format(layers)))
     net.eval()
     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
 
