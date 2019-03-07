@@ -163,20 +163,20 @@ def indexFolders():
 def ablationTest():
     params = request.get_json()
 
-    network = params['network']
-    layers = params['layer']
-    units = params['unit']
+    # network = params['network']
+    # layers = params['layer']
+    # units = params['unit']
 
-    acc_full, acc_class_full, acc, acc_class, labels_full, labels_ablated, class_labels = MLP.mlp_ablation(network, layers, units)
+    # acc_full, acc_class_full, acc, acc_class, labels_full, labels_ablated, class_labels = MLP.mlp_ablation(network, layers, units)
 
-    result = {"labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-              "class labels": class_labels.tolist(),
-              "trained": {"averaged accuracy": acc_full,
-                          "class specific accuracy": acc_class_full.tolist(),
-                          "color labels": labels_full.tolist()},
-              "ablated": {"averaged accuracy": acc,
-                          "class specific accuracy": acc_class.tolist(),
-                          "color labels": labels_ablated.tolist()}}
+    # result = {"labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    #           "class labels": class_labels.tolist(),
+    #           "trained": {"averaged accuracy": acc_full,
+    #                       "class specific accuracy": acc_class_full.tolist(),
+    #                       "color labels": labels_full.tolist()},
+    #           "ablated": {"averaged accuracy": acc,
+    #                       "class specific accuracy": acc_class.tolist(),
+    #                       "color labels": labels_ablated.tolist()}}
 
     # DUMMY FOR TEST
     result = {

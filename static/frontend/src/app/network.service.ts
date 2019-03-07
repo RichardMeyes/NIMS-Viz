@@ -120,20 +120,8 @@ export class NetworkService {
       'Something bad happened; please try again later.');
   }
 
-  public detachNodes(selectedNodes) {
-    return this.http.post('/detachNodes', selectedNodes, httpOptions)
-      .pipe(catchError(this.handleError))
-      .subscribe();
-  }
-
-  public reattachNodes(selectedNodes) {
-    return this.http.post('/reattachNodes', selectedNodes, httpOptions)
-      .pipe(catchError(this.handleError))
-      .subscribe();
-  }
-
   public ablationTest() {
-    return this.http.get('/ablationTest')
+    return this.http.post('/ablationTest', {}, httpOptions)
       .pipe(catchError(this.handleError));
   }
 }

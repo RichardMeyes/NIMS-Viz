@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, EventEmitter, SimpleChanges, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Subject } from 'rxjs';
@@ -51,6 +51,7 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
+    this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
     this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
     this.draw();
@@ -313,9 +314,15 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
     if (this.router.url.includes('ablation')) {
+      enterCircles.on('click', function (d) {
+        d3.select('.context-menu').remove();
+        self.conMenuSelected = d;
+
+        if (!d.isOutput) { self.modifyNodes(); }
+      });
+
       enterCircles.on('contextmenu', function (d) {
         d3.select('.context-menu').remove();
-
         self.conMenuSelected = d;
 
         if (!d.isOutput) {
@@ -514,22 +521,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       .on('mouseout', function () {
         d3.select(this).select('rect').style('fill', self.conMenuConfig.fill);
       })
-      .on('click', function (d) {
-        if (d === 'detach node') {
-          self.detachedNodes.push(self.conMenuSelected);
-          self.networkService.detachNodes(self.conMenuSelected);
-        } else if (d === 'reattach node') {
-          for (let i = 0; i < self.detachedNodes.length; i++) {
-            if (self.detachedNodes[i].layer === self.conMenuSelected.layer && self.detachedNodes[i].unit === self.conMenuSelected.unit) {
-              self.detachedNodes.splice(i, 1);
-              break;
-            }
-          }
-          self.networkService.reattachNodes(self.conMenuSelected);
-        }
-
-        self.setupWeights();
-        self.bindWeights(false);
+      .on('click', function () {
+        self.modifyNodes();
       });
 
 
@@ -562,6 +555,25 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       })
       .attr('dy', this.conMenuConfig.height)
       .attr('fill', this.conMenuConfig.color);
+  }
+
+  modifyNodes() {
+    if (this.detachedNodes.length === 0) {
+      this.detachedNodes.push(this.conMenuSelected);
+    } else {
+      for (let i = 0; i < this.detachedNodes.length; i++) {
+        if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
+          this.detachedNodes.splice(i, 1);
+          break;
+        } else if (i === this.detachedNodes.length - 1) {
+          this.detachedNodes.push(this.conMenuSelected);
+          break;
+        }
+      }
+    }
+
+    this.setupWeights();
+    this.bindWeights(false);
   }
 
   ngOnDestroy() {
