@@ -171,7 +171,9 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
 def mlp_ablation(network, ko_layers, ko_units):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    layers = network.split('_')[-1]
+    # layers = network.split('_')[-1]
+    layers = network[3:]
+    print(layers)
 
     net = Net(layers, 0)
     net.load_state_dict(torch.load("static/data/models/MLP_{0}_trained.pt".format(layers)))
