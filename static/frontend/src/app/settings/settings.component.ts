@@ -209,6 +209,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   visualize() {
+    this.dataService.selectedFile.next(this.selectedFile);
     this.dataService.vizWeights.next(null);
 
     const nextEpochConfig = new EpochConfig();
@@ -229,10 +230,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       epochToVisualize = 0;
     }
 
-    if (this.router.url.includes('ablation')) {
-      this.dataService.plotAccuracies.next(true);
-    }
-
     this.playgroundService.visualize(this.selectedFile, epochToVisualize)
       .pipe(take(1))
       .subscribe(val => {
@@ -248,7 +245,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
 
-    this.dataService.selectedFile.next(this.selectedFile);
+    if (this.router.url.includes('ablation')) {
+      this.dataService.plotAccuracies.next(true);
+    }
   }
 
   resetOptions() {
@@ -307,3 +306,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.destroyed.next();
   }
 }
+
+
+
+

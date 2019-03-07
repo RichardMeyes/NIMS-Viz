@@ -1,2 +1,6 @@
 <app-playground-viz [inputTopology]="vizTopology" [inputWeights]="vizWeights"></app-playground-viz>
 <app-accuracy-plot></app-accuracy-plot>
+
+<div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="selectedFile" class="test-network">
+    <button mat-raised-button (click)="testNetwork()">Test Network</button>
+</div>

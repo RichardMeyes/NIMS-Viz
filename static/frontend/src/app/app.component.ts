@@ -58,6 +58,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.playgroundData.next(new Playground());
     this.dataService.selectedFile.next(null);
     this.dataService.optionData.next(new Option(null, new HeatmapConfig(), false));
+
+    this.dataService.plotAccuracies.next(false);
   }
 
   ngOnDestroy(): void {

@@ -17,8 +17,10 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, layers):
+    def __init__(self, layers, num_epochs):
         self.layers = layers
+        self.num_epochs = num_epochs
+        self.weights_dict = dict()
 
         # create Net
         super(Net, self).__init__()
@@ -65,7 +67,7 @@ class Net(nn.Module):
 
             # store weights after each epoch
             temp_epoch_dict = dict()
-            weights = self.input.weight.data.numpy().tolist()
+            weights = self.h0.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
             temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
             for i_layer in range(len(self.layers)):

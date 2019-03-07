@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { DataService } from '../services/data.service';
+import { NetworkService } from '../network.service';
 
 
 @Component({
@@ -15,11 +16,13 @@ export class AblationComponent implements OnInit, OnDestroy {
 
   vizTopology: any;
   vizWeights: any;
+  selectedFile: any;
 
   destroyed = new Subject<void>();
 
   constructor(
-    private dataService: DataService
+    private dataService: DataService,
+    private networkService: NetworkService
   ) { }
 
   ngOnInit() {
@@ -30,6 +33,28 @@ export class AblationComponent implements OnInit, OnDestroy {
     this.dataService.vizWeights
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.vizWeights = val; });
+
+    this.dataService.selectedFile
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.selectedFile = val; });
+  }
+
+  testNetwork() {
+    const network = this.selectedFile.split('\\')[1].split('.')[0].replace('[', '(').replace(']', ')');
+    console.log(network);
+    console.log(this.selectedFile);
+
+    const body = {
+      network: network,
+      layers: [1],
+      units: [2]
+    };
+
+    console.log(body);
+
+    this.networkService.ablationTest(body)
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { console.log(val); });
   }
 
   public ngOnDestroy() {

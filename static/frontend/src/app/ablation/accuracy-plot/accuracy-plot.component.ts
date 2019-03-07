@@ -28,28 +28,28 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
-          this.networkService.ablationTest()
-            .pipe(take(1))
-            .subscribe((anotherVal: any) => {
-              this.barChartData = {
-                labels: anotherVal.labels,
-                datasets: [{
-                  label: 'Value 1',
-                  backgroundColor: 'rgba(205, 92, 92, .5)',
-                  borderColor: 'rgba(205, 92, 92, 1)',
-                  borderWidth: 1,
-                  data: anotherVal.values1
-                }, {
-                  label: 'Value 2',
-                  backgroundColor: 'rgba(70, 130, 180, .5)',
-                  borderColor: 'rgba(70, 130, 180, 1)',
-                  borderWidth: 1,
-                  data: anotherVal.values2
-                }]
-              };
+          // this.networkService.ablationTest()
+          //   .pipe(take(1))
+          //   .subscribe((anotherVal: any) => {
+          //     this.barChartData = {
+          //       labels: anotherVal.labels,
+          //       datasets: [{
+          //         label: 'Value 1',
+          //         backgroundColor: 'rgba(205, 92, 92, .5)',
+          //         borderColor: 'rgba(205, 92, 92, 1)',
+          //         borderWidth: 1,
+          //         data: anotherVal.values1
+          //       }, {
+          //         label: 'Value 2',
+          //         backgroundColor: 'rgba(70, 130, 180, .5)',
+          //         borderColor: 'rgba(70, 130, 180, 1)',
+          //         borderWidth: 1,
+          //         data: anotherVal.values2
+          //       }]
+          //     };
 
-              this.plotAccuracies();
-            });
+          //     this.plotAccuracies();
+          //   });
         }
       });
   }
