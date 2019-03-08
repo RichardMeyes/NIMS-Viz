@@ -1,6 +1,7 @@
 """
 
 """
+import ast
 import json
 import torch
 import numpy as np
@@ -93,7 +94,7 @@ class Net(nn.Module):
             print('emitted data')
 
         #save weights
-        with open("static/data/weights/MLP{0}.json".format(self.layers), "w") as f:
+        with open("static/data/weights/MLP_{0}.json".format(self.layers), "w") as f:
             json.dump(self.weights_dict, f)
 
         # save trained net
@@ -171,11 +172,11 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
 def mlp_ablation(network, ko_layers, ko_units):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # layers = network.split('_')[-1]
-    layers = network[3:]
-    print(layers)
+    layers = network.split('_')[-1]
+    layers = ast.literal_eval(layers)
 
     net = Net(layers, 0)
+    net.to(device)
     net.load_state_dict(torch.load("static/data/models/MLP_{0}_trained.pt".format(layers)))
     net.eval()
     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
