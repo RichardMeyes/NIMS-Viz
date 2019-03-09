@@ -244,10 +244,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.dataService.vizTopology.next({ 'layers': layers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
-
-    if (this.router.url.includes('ablation')) {
-      this.dataService.plotAccuracies.next(true);
-    }
   }
 
   resetOptions() {

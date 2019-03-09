@@ -24,6 +24,13 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.dataService.selectedFile
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        if (val) { this.getFullTest(val); }
+      });
+
+
     this.dataService.plotAccuracies
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
@@ -54,6 +61,43 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
       });
   }
 
+  getFullTest(selectedFile) {
+    const network = selectedFile.split('\\')[1]
+      .split('.')[0];
+
+    const body = {
+      network: network,
+      layers: [],
+      units: []
+    };
+
+    this.networkService.ablationTest(body)
+      .pipe(take(1))
+      .subscribe((val: any) => {
+        val['class specific accuracy'].unshift(0);
+        val['class specific accuracy'] = val['class specific accuracy'].map(acc => acc * 100);
+
+        this.barChartData = {
+          labels: val.labels,
+          datasets: [{
+            label: 'Full Network',
+            backgroundColor: 'rgba(205, 92, 92, .5)',
+            borderColor: 'rgba(205, 92, 92, 1)',
+            borderWidth: 1,
+            data: val['class specific accuracy']
+          }, {
+            label: 'Ablated Network',
+            backgroundColor: 'rgba(70, 130, 180, .5)',
+            borderColor: 'rgba(70, 130, 180, 1)',
+            borderWidth: 1,
+            data: []
+          }]
+        };
+
+        this.plotAccuracies();
+      });
+  }
+
   plotAccuracies() {
     this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
       type: 'bar',
@@ -65,7 +109,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         },
         title: {
           display: true,
-          text: 'Test Results'
+          text: 'Accuracy Test Results'
         },
         scales: {
           xAxes: [{

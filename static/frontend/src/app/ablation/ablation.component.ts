@@ -36,7 +36,9 @@ export class AblationComponent implements OnInit, OnDestroy {
 
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.selectedFile = val; });
+      .subscribe(val => {
+        if (val) { this.selectedFile = val; }
+      });
   }
 
   testNetwork() {
@@ -45,8 +47,8 @@ export class AblationComponent implements OnInit, OnDestroy {
 
     const body = {
       network: network,
-      layers: [1],
-      units: [2]
+      layers: [],
+      units: []
     };
 
     console.log(body);

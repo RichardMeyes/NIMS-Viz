@@ -185,16 +185,15 @@ def mlp_ablation(network, ko_layers, ko_units):
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
-    acc_full, labels_full, acc_class_full, class_labels = net.test_net(criterion, testloader, device)
 
     for i_layer, i_unit in zip(ko_layers, ko_units):
         print("knockout layer {0}, unit {1}".format(i_layer, i_unit))
         n_inputs = layers[i_layer - 1] if i_layer != 0 else 784
         net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
         net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
-    acc, labels_ablated, acc_class , _ = net.test_net(criterion, testloader, device)
+    acc, correct_labels, acc_class, class_labels = net.test_net(criterion, testloader, device)
 
-    return acc_full, acc_class_full, acc, acc_class, labels_full, labels_ablated, class_labels
+    return acc, correct_labels, acc_class, class_labels
 
 
 # def mlpContinue():
