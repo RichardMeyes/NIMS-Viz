@@ -1,8 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Chart } from 'chart.js';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+import { DataService } from 'src/app/services/data.service';
 import { NetworkService } from 'src/app/network.service';
 
 @Component({
@@ -13,18 +15,53 @@ import { NetworkService } from 'src/app/network.service';
 export class TSNEPlotComponent implements OnInit, OnDestroy {
   destroyed = new Subject<void>();
 
+  @ViewChild('canvas') canvas;
+  chart; scatterChartData;
+
+  tSNECoor;
+  testResult;
+
   constructor(
+    private dataService: DataService,
     private networkService: NetworkService
   ) { }
 
   ngOnInit() {
     this.networkService.getTSNECoordinate()
       .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { if (val) { this.tSNECoor = val; } });
+
+    this.dataService.testResult
+      .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
-          console.log(val);
+          this.scatterChartData = {
+            datasets: [{
+              label: 'Correctly Classified',
+              backgroundColor: 'rgba(66, 66, 66, .5)',
+              borderColor: 'rgba(66, 66, 66, 1)',
+              data: this.tSNECoor.map(coor => {
+                return { x: coor[0], y: coor[1] };
+              })
+            }]
+          };
+
+          this.plotCoor();
         }
       });
+  }
+
+  plotCoor() {
+    this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
+      type: 'scatter',
+      data: this.scatterChartData,
+      // options: {
+      //   title: {
+      //     display: true,
+      //     text: ''
+      //   }
+      // }
+    });
   }
 
   ngOnDestroy() {

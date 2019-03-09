@@ -23,7 +23,7 @@ export class DataService {
 
   detachedNodes: BehaviorSubject<any>;
   testNetwork: BehaviorSubject<boolean>;
-  fullTestResult:BehaviorSubject<any>;
+  testResult: BehaviorSubject<any>;
 
   activeSceneTab: BehaviorSubject<number>;
 
@@ -57,8 +57,9 @@ export class DataService {
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);
 
-    this.testNetwork = new BehaviorSubject(false);
     this.detachedNodes = new BehaviorSubject(undefined);
+    this.testNetwork = new BehaviorSubject(false);
+    this.testResult = new BehaviorSubject(null);
 
     this.activeSceneTab = new BehaviorSubject(0);
 

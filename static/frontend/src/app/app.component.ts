@@ -60,6 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.optionData.next(new Option(null, new HeatmapConfig(), false));
 
     this.dataService.testNetwork.next(false);
+    this.dataService.testResult.next(null);
   }
 
   ngOnDestroy(): void {

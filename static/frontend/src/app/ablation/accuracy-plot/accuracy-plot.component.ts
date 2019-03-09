@@ -94,6 +94,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         }
 
         this.plotAccuracies(isFull);
+        this.dataService.testResult.next(val);
       });
   }
 
