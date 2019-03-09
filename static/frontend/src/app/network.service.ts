@@ -130,4 +130,9 @@ export class NetworkService {
     return this.http.post('/ablationTest', body, httpOptions)
       .pipe(catchError(this.handleError));
   }
+
+  public getTSNECoordinate() {
+    return this.http.get('/getTSNECoordinate')
+      .pipe(catchError(this.handleError));
+  }
 }

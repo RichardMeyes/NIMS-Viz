@@ -23,6 +23,7 @@ export class DataService {
 
   detachedNodes: BehaviorSubject<any>;
   testNetwork: BehaviorSubject<boolean>;
+  fullTestResult:BehaviorSubject<any>;
 
   activeSceneTab: BehaviorSubject<number>;
 

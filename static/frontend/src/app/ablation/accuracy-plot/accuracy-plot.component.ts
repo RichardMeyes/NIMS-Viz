@@ -92,7 +92,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             });
           }
         }
-        console.log(this.barChartData);
+
         this.plotAccuracies(isFull);
       });
   }

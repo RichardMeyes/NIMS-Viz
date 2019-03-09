@@ -26,6 +26,7 @@ import { BuilderComponent } from './builder/builder.component';
 import { ArchiveComponent } from './archive/archive.component';
 import { AblationComponent } from './ablation/ablation.component';
 import { AccuracyPlotComponent } from './ablation/accuracy-plot/accuracy-plot.component';
+import { TSNEPlotComponent } from './ablation/t-sne-plot/t-sne-plot.component';
 
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
@@ -46,6 +47,7 @@ import { AccuracyPlotComponent } from './ablation/accuracy-plot/accuracy-plot.co
     ArchiveComponent,
     AblationComponent,
     AccuracyPlotComponent,
+    TSNEPlotComponent,
     SettingsComponent,
     OrdinalPipe
   ],
