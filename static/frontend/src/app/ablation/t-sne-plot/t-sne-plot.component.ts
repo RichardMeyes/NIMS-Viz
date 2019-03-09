@@ -35,15 +35,35 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
+          const coloredCoor = [[], []];
+
+          val['color labels'].forEach((element, elementIndex) => {
+            if (element === 1) {
+              coloredCoor[0].push(this.tSNECoor[elementIndex]);
+            } else {
+              coloredCoor[1].push(this.tSNECoor[elementIndex]);
+            }
+          });
+
           this.scatterChartData = {
-            datasets: [{
-              label: 'Correctly Classified',
-              backgroundColor: 'rgba(66, 66, 66, .5)',
-              borderColor: 'rgba(66, 66, 66, 1)',
-              data: this.tSNECoor.map(coor => {
-                return { x: coor[0], y: coor[1] };
-              })
-            }]
+            datasets: [
+              {
+                label: 'Correctly Classified',
+                backgroundColor: 'rgba(66, 66, 66, .5)',
+                borderColor: 'rgba(66, 66, 66, 1)',
+                data: coloredCoor[0].map(coor => {
+                  return { x: coor[0], y: coor[1] };
+                })
+              },
+              {
+                label: 'Incorrectly Classified',
+                backgroundColor: 'rgba(205, 92, 92, .5)',
+                borderColor: 'rgba(205, 92, 92, 1)',
+                data: coloredCoor[1].map(coor => {
+                  return { x: coor[0], y: coor[1] };
+                })
+              }
+            ]
           };
 
           this.plotCoor();
@@ -52,16 +72,22 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
   }
 
   plotCoor() {
-    this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
-      type: 'scatter',
-      data: this.scatterChartData,
-      // options: {
-      //   title: {
-      //     display: true,
-      //     text: ''
-      //   }
-      // }
-    });
+    if (!this.chart) {
+      this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
+        type: 'scatter',
+        data: this.scatterChartData,
+        options: {
+          responsive: true,
+          title: {
+            display: true,
+            text: 'tSNE Visualization'
+          }
+        }
+      });
+    } else {
+      this.chart.data = this.scatterChartData;
+      this.chart.update();
+    }
   }
 
   ngOnDestroy() {

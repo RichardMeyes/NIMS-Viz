@@ -1,6 +1,8 @@
 <app-playground-viz [inputTopology]="vizTopology" [inputWeights]="vizWeights"></app-playground-viz>
-<app-accuracy-plot></app-accuracy-plot>
-<app-t-sne-plot></app-t-sne-plot>
+<div class="right-chart">
+    <app-accuracy-plot></app-accuracy-plot>
+    <app-t-sne-plot></app-t-sne-plot>
+</div>
 
 <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showTestNetwork" class="test-network">
     <button mat-raised-button (click)="testNetwork()">Test Network</button>

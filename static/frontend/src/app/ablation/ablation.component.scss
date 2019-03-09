@@ -4,3 +4,12 @@
     width: 50vw;
     z-index: 10;
 }
+
+.right-chart {
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    width: 50vw;
+    height: calc(100vh - 64px);
+}

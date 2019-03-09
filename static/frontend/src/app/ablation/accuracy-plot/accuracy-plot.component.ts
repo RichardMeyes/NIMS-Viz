@@ -59,8 +59,8 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
     this.networkService.ablationTest(network, layers, units)
       .pipe(take(1))
       .subscribe((val: any) => {
-        val['class specific accuracy'].unshift(0);
         val['class specific accuracy'] = val['class specific accuracy'].map(acc => acc * 100);
+        val['class specific accuracy'].unshift(val['averaged accuracy']);
 
         if (isFull) {
           this.barChartData = {

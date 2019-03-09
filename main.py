@@ -8,6 +8,7 @@ import os
 import json
 import shutil
 import subprocess
+import pickle
 
 import static.backend.utility as utility
 import static.backend.MLP as MLP
@@ -177,13 +178,6 @@ def ablationTest():
         "color labels": correct_labels.tolist()
     }
 
-    # DUMMY FOR TEST
-    # result = {
-    #   "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-    #   "values1": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-    #   "values2": [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0]
-    # }
-
     return json.dumps(result)
 
 
@@ -201,6 +195,12 @@ def mlpSocketIO(params):
     net, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
     print('final json send')
 
+
+@app.route("/getTSNECoordinate", methods=["GET"])
+@cross_origin()
+def getTSNECoordinate():
+    result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
+    return json.dumps(result.tolist())
 
 @socketio.on_error_default  # handles all namespaces without an explicit error handler
 def default_error_handler(e):
