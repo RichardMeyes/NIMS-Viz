@@ -59,7 +59,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.selectedFile.next(null);
     this.dataService.optionData.next(new Option(null, new HeatmapConfig(), false));
 
-    this.dataService.plotAccuracies.next(false);
+    this.dataService.testNetwork.next(false);
   }
 
   ngOnDestroy(): void {

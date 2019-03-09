@@ -21,7 +21,8 @@ export class DataService {
   vizTopology: BehaviorSubject<any>;
   vizWeights: BehaviorSubject<any>;
 
-  plotAccuracies: BehaviorSubject<boolean>;
+  detachedNodes: BehaviorSubject<any>;
+  testNetwork: BehaviorSubject<boolean>;
 
   activeSceneTab: BehaviorSubject<number>;
 
@@ -55,7 +56,8 @@ export class DataService {
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);
 
-    this.plotAccuracies = new BehaviorSubject(false);
+    this.testNetwork = new BehaviorSubject(false);
+    this.detachedNodes = new BehaviorSubject(undefined);
 
     this.activeSceneTab = new BehaviorSubject(0);
 

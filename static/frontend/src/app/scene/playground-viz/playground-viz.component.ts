@@ -85,7 +85,9 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
-      .subscribe(() => { this.detachedNodes = []; });
+      .subscribe(val => {
+        if (val) { this.detachedNodes = []; }
+      });
 
     this.defaultSettings = {
       nodeRadius: 10,
@@ -94,6 +96,12 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
       nodeStroke: 0,
       duration: 500
     };
+
+    this.dataService.testNetwork
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        if (val) { this.dataService.detachedNodes.next(this.detachedNodes); }
+      });
   }
 
   draw() {

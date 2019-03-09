@@ -120,7 +120,13 @@ export class NetworkService {
       'Something bad happened; please try again later.');
   }
 
-  public ablationTest(body) {
+  public ablationTest(network, layers, units) {
+    const body = {
+      network: network,
+      layers: layers,
+      units: units
+    };
+
     return this.http.post('/ablationTest', body, httpOptions)
       .pipe(catchError(this.handleError));
   }
