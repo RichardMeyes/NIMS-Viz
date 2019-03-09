@@ -92,40 +92,44 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             });
           }
         }
-
-        this.plotAccuracies();
+        console.log(this.barChartData);
+        this.plotAccuracies(isFull);
       });
   }
 
-  plotAccuracies() {
-    this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
-      type: 'bar',
-      data: this.barChartData,
-      options: {
-        responsive: true,
-        legend: {
-          position: 'top',
-        },
-        title: {
-          display: true,
-          text: 'Accuracy Test Results'
-        },
-        scales: {
-          xAxes: [{
-            scaleLabel: {
-              display: true,
-              labelString: 'Class Label'
-            }
-          }],
-          yAxes: [{
-            scaleLabel: {
-              display: true,
-              labelString: 'Accuracy [%]'
-            }
-          }]
+  plotAccuracies(isFull) {
+    if (isFull) {
+      this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
+        type: 'bar',
+        data: this.barChartData,
+        options: {
+          responsive: true,
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: true,
+            text: 'Accuracy Test Results'
+          },
+          scales: {
+            xAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: 'Class Label'
+              }
+            }],
+            yAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: 'Accuracy [%]'
+              }
+            }]
+          }
         }
-      }
-    });
+      });
+    } else {
+      this.chart.update();
+    }
   }
 
   ngOnDestroy() {
