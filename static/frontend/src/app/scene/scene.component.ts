@@ -52,7 +52,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   heatmapCanvasNormalTexture; heatmapCanvasNodeTexture;
 
   vizTopology: any;
-  vizWeights: any;
 
   epochCounter: number; resetCounter;
   epochSliderConfig;
@@ -113,10 +112,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.vizTopology
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.vizTopology = val; });
-
-    this.dataService.vizWeights
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.vizWeights = val; });
 
     this.dataService.createHeatmap
       .pipe(takeUntil(this.destroyed))
