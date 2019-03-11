@@ -12,9 +12,6 @@ import { DataService } from '../services/data.service';
   styleUrls: ['./ablation.component.scss']
 })
 export class AblationComponent implements OnInit, OnDestroy {
-
-  vizTopology: any;
-  vizWeights: any;
   selectedFile: any;
 
   showTestNetwork: boolean;
@@ -28,14 +25,9 @@ export class AblationComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.showTestNetwork = false;
 
-    this.dataService.vizTopology
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.vizTopology = val; });
-
     this.dataService.vizWeights
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
-        this.vizWeights = val;
         if (val) { this.showTestNetwork = true; }
       });
 

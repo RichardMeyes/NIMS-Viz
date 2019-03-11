@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, ViewChild, HostListener, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Subject } from 'rxjs';
@@ -14,7 +14,7 @@ import { NetworkService } from 'src/app/network.service';
   templateUrl: './playground-viz.component.html',
   styleUrls: ['./playground-viz.component.scss']
 })
-export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
+export class PlaygroundVizComponent implements OnInit, OnDestroy {
   toolbarHeight; tabsHeight;
   minWidthHeight;
 
@@ -35,8 +35,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
   defaultSettings;
 
   @ViewChild('container') container;
-  @Input() inputTopology;
-  @Input() inputWeights;
+  inputTopology;
+  inputWeights;
 
   destroyed = new Subject<void>();
 
@@ -59,11 +59,8 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private dataService: DataService,
-    private networkService: NetworkService,
     private router: Router
   ) { }
-
-  ngOnChanges() { this.draw(); }
 
   ngOnInit() {
     this.dataService.toolbarHeight
@@ -82,6 +79,20 @@ export class PlaygroundVizComponent implements OnInit, OnChanges, OnDestroy {
     this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
     this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
     this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
+
+    this.dataService.vizTopology
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        this.inputTopology = val;
+        this.draw();
+      });
+
+    this.dataService.vizWeights
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        this.inputWeights = val;
+        this.draw();
+      });
 
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
