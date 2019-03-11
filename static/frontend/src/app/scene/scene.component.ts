@@ -327,14 +327,17 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isPlaying = !this.isPlaying;
 
     if (this.isPlaying) {
-      this.animationIntervals.push(setInterval(() => {
+      const runAnimation = () => {
         if (this.epochSliderConfig.epochValue < this.epochSliderConfig.epochRange[1]) {
           this.epochSliderConfig.epochValue++;
         } else {
           this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[0];
         }
         this.createHeatmap();
-      }, 3.5 * 500 * (this.vizTopology.layers.length + 1) + 150));
+      };
+      runAnimation();
+
+      this.animationIntervals.push(setInterval(runAnimation, 3.5 * 500 * (this.vizTopology.layers.length + 1) + 150));
     } else {
       this.animationIntervals.forEach(animationInterval => {
         clearInterval(animationInterval);
