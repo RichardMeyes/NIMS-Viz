@@ -94,11 +94,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         this.draw();
       });
 
-    this.dataService.selectedFile
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (val) { this.detachedNodes = []; }
-      });
+    this.detachedNodes = [];
+    if (this.router.url.includes('ablation')) {
+      this.dataService.selectedFile
+        .pipe(takeUntil(this.destroyed))
+        .subscribe(val => {
+          if (val) { this.detachedNodes = []; }
+        });
+    }
 
     this.defaultSettings = {
       nodeRadius: 10,
