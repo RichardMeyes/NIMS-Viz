@@ -24,6 +24,7 @@ export class DataService {
 
   detachedNodes: BehaviorSubject<any>;
   testNetwork: BehaviorSubject<boolean>;
+  resetNetwork: BehaviorSubject<boolean>;
   testResult: BehaviorSubject<any>;
 
   activeSceneTab: BehaviorSubject<number>;
@@ -61,6 +62,7 @@ export class DataService {
 
     this.detachedNodes = new BehaviorSubject(undefined);
     this.testNetwork = new BehaviorSubject(false);
+    this.resetNetwork = new BehaviorSubject(false);
     this.testResult = new BehaviorSubject(null);
 
     this.activeSceneTab = new BehaviorSubject(0);

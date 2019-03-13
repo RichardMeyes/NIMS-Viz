@@ -42,6 +42,10 @@ export class AblationComponent implements OnInit, OnDestroy {
     this.dataService.testNetwork.next(true);
   }
 
+  resetNetwork() {
+    this.dataService.resetNetwork.next(true);
+  }
+
   public ngOnDestroy() {
     this.destroyed.next();
   }

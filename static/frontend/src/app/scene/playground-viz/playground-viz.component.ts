@@ -40,7 +40,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   destroyed = new Subject<void>();
 
   @HostListener('window:resize', ['$event'])
-  onResize(event) { this.draw(); }
+  onResize(event) { this.draw(false); }
 
   constructor(
     private dataService: DataService,
@@ -56,14 +56,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         this.inputTopology = val;
-        this.draw();
+        this.draw(true);
       });
 
     this.dataService.vizWeights
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         this.inputWeights = val;
-        this.draw();
+        this.draw(true);
       });
 
     this.detachedNodes = [];
@@ -88,9 +88,18 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .subscribe(val => {
         if (val) { this.dataService.detachedNodes.next(this.detachedNodes); }
       });
+
+    this.dataService.resetNetwork
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        if (val) {
+          this.detachedNodes = [];
+          this.draw(false);
+        }
+      });
   }
 
-  draw() {
+  draw(runAnimation) {
     if (this.defaultSettings) {
       this.activities = [];
 
@@ -103,7 +112,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
       if (this.inputTopology && this.inputWeights) {
         this.setupWeights();
-        this.bindWeights(true);
+        this.bindWeights(runAnimation);
       }
     }
   }
