@@ -33,6 +33,11 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
           this.selectedFile = val;
           this.accTest(true, this.selectedFile, [], []);
         }
+
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
       });
 
     this.dataService.detachedNodes

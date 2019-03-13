@@ -210,6 +210,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   visualize() {
     this.dataService.selectedFile.next(this.selectedFile);
+    this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
 
     const nextEpochConfig = new EpochConfig();

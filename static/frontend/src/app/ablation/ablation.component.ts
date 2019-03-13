@@ -12,8 +12,7 @@ import { DataService } from '../services/data.service';
   styleUrls: ['./ablation.component.scss']
 })
 export class AblationComponent implements OnInit, OnDestroy {
-  selectedFile: any;
-
+  showSpinner: boolean;
   showTestNetwork: boolean;
 
   destroyed = new Subject<void>();
@@ -24,17 +23,24 @@ export class AblationComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.showTestNetwork = false;
+    this.showSpinner = false;
 
     this.dataService.vizWeights
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
-        if (val) { this.showTestNetwork = true; }
+        if (val) {
+          this.showTestNetwork = true;
+          this.showSpinner = false;
+        }
       });
 
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
-        if (val) { this.selectedFile = val; }
+        if (val) {
+          this.showTestNetwork = false;
+          this.showSpinner = true;
+        }
       });
   }
 

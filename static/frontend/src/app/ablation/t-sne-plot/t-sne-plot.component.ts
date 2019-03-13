@@ -27,6 +27,15 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.dataService.selectedFile
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        if (this.chart) {
+          this.chart.destroy();
+          this.chart = null;
+        }
+      });
+
     this.networkService.getTSNECoordinate()
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { if (val) { this.tSNECoor = val; } });

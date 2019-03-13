@@ -102,15 +102,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   draw(runAnimation) {
     if (this.defaultSettings) {
       this.activities = [];
+      this.resetViz();
 
       if (this.inputTopology) {
-        this.resetViz();
-
         this.setupTopology();
         this.bindTopology();
       }
 
-      if (this.inputTopology && this.inputWeights) {
+      if (this.inputWeights) {
         this.setupWeights();
         this.bindWeights(runAnimation);
       }
