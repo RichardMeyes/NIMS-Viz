@@ -59,6 +59,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.selectedFile.next(null);
     this.dataService.optionData.next(new Option(null, new HeatmapConfig(), false));
 
+    this.dataService.vizTopology.next(null);
+    this.dataService.vizWeights.next(null);
+
     this.dataService.testNetwork.next(false);
     this.dataService.testResult.next(null);
   }

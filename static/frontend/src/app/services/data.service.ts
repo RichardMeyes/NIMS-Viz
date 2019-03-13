@@ -10,6 +10,7 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
 export class DataService {
   toolbarHeight: BehaviorSubject<number>;
   readonly tabsHeight: number;
+  readonly bottomMargin: number;
 
   readonly heatmapNodeConfig;
   createHeatmap: BehaviorSubject<any>;
@@ -32,6 +33,7 @@ export class DataService {
   constructor() {
     this.toolbarHeight = new BehaviorSubject(56);
     this.tabsHeight = 49;
+    this.bottomMargin = 72;
 
     this.heatmapNodeConfig = {
       radius: 4,

@@ -7,7 +7,6 @@ import { takeUntil } from 'rxjs/operators';
 import * as d3 from 'd3';
 
 import { DataService } from 'src/app/services/data.service';
-import { NetworkService } from 'src/app/network.service';
 
 @Component({
   selector: 'app-playground-viz',
@@ -15,7 +14,7 @@ import { NetworkService } from 'src/app/network.service';
   styleUrls: ['./playground-viz.component.scss']
 })
 export class PlaygroundVizComponent implements OnInit, OnDestroy {
-  toolbarHeight; tabsHeight;
+  toolbarHeight;
   minWidthHeight;
 
   zoom; currTransform;
@@ -41,21 +40,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   destroyed = new Subject<void>();
 
   @HostListener('window:resize', ['$event'])
-  onResize(event) {
-    this.svgWidth = window.innerWidth;
-    this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
-
-    if (this.router.url.includes('ablation')) {
-      this.svgWidth = window.innerWidth / 2;
-      this.svgHeight = window.innerHeight - (this.toolbarHeight);
-    }
-
-    this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
-    this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
-    this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
-
-    this.draw();
-  }
+  onResize(event) { this.draw(); }
 
   constructor(
     private dataService: DataService,
@@ -66,19 +51,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.dataService.toolbarHeight
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.toolbarHeight = val; });
-    this.tabsHeight = this.dataService.tabsHeight;
-
-    this.svgWidth = window.innerWidth;
-    this.svgHeight = window.innerHeight - (this.toolbarHeight + this.tabsHeight);
-
-    if (this.router.url.includes('ablation')) {
-      this.svgWidth = window.innerWidth / 2;
-      this.svgHeight = window.innerHeight - (this.toolbarHeight);
-    }
-
-    this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
-    this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
-    this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
     this.dataService.vizTopology
       .pipe(takeUntil(this.destroyed))
@@ -129,7 +101,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         this.bindTopology();
       }
 
-      if (this.inputWeights) {
+      if (this.inputTopology && this.inputWeights) {
         this.setupWeights();
         this.bindWeights(true);
       }
@@ -462,6 +434,20 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   }
 
   resetViz() {
+    this.svgWidth = window.innerWidth;
+    this.svgHeight = window.innerHeight - (this.toolbarHeight + this.dataService.tabsHeight + this.dataService.bottomMargin);
+
+    if (this.router.url.includes('ablation')) {
+      this.svgWidth = window.innerWidth / 2;
+      this.svgHeight = window.innerHeight - (this.toolbarHeight + this.dataService.bottomMargin);
+    }
+
+    this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
+    this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
+    this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
+
+
+
     if (this.svg) { this.svg.remove(); }
     this.svg = d3.select(this.container.nativeElement)
       .append('svg')
