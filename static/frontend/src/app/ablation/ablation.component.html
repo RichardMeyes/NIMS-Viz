@@ -4,8 +4,8 @@
 
 <app-playground-viz></app-playground-viz>
 <div class="right-chart">
-    <app-accuracy-plot></app-accuracy-plot>
-    <app-t-sne-plot></app-t-sne-plot>
+    <app-accuracy-plot (finished)="accFinished=$event; updateSpinner()"></app-accuracy-plot>
+    <app-t-sne-plot (finished)="tSNEFinished=$event; updateSpinner()"></app-t-sne-plot>
 </div>
 
 <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showTestNetwork" class="test-network">

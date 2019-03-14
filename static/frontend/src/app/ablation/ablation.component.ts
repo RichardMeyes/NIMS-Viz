@@ -15,6 +15,9 @@ export class AblationComponent implements OnInit, OnDestroy {
   showSpinner: boolean;
   showTestNetwork: boolean;
 
+  accFinished: boolean;
+  tSNEFinished: boolean;
+
   destroyed = new Subject<void>();
 
   constructor(
@@ -24,15 +27,6 @@ export class AblationComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.showTestNetwork = false;
     this.showSpinner = false;
-
-    this.dataService.vizWeights
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (val) {
-          this.showTestNetwork = true;
-          this.showSpinner = false;
-        }
-      });
 
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
@@ -45,11 +39,22 @@ export class AblationComponent implements OnInit, OnDestroy {
   }
 
   testNetwork() {
+    this.showSpinner = true;
     this.dataService.testNetwork.next(true);
   }
 
   resetNetwork() {
     this.dataService.resetNetwork.next(true);
+  }
+
+  updateSpinner() {
+    if (this.accFinished && this.tSNEFinished) {
+      this.showSpinner = false;
+      this.showTestNetwork = true;
+
+      this.accFinished = false;
+      this.tSNEFinished = false;
+    }
   }
 
   public ngOnDestroy() {

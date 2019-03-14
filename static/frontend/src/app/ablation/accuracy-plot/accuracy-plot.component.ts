@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy, } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, Output, EventEmitter, } from '@angular/core';
 import { Chart } from 'chart.js';
 
 import { Subject } from 'rxjs';
@@ -19,13 +19,16 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   chart; barChartData;
 
   fullNetwork;
-
   selectedFile;
+
+  @Output() finished: EventEmitter<boolean>;
 
   constructor(
     private dataService: DataService,
     private networkService: NetworkService
-  ) { }
+  ) {
+    this.finished = new EventEmitter<boolean>();
+  }
 
   ngOnInit() {
     this.dataService.selectedFile
@@ -143,6 +146,8 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
     } else {
       this.chart.update();
     }
+
+    this.finished.emit(true);
   }
 
   ngOnDestroy() {

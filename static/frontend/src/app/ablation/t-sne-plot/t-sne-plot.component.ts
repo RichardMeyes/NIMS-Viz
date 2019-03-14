@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Output, EventEmitter } from '@angular/core';
 import { Chart } from 'chart.js';
 
 import { Subject } from 'rxjs';
@@ -21,10 +21,14 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
   tSNECoor;
   testResult;
 
+  @Output() finished: EventEmitter<boolean>;
+
   constructor(
     private dataService: DataService,
     private networkService: NetworkService
-  ) { }
+  ) {
+    this.finished = new EventEmitter<boolean>();
+  }
 
   ngOnInit() {
     this.dataService.selectedFile
@@ -97,6 +101,8 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
       this.chart.data = this.scatterChartData;
       this.chart.update();
     }
+
+    this.finished.emit(true);
   }
 
   ngOnDestroy() {
