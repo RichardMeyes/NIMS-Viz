@@ -18,7 +18,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   @ViewChild('canvas') canvas;
   chart; barChartData;
 
-  fullNetwork;
+  fullNetworkData;
   selectedFile;
 
   @Output() finished: EventEmitter<boolean>;
@@ -77,20 +77,22 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         val['class specific accuracy'].unshift(val['averaged accuracy']);
 
         if (isFull) {
-          this.fullNetwork = {
+          this.fullNetworkData = val['class specific accuracy'];
+
+          const fullNetwork = {
             label: 'Full Network',
-            backgroundColor: 'rgba(205, 92, 92, .5)',
-            borderColor: 'rgba(205, 92, 92, 1)',
+            backgroundColor: 'rgba(117, 117, 117, .1)',
+            borderColor: 'rgba(117, 117, 117, 1)',
             borderWidth: 1,
             data: val['class specific accuracy']
           };
 
           this.barChartData = {
             labels: val.labels,
-            datasets: [this.fullNetwork]
+            datasets: [fullNetwork]
           };
         } else {
-          this.barChartData.datasets[0].data = this.fullNetwork.data.map((el, elIndex) =>
+          this.barChartData.datasets[0].data = this.fullNetworkData.map((el, elIndex) =>
             el - val['class specific accuracy'][elIndex]);
 
           const ablatedNetwork = {

@@ -67,8 +67,8 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
             datasets: [
               {
                 label: 'Correctly Classified',
-                backgroundColor: 'rgba(66, 66, 66, .5)',
-                borderColor: 'rgba(66, 66, 66, 1)',
+                backgroundColor: 'rgba(117, 117, 117, .1)',
+                borderColor: 'rgba(117, 117, 117, 1)',
                 data: coloredCoor[0].map(coor => {
                   return { x: coor[0], y: coor[1] };
                 })
