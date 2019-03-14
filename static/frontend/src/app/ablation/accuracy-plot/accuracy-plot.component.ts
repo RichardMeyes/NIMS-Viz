@@ -18,6 +18,8 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   @ViewChild('canvas') canvas;
   chart; barChartData;
 
+  fullNetwork;
+
   selectedFile;
 
   constructor(
@@ -52,7 +54,11 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             units.push(element.unit);
           });
 
-          this.accTest(false, this.selectedFile, layers, units);
+          if (layers.length === 0 && units.length === 0) {
+            this.accTest(true, this.selectedFile, layers, units);
+          } else {
+            this.accTest(false, this.selectedFile, layers, units);
+          }
         }
       });
   }
@@ -68,33 +74,34 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         val['class specific accuracy'].unshift(val['averaged accuracy']);
 
         if (isFull) {
+          this.fullNetwork = {
+            label: 'Full Network',
+            backgroundColor: 'rgba(205, 92, 92, .5)',
+            borderColor: 'rgba(205, 92, 92, 1)',
+            borderWidth: 1,
+            data: val['class specific accuracy']
+          };
+
           this.barChartData = {
             labels: val.labels,
-            datasets: [{
-              label: 'Full Network',
-              backgroundColor: 'rgba(205, 92, 92, .5)',
-              borderColor: 'rgba(205, 92, 92, 1)',
-              borderWidth: 1,
-              data: val['class specific accuracy']
-            }]
+            datasets: [this.fullNetwork]
           };
         } else {
+          this.barChartData.datasets[0].data = this.fullNetwork.data.map((el, elIndex) =>
+            el - val['class specific accuracy'][elIndex]);
+
+          const ablatedNetwork = {
+            label: 'Ablated Network',
+            backgroundColor: 'rgba(70, 130, 180, .5)',
+            borderColor: 'rgba(70, 130, 180, 1)',
+            borderWidth: 1,
+            data: val['class specific accuracy']
+          };
+
           if (this.barChartData.datasets[1]) {
-            this.barChartData.datasets[1] = {
-              label: 'Ablated Network',
-              backgroundColor: 'rgba(70, 130, 180, .5)',
-              borderColor: 'rgba(70, 130, 180, 1)',
-              borderWidth: 1,
-              data: val['class specific accuracy']
-            };
+            this.barChartData.datasets[1] = ablatedNetwork;
           } else {
-            this.barChartData.datasets.push({
-              label: 'Ablated Network',
-              backgroundColor: 'rgba(70, 130, 180, .5)',
-              borderColor: 'rgba(70, 130, 180, 1)',
-              borderWidth: 1,
-              data: val['class specific accuracy']
-            });
+            this.barChartData.datasets.push(ablatedNetwork);
           }
         }
 
