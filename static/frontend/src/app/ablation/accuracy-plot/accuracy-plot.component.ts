@@ -140,6 +140,12 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
                 labelString: 'Accuracy [%]'
               }
             }]
+          },
+          tooltips: {
+            callbacks: {
+              label: (tooltipItem, data) =>
+                `${Math.round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] * 100) / 100}%`
+            }
           }
         }
       });

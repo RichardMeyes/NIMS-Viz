@@ -17,6 +17,7 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
 
   @ViewChild('canvas') canvas;
   chart; scatterChartData;
+  classLabels;
 
   tSNECoor;
   testResult;
@@ -49,16 +50,20 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
       .subscribe(val => {
         if (val) {
           const coloredCoor = [[], []];
+          const labels = [[], []];
 
           val['color labels'].forEach((element, elementIndex) => {
             if (element === 1) {
               coloredCoor[0].push(this.tSNECoor[elementIndex]);
+              labels[0].push(val['class labels'][elementIndex]);
             } else {
               coloredCoor[1].push(this.tSNECoor[elementIndex]);
+              labels[1].push(val['class labels'][elementIndex]);
             }
           });
 
           this.scatterChartData = {
+            labels: labels,
             datasets: [
               {
                 label: 'Correctly Classified',
@@ -94,6 +99,11 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
           title: {
             display: true,
             text: 'tSNE Visualization'
+          },
+          tooltips: {
+            callbacks: {
+              label: (tooltipItem, data) => `${data.labels[tooltipItem.datasetIndex][tooltipItem.index]}`
+            }
           }
         }
       });
