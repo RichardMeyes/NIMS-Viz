@@ -31,17 +31,26 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Chart.pluginService.register({
+    //   beforeUpdate: function (chartInstance) {
+    //     for (let i = 1; i < chartInstance.data.datasets.length; i++) {
+    //       chartInstance.data.datasets[i].backgroundColor = chartInstance.data.datasets[i].data.map(function (data) {
+    //         return data < 0 ? 'rgba(70, 130, 180, .25)' : 'rgba(205, 92, 92, .25)';
+    //       });
+
+    //       chartInstance.data.datasets[i].borderColor = chartInstance.data.datasets[i].data.map(function (data) {
+    //         return data < 0 ? 'rgba(70, 130, 180, 1)' : 'rgba(205, 92, 92, 1)';
+    //       });
+    //     }
+    //   }
+    // });
+
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
           this.selectedFile = val;
           this.accTest(true, this.selectedFile, [], []);
-        }
-
-        if (this.chart) {
-          this.chart.destroy();
-          this.chart = null;
         }
       });
 
@@ -97,8 +106,8 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const ablatedNetwork = {
             label: 'Ablated Network',
-            backgroundColor: 'rgba(70, 130, 180, .5)',
-            borderColor: 'rgba(70, 130, 180, 1)',
+            backgroundColor: 'rgba(205, 92, 92, .25)',
+            borderColor: 'rgba(205, 92, 92, 1)',
             borderWidth: 1,
             data: val['class specific accuracy']
           };
@@ -117,6 +126,11 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
   plotAccuracies(isFull) {
     if (isFull) {
+      if (this.chart) {
+        this.chart.destroy();
+        this.chart = null;
+      }
+
       this.chart = new Chart(this.canvas.nativeElement.getContext('2d'), {
         type: 'bar',
         data: this.barChartData,
