@@ -18,7 +18,18 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, layers, num_epochs):
+    def __init__(self, layers, num_epochs, conv_layers, kernel_size, stride,  padding):
+        self.conv_layers = conv_layers
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+
+        for i_layer in range(len(conv_layers)):
+            self.__setattr__("c{0}".format(i_layer+1),
+                             nn.Conv2d(32, 32, self.kernel_size, self.stride, self.padding))
+
+
+
         self.layers = layers
         self.num_epochs = num_epochs
         self.weights_dict = dict()
@@ -38,8 +49,15 @@ class Net(nn.Module):
         self.output = nn.Linear(self.layers[-1], 10)
 
     def forward(self, x):
+        for i_layer in range(len(self.conv_layers)):
+            x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
+            x = F.max_pool2d(self.__getattr__("c{0}".format(i_layer))(x), self.kernel_size, self.stride)
+
+
+
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
+
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         return x
 
