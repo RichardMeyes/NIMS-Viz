@@ -18,7 +18,12 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, layers, num_epochs, conv_layers, kernel_size, stride,  padding):
+    def __init__(self, layers, num_epochs, conv_layers=[], kernel_size=5, stride=1,  padding=2):
+        # create Net
+        super(Net, self).__init__()
+
+
+        # Conv Layers
         self.conv_layers = conv_layers
         self.kernel_size = kernel_size
         self.stride = stride
@@ -26,35 +31,27 @@ class Net(nn.Module):
 
         for i_layer in range(len(conv_layers)):
             self.__setattr__("c{0}".format(i_layer+1),
-                             nn.Conv2d(32, 32, self.kernel_size, self.stride, self.padding))
+                             nn.Conv2d(self.conv_layers[i_layer][0], self.conv_layers[i_layer][1], self.kernel_size, self.stride, self.padding))
 
 
-
+        # FC Layers
         self.layers = layers
         self.num_epochs = num_epochs
         self.weights_dict = dict()
-
-        # create Net
-        super(Net, self).__init__()
-
-        # build input layer
+        
         self.h0 = nn.Linear(28 * 28, self.layers[0])
-
-        # build hidden layers 1, n-1
         for i_layer in range(len(layers)-1):
             self.__setattr__("h{0}".format(i_layer+1),
                              nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
-
-        # build output layer
         self.output = nn.Linear(self.layers[-1], 10)
 
     def forward(self, x):
+        x = x.view(-1, 1, 28, 28)
         for i_layer in range(len(self.conv_layers)):
             x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
-            x = F.max_pool2d(self.__getattr__("c{0}".format(i_layer))(x), self.kernel_size, self.stride)
+            x = F.max_pool2d(x, self.kernel_size, self.stride)
 
-
-
+        x = x.view(x.size(0), -1)
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
 
