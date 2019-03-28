@@ -20,7 +20,7 @@ import 'three/examples/js/controls/OrbitControls';
 
 // import { BrainComponent } from './brain/brain.component';
 import { update } from '@tensorflow/tfjs-layers/dist/variables';
-import { Playground, TfjsLayer } from '../models/playground.model';
+import { Playground } from '../models/playground.model';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { HeatmapConfig } from '../models/heatmap-config.model';
 import { isPlatformBrowser } from '@angular/common';

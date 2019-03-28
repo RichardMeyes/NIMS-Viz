@@ -1,28 +1,35 @@
 export class Playground {
+    sources: SelectForm[];
+    selectedSource: number;
+
     batchSizeTest: number;
     batchSizeTrain: number;
     numBatches: number;
     epoch: number;
 
-    layers: TfjsLayer[];
+    fcLayers: number[];
+    fcLayerCount: number;
 
     learningRates: SelectForm[];
     activation: SelectForm[];
     selectedLearningRates: number;
 
-    layerCount: number;
+    convLayerCount: number;
+
 
     constructor() {
+        this.sources = [
+            new SelectForm('MNIST', 'MNIST')
+        ];
+        this.selectedSource = 0;
+
         this.batchSizeTest = 64;
         this.batchSizeTrain = 64;
         this.numBatches = 150;
         this.epoch = 5;
 
-        this.layers = [
-            new TfjsLayer(20, 'relu'),
-            new TfjsLayer(15, 'relu'),
-            new TfjsLayer(10, 'relu')
-        ];
+        this.fcLayers = [20, 15, 10];
+        this.fcLayerCount = this.fcLayers.length;
 
         this.learningRates = [
             new SelectForm('0.000001', '0.000001'),
@@ -42,8 +49,6 @@ export class Playground {
             new SelectForm('softmax', 'Softmax')
         ];
         this.selectedLearningRates = 0;
-
-        this.layerCount = this.layers.length;
     }
 }
 
@@ -51,9 +56,9 @@ class SelectForm {
     constructor(public value: string, private viewValue: string) { }
 }
 
-export class TfjsLayer {
-    constructor(
-        public unitCount: number,
-        public activation: string
-    ) { }
-}
+// export class TfjsLayer {
+//     constructor(
+//         public unitCount: number,
+//         public activation: string
+//     ) { }
+// }

@@ -10,7 +10,7 @@ import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
 import { DataService } from '../services/data.service';
 
-import { Playground, TfjsLayer } from '../models/playground.model';
+import { Playground } from '../models/playground.model';
 import { HeatmapConfig } from '../models/heatmap-config.model';
 import { EpochConfig } from '../models/epoch-config.model';
 import { Option } from '../models/option.model';
@@ -77,44 +77,50 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   createForm() {
     this.playgroundForm = this.fb.group({
+      source: ['', Validators.required],
+
       batchSizeTrain: [0, [Validators.required, Validators.min(0)]],
       batchSizeTest: [0, [Validators.required, Validators.min(0)]],
       epoch: [0, [Validators.required, Validators.min(0)]],
 
+      convLayerCount: [0, [Validators.required, Validators.min(0)]],
+      fcLayerCount: [0, [Validators.required, Validators.min(0)]],
       learning_rate: ['', Validators.required],
-      layerCount: [0, [Validators.required, Validators.min(0)]],
 
       layers: this.fb.array([])
     });
 
     this.playgroundForm.patchValue({
+      source: this.playgroundData.sources[this.playgroundData.selectedSource].value,
+
       batchSizeTrain: this.playgroundData.batchSizeTrain,
       batchSizeTest: this.playgroundData.batchSizeTest,
       epoch: this.playgroundData.epoch,
 
+      convLayerCount: this.playgroundData.convLayerCount,
+      fcLayerCount: this.playgroundData.fcLayerCount,
       learning_rate: this.playgroundData.learningRates[this.playgroundData.selectedLearningRates].value,
-      layerCount: this.playgroundData.layerCount
     });
 
     this.playgroundForm.setControl('layers', this.fb.array(
-      this.playgroundData.layers.map(layer => this.fb.group({
-        unitCount: [layer.unitCount, [Validators.required, Validators.min(1)]]
+      this.playgroundData.fcLayers.map(layer => this.fb.group({
+        unitCount: [layer, [Validators.required, Validators.min(1)]]
       }))
     ));
   }
 
   layerCountChange() {
-    const layerCountControl = this.playgroundForm.get('layerCount');
+    const layerCountControl = this.playgroundForm.get('fcLayerCount');
     layerCountControl.valueChanges.pipe(debounceTime(500)).forEach(
       () => {
-        if (+this.playgroundForm.get('layerCount').value > this.layers.controls.length) {
-          for (let i = this.layers.controls.length; i < +this.playgroundForm.get('layerCount').value; i++) {
+        if (+this.playgroundForm.get('fcLayerCount').value > this.layers.controls.length) {
+          for (let i = this.layers.controls.length; i < +this.playgroundForm.get('fcLayerCount').value; i++) {
             this.layers.push(this.fb.group({
               unitCount: [1, [Validators.required, Validators.min(1)]]
             }));
           }
         } else {
-          for (let i = this.layers.controls.length; i > +this.playgroundForm.get('layerCount').value; i--) {
+          for (let i = this.layers.controls.length; i > +this.playgroundForm.get('fcLayerCount').value; i--) {
             this.layers.removeAt(i - 1);
           }
         }
@@ -124,38 +130,39 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   delLayer(i: number) {
     this.layers.removeAt(i);
-    this.playgroundForm.get('layerCount').setValue(this.layers.length);
+    this.playgroundForm.get('fcLayerCount').setValue(this.layers.length);
   }
 
   trainNetwork() {
     const captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
+    console.log(captureForm);
 
-    const objToSend = {
-      learning_rate: +captureForm.learning_rate,
-      batch_size_train: +captureForm.batchSizeTrain,
-      batch_size_test: +captureForm.batchSizeTest,
-      num_epochs: +captureForm.epoch,
-      layers: []
-    };
-    this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
-    this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
-    this.playgroundData.epoch = +captureForm.epoch;
-    this.playgroundData.layerCount = +captureForm.layerCount;
-    this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
-      learningRate => learningRate.value === captureForm.learning_rate
-    );
-    this.playgroundData.layers = [];
+    // const objToSend = {
+    //   learning_rate: +captureForm.learning_rate,
+    //   batch_size_train: +captureForm.batchSizeTrain,
+    //   batch_size_test: +captureForm.batchSizeTest,
+    //   num_epochs: +captureForm.epoch,
+    //   layers: []
+    // };
+    // this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
+    // this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
+    // this.playgroundData.epoch = +captureForm.epoch;
+    // this.playgroundData.fcLayerCount = +captureForm.fcLayerCount;
+    // this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
+    //   learningRate => learningRate.value === captureForm.learning_rate
+    // );
+    // this.playgroundData.layers = [];
 
-    captureForm.layers.forEach(layer => {
-      objToSend.layers.push(layer.unitCount);
-      this.playgroundData.layers.push(new TfjsLayer(layer.unitCount, 'relu'));
-    });
+    // captureForm.layers.forEach(layer => {
+    //   objToSend.layers.push(layer.unitCount);
+    //   this.playgroundData.layers.push(new TfjsLayer(layer.unitCount, 'relu'));
+    // });
 
-    this.dataService.vizTopology.next(this.playgroundForm.value);
-    this.dataService.vizWeights.next(null);
-    this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
+    // this.dataService.vizTopology.next(this.playgroundForm.value);
+    // this.dataService.vizWeights.next(null);
+    // this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
-    this.dataService.playgroundData.next(this.playgroundData);
+    // this.dataService.playgroundData.next(this.playgroundData);
   }
 
   reset() {
@@ -303,7 +310,3 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.destroyed.next();
   }
 }
-
-
-
-

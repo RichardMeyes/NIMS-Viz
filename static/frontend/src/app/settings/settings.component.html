@@ -1,10 +1,25 @@
 <mat-dialog-content>
   <mat-tab-group (selectedTabChange)="tabChanged($event)">
-    <mat-tab label="Source">
+    <mat-tab label="Configurations">
       <div *ngIf="router.url.includes('builder')">
         <form [formGroup]="playgroundForm" fxLayout="row wrap">
           <div style="margin-top: 0.5rem;">
-            <strong>Mnist Data</strong>
+            <strong>Source</strong>
+          </div>
+          <div fxFlex="grow"></div>
+          <div>
+            <mat-form-field>
+              <mat-label>Source</mat-label>
+              <mat-select formControlName="source">
+                <mat-option *ngFor="let source of playgroundData.sources" [value]="source.value">
+                  {{source.viewValue}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div fxFlex="grow"></div>
+          <div style="margin-top: 0.5rem;">
+            <strong>{{ playgroundForm.value.source }} Configurations</strong>
           </div>
           <div fxFlex="grow"></div>
           <div>
@@ -25,10 +40,14 @@
           <div fxFlex="grow"></div>
           <div>
             <mat-form-field>
-              <input matInput placeholder="Number of Layers" type="number" min="0" formControlName="layerCount">
+              <input matInput placeholder="Number of Convolutional Layers" type="number" min="0"
+                formControlName="convLayerCount">
             </mat-form-field>
             <mat-form-field>
-              <input matInput placeholder="Learning Rate (Notations: 0.01 or 1e-2" type="text" formControlName="learning_rate"
+              <input matInput placeholder="Number of FC Layers" type="number" min="0" formControlName="fcLayerCount">
+            </mat-form-field>
+            <mat-form-field>
+              <input matInput placeholder="Learning Rate" type="text" formControlName="learning_rate"
                 [matAutocomplete]="auto">
               <mat-autocomplete #auto="matAutocomplete">
                 <mat-option *ngFor="let option of playgroundData.learningRates" [value]="option.value">
@@ -38,6 +57,23 @@
             </mat-form-field>
           </div>
           <div fxFlex="grow"></div>
+          <strong>Convolutional Layers</strong>
+          <div formArrayName="layers" fxLayout="row wrap">
+            <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
+              <div style="margin-top: 0.5rem;">
+                <strong> {{ i+1 | ordinal }} Layer</strong>
+              </div>
+              <div class="layers">
+                <mat-form-field>
+                  <input matInput placeholder="Number of Units" type="number" min="1" formControlName="unitCount">
+                </mat-form-field>
+                <button mat-icon-button (click)="delLayer(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          <strong>Fully Connected Layers</strong>
           <div formArrayName="layers" fxLayout="row wrap">
             <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
               <div style="margin-top: 0.5rem;">
@@ -85,43 +121,47 @@
           </div>
           <div fxLayout="row" fxLayoutAlign="start center">
             <div class="form-field">Minimum Opacity:</div>
-            <nouislider [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity"></nouislider>
+            <nouislider [min]="0.01" [max]="1.0" [step]="0.01" [(ngModel)]="heatmapNormalConfig.minOpacity">
+            </nouislider>
             <div>{{ heatmapNormalConfig.minOpacity }}</div>
           </div>
           <div fxLayout="row" fxLayoutAlign="start center">
             <label class="form-field">Color 1:</label>
-            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'2'" [selectedColor]="heatmapNormalConfig.color1"
-              (change)="heatmapNormalConfig.color1=$event;" (selected)="heatmapNormalConfig.color1=$event;" fxFlex="10">
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'2'"
+              [selectedColor]="heatmapNormalConfig.color1" (change)="heatmapNormalConfig.color1=$event;"
+              (selected)="heatmapNormalConfig.color1=$event;" fxFlex="10">
               <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="5">
               </mcc-color-picker-collection>
             </mcc-color-picker>
             <div class="form-field">Trigger:</div>
-            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-              [(ngModel)]="heatmapNormalConfig.color1Trigger"></nouislider>
+            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax"
+              [step]="0.01" [(ngModel)]="heatmapNormalConfig.color1Trigger"></nouislider>
             <div>{{(heatmapNormalConfig.color1Trigger)}}</div>
           </div>
           <div fxLayout="row" fxLayoutAlign="start center">
             <label class="form-field">Color 2:</label>
-            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color2"
-              (change)="heatmapNormalConfig.color2=$event;" (selected)="heatmapNormalConfig.color2=$event;" fxFlex="10">
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'"
+              [selectedColor]="heatmapNormalConfig.color2" (change)="heatmapNormalConfig.color2=$event;"
+              (selected)="heatmapNormalConfig.color2=$event;" fxFlex="10">
               <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
               </mcc-color-picker-collection>
             </mcc-color-picker>
             <div class="form-field">Trigger:</div>
-            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-              [(ngModel)]="heatmapNormalConfig.color2Trigger"></nouislider>
+            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax"
+              [step]="0.01" [(ngModel)]="heatmapNormalConfig.color2Trigger"></nouislider>
             <div>{{(heatmapNormalConfig.color2Trigger)}}</div>
           </div>
           <div fxLayout="row" fxLayoutAlign="start center">
             <label class="form-field">Color 3:</label>
-            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'" [selectedColor]="heatmapNormalConfig.color3"
-              (change)="heatmapNormalConfig.color3=$event;" (selected)="heatmapNormalConfig.color3=$event;" fxFlex="10">
+            <mcc-color-picker [usedColorLabel]="'My Colors'" [usedSizeColors]="'7'"
+              [selectedColor]="heatmapNormalConfig.color3" (change)="heatmapNormalConfig.color3=$event;"
+              (selected)="heatmapNormalConfig.color3=$event;" fxFlex="10">
               <mcc-color-picker-collection [label]="'First Collection'" [colors]="colors" [size]="16">
               </mcc-color-picker-collection>
             </mcc-color-picker>
             <div class="form-field">Trigger:</div>
-            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax" [step]="0.01"
-              [(ngModel)]="heatmapNormalConfig.color3Trigger"></nouislider>
+            <nouislider [min]="heatmapNormalConfig.weightValueMin" [max]="heatmapNormalConfig.weightValueMax"
+              [step]="0.01" [(ngModel)]="heatmapNormalConfig.color3Trigger"></nouislider>
             <div>{{(heatmapNormalConfig.color3Trigger)}}</div>
 
           </div>
@@ -141,11 +181,12 @@
 <mat-dialog-actions>
   <div *ngIf="activeSettingsTab == 0">
     <button mat-button (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
-    <button mat-button (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid" *ngIf="router.url.includes('builder')"
-      mat-dialog-close>
+    <button mat-button (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid"
+      *ngIf="router.url.includes('builder')" mat-dialog-close>
       Train Network
     </button>
-    <button mat-button (click)="visualize()" *ngIf="router.url.includes('archive') || router.url.includes('ablation')" mat-dialog-close>Visualize
+    <button mat-button (click)="visualize()" *ngIf="router.url.includes('archive') || router.url.includes('ablation')"
+      mat-dialog-close>Visualize
     </button>
   </div>
   <div *ngIf="activeSettingsTab == 1">
