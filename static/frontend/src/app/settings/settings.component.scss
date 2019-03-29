@@ -1,15 +1,19 @@
 mat-dialog-content {
     min-width: 320px;
-    max-width: 710px;
+    max-width: 1230px;
 }
 
 mat-form-field, .form-field {
-    margin-right: 16px;
+    margin-right: 1rem;
 }
 
 .layers {
     margin-right: 1rem;
-    mat-form-field { margin-right: 0; }
+    // mat-form-field { margin-right: 0; }
+}
+
+.del-button {
+    margin-left: -1rem;
 }
 
 mcc-color-picker {

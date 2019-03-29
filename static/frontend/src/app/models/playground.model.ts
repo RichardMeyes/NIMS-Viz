@@ -7,14 +7,15 @@ export class Playground {
     numBatches: number;
     epoch: number;
 
+    convLayers: ConvLayer[];
+    convLayerCount: number;
+
     fcLayers: number[];
     fcLayerCount: number;
 
     learningRates: SelectForm[];
     activation: SelectForm[];
     selectedLearningRates: number;
-
-    convLayerCount: number;
 
 
     constructor() {
@@ -27,6 +28,13 @@ export class Playground {
         this.batchSizeTrain = 64;
         this.numBatches = 150;
         this.epoch = 5;
+
+        this.convLayers = [
+            new ConvLayer(1, 32, 5, 1, 2),
+            new ConvLayer(32, 32, 5, 1, 2),
+            new ConvLayer(32, 64, 5, 1, 2)
+        ];
+        this.convLayerCount = this.convLayers.length;
 
         this.fcLayers = [20, 15, 10];
         this.fcLayerCount = this.fcLayers.length;
@@ -54,6 +62,16 @@ export class Playground {
 
 class SelectForm {
     constructor(public value: string, private viewValue: string) { }
+}
+
+export class ConvLayer {
+    constructor(
+        public inChannel: number,
+        public outChannel: number,
+        public kernelSize: number,
+        public stride: number,
+        public padding: number
+    ) { }
 }
 
 // export class TfjsLayer {

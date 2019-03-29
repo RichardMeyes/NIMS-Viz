@@ -310,15 +310,15 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.playgroundService.visualize(this.selectedFile, (this.epochSliderConfig.epochValue - 1))
       .pipe(take(1))
       .subscribe(val => {
-        let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
+        let fcLayers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
           .replace(/\s/g, '')
           .split(',')
           .map(layer => +layer);
         const currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
 
-        layers = layers.map(unitCount => { return { 'unitCount': unitCount }; });
+        fcLayers = fcLayers.map(unitCount => { return { 'unitCount': unitCount }; });
 
-        this.dataService.vizTopology.next({ 'layers': layers });
+        this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
   }
@@ -337,7 +337,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       };
       runAnimation();
 
-      this.animationIntervals.push(setInterval(runAnimation, 3.5 * 500 * (this.vizTopology.layers.length + 1) + 150));
+      this.animationIntervals.push(setInterval(runAnimation, 3.5 * 500 * (this.vizTopology.fcLayers.length + 1) + 150));
     } else {
       this.animationIntervals.forEach(animationInterval => {
         clearInterval(animationInterval);

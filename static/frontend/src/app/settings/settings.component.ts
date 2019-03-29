@@ -10,7 +10,7 @@ import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
 import { DataService } from '../services/data.service';
 
-import { Playground } from '../models/playground.model';
+import { Playground, ConvLayer } from '../models/playground.model';
 import { HeatmapConfig } from '../models/heatmap-config.model';
 import { EpochConfig } from '../models/epoch-config.model';
 import { Option } from '../models/option.model';
@@ -43,8 +43,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     private dataService: DataService
   ) { }
 
-  get layers(): FormArray {
-    return this.playgroundForm.get('layers') as FormArray;
+  get convLayers(): FormArray {
+    return this.playgroundForm.get('convLayers') as FormArray;
+  }
+  get fcLayers(): FormArray {
+    return this.playgroundForm.get('fcLayers') as FormArray;
   }
 
   ngOnInit() {
@@ -83,11 +86,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       batchSizeTest: [0, [Validators.required, Validators.min(0)]],
       epoch: [0, [Validators.required, Validators.min(0)]],
 
+      convLayers: this.fb.array([]),
       convLayerCount: [0, [Validators.required, Validators.min(0)]],
-      fcLayerCount: [0, [Validators.required, Validators.min(0)]],
-      learning_rate: ['', Validators.required],
 
-      layers: this.fb.array([])
+      fcLayers: this.fb.array([]),
+      fcLayerCount: [0, [Validators.required, Validators.min(0)]],
+
+      learning_rate: ['', Validators.required]
     });
 
     this.playgroundForm.patchValue({
@@ -102,7 +107,17 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       learning_rate: this.playgroundData.learningRates[this.playgroundData.selectedLearningRates].value,
     });
 
-    this.playgroundForm.setControl('layers', this.fb.array(
+
+    this.playgroundForm.setControl('convLayers', this.fb.array(
+      this.playgroundData.convLayers.map((layer: ConvLayer) => this.fb.group({
+        inChannel: [layer.inChannel, [Validators.required, Validators.min(1)]],
+        outChannel: [layer.outChannel, [Validators.required, Validators.min(1)]],
+        kernelSize: [layer.kernelSize, [Validators.required, Validators.min(1)]],
+        stride: [layer.stride, [Validators.required, Validators.min(1)]],
+        padding: [layer.padding, [Validators.required, Validators.min(1)]]
+      }))
+    ));
+    this.playgroundForm.setControl('fcLayers', this.fb.array(
       this.playgroundData.fcLayers.map(layer => this.fb.group({
         unitCount: [layer, [Validators.required, Validators.min(1)]]
       }))
@@ -110,59 +125,88 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   layerCountChange() {
-    const layerCountControl = this.playgroundForm.get('fcLayerCount');
-    layerCountControl.valueChanges.pipe(debounceTime(500)).forEach(
+    const convLayerCount = this.playgroundForm.get('convLayerCount');
+    convLayerCount.valueChanges.pipe(debounceTime(500)).forEach(
       () => {
-        if (+this.playgroundForm.get('fcLayerCount').value > this.layers.controls.length) {
-          for (let i = this.layers.controls.length; i < +this.playgroundForm.get('fcLayerCount').value; i++) {
-            this.layers.push(this.fb.group({
+        if (+convLayerCount.value > this.convLayers.controls.length) {
+          for (let i = this.convLayers.controls.length; i < +convLayerCount.value; i++) {
+            this.convLayers.push(this.fb.group({
+              inChannel: [1, [Validators.required, Validators.min(1)]],
+              outChannel: [1, [Validators.required, Validators.min(1)]],
+              kernelSize: [5, [Validators.required, Validators.min(1)]],
+              stride: [1, [Validators.required, Validators.min(1)]],
+              padding: [2, [Validators.required, Validators.min(1)]]
+            }));
+          }
+        } else {
+          for (let i = this.convLayers.controls.length; i > +convLayerCount.value; i--) {
+            this.convLayers.removeAt(i - 1);
+          }
+        }
+      }
+    );
+
+
+    const fcLayerCount = this.playgroundForm.get('fcLayerCount');
+    fcLayerCount.valueChanges.pipe(debounceTime(500)).forEach(
+      () => {
+        if (+fcLayerCount.value > this.fcLayers.controls.length) {
+          for (let i = this.fcLayers.controls.length; i < +fcLayerCount.value; i++) {
+            this.fcLayers.push(this.fb.group({
               unitCount: [1, [Validators.required, Validators.min(1)]]
             }));
           }
         } else {
-          for (let i = this.layers.controls.length; i > +this.playgroundForm.get('fcLayerCount').value; i--) {
-            this.layers.removeAt(i - 1);
+          for (let i = this.fcLayers.controls.length; i > +fcLayerCount.value; i--) {
+            this.fcLayers.removeAt(i - 1);
           }
         }
       }
     );
   }
 
-  delLayer(i: number) {
-    this.layers.removeAt(i);
-    this.playgroundForm.get('fcLayerCount').setValue(this.layers.length);
+  delLayer(i: number, layer: string) {
+    if (layer === 'convLayer') {
+      this.convLayers.removeAt(i);
+      this.playgroundForm.get('convLayerCount').setValue(this.convLayers.length);
+    }
+
+    if (layer === 'fcLayer') {
+      this.fcLayers.removeAt(i);
+      this.playgroundForm.get('fcLayerCount').setValue(this.fcLayers.length);
+    }
   }
 
   trainNetwork() {
     const captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
     console.log(captureForm);
 
-    // const objToSend = {
-    //   learning_rate: +captureForm.learning_rate,
-    //   batch_size_train: +captureForm.batchSizeTrain,
-    //   batch_size_test: +captureForm.batchSizeTest,
-    //   num_epochs: +captureForm.epoch,
-    //   layers: []
-    // };
-    // this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
-    // this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
-    // this.playgroundData.epoch = +captureForm.epoch;
-    // this.playgroundData.fcLayerCount = +captureForm.fcLayerCount;
-    // this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
-    //   learningRate => learningRate.value === captureForm.learning_rate
-    // );
-    // this.playgroundData.layers = [];
+    const objToSend = {
+      learning_rate: +captureForm.learning_rate,
+      batch_size_train: +captureForm.batchSizeTrain,
+      batch_size_test: +captureForm.batchSizeTest,
+      num_epochs: +captureForm.epoch,
+      layers: []
+    };
+    this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
+    this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
+    this.playgroundData.epoch = +captureForm.epoch;
+    this.playgroundData.fcLayerCount = +captureForm.fcLayerCount;
+    this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
+      learningRate => learningRate.value === captureForm.learning_rate
+    );
+    this.playgroundData.fcLayers = [];
 
-    // captureForm.layers.forEach(layer => {
-    //   objToSend.layers.push(layer.unitCount);
-    //   this.playgroundData.layers.push(new TfjsLayer(layer.unitCount, 'relu'));
-    // });
+    captureForm.fcLayers.forEach(layer => {
+      objToSend.layers.push(layer.unitCount);
+      this.playgroundData.fcLayers.push(layer.unitCount);
+    });
 
-    // this.dataService.vizTopology.next(this.playgroundForm.value);
-    // this.dataService.vizWeights.next(null);
-    // this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
+    this.dataService.vizTopology.next(this.playgroundForm.value);
+    this.dataService.vizWeights.next(null);
+    this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
-    // this.dataService.playgroundData.next(this.playgroundData);
+    this.dataService.playgroundData.next(this.playgroundData);
   }
 
   reset() {
@@ -241,15 +285,15 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.playgroundService.visualize(this.selectedFile, epochToVisualize)
       .pipe(take(1))
       .subscribe(val => {
-        let layers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
+        let fcLayers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
           .replace(/\s/g, '')
           .split(',')
           .map(layer => +layer);
         const currEpoch = `epoch_0`;
 
-        layers = layers.map(unitCount => { return { 'unitCount': unitCount }; });
+        fcLayers = fcLayers.map(unitCount => { return { 'unitCount': unitCount }; });
 
-        this.dataService.vizTopology.next({ 'layers': layers });
+        this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
   }

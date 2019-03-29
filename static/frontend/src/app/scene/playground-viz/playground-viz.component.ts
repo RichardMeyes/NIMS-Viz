@@ -117,7 +117,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   }
 
   setupTopology() {
-    const layers: number[] = this.inputTopology.layers.map(layer => +layer.unitCount);
+    const layers: number[] = this.inputTopology.fcLayers.map(layer => +layer.unitCount);
     layers.push(10);
     const filteredTopology = [];
     const filteredEdges = [];

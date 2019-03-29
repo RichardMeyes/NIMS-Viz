@@ -57,25 +57,44 @@
             </mat-form-field>
           </div>
           <div fxFlex="grow"></div>
-          <strong>Convolutional Layers</strong>
-          <div formArrayName="layers" fxLayout="row wrap">
-            <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
+          <div style="margin-top: 0.5rem;">
+            <strong>Convolutional Layers</strong>
+          </div>
+          <div fxFlex="grow"></div>
+          <div formArrayName="convLayers" fxLayout="row wrap">
+            <div *ngFor="let layer of convLayers.controls; let i=index" [formGroupName]="i">
               <div style="margin-top: 0.5rem;">
                 <strong> {{ i+1 | ordinal }} Layer</strong>
               </div>
               <div class="layers">
                 <mat-form-field>
-                  <input matInput placeholder="Number of Units" type="number" min="1" formControlName="unitCount">
+                  <input matInput placeholder="In Channel" type="number" min="1" formControlName="inChannel">
                 </mat-form-field>
-                <button mat-icon-button (click)="delLayer(i)">
+                <mat-form-field>
+                  <input matInput placeholder="Out Channel" type="number" min="1" formControlName="outChannel">
+                </mat-form-field>
+                <mat-form-field>
+                  <input matInput placeholder="Kernel Size" type="number" min="1" formControlName="kernelSize">
+                </mat-form-field>
+                <mat-form-field>
+                  <input matInput placeholder="Stride" type="number" min="1" formControlName="stride">
+                </mat-form-field>
+                <mat-form-field>
+                  <input matInput placeholder="Padding" type="number" min="1" formControlName="padding">
+                </mat-form-field>
+                <button mat-icon-button (click)="delLayer(i, 'convLayer')" class="del-button">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
             </div>
           </div>
-          <strong>Fully Connected Layers</strong>
-          <div formArrayName="layers" fxLayout="row wrap">
-            <div *ngFor="let layer of layers.controls; let i=index" [formGroupName]="i">
+          <div fxFlex="grow"></div>
+          <div style="margin-top: 0.5rem;">
+            <strong>Fully Connected Layers</strong>
+          </div>
+          <div fxFlex="grow"></div>
+          <div formArrayName="fcLayers" fxLayout="row wrap">
+            <div *ngFor="let layer of fcLayers.controls; let i=index" [formGroupName]="i">
               <div style="margin-top: 0.5rem;">
                 <strong> {{ i+1 | ordinal }} Layer</strong>
               </div>
@@ -83,7 +102,7 @@
                 <mat-form-field>
                   <input matInput placeholder="Number of Units" type="number" min="1" formControlName="unitCount">
                 </mat-form-field>
-                <button mat-icon-button (click)="delLayer(i)">
+                <button mat-icon-button (click)="delLayer(i, 'fcLayer')" class="del-button">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
