@@ -69,8 +69,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.playgroundData = val;
           this.createForm();
         });
-
-      setTimeout(() => { this.layerCountChange(); }, 0);
     } else if (this.router.url.includes('archive') || this.router.url.includes('ablation')) {
       this.scanForFiles();
     }
@@ -124,47 +122,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     ));
   }
 
-  layerCountChange() {
-    const convLayerCount = this.playgroundForm.get('convLayerCount');
-    convLayerCount.valueChanges.pipe(debounceTime(500)).forEach(
-      () => {
-        if (+convLayerCount.value > this.convLayers.controls.length) {
-          for (let i = this.convLayers.controls.length; i < +convLayerCount.value; i++) {
-            this.convLayers.push(this.fb.group({
-              inChannel: [1, [Validators.required, Validators.min(1)]],
-              outChannel: [1, [Validators.required, Validators.min(1)]],
-              kernelSize: [5, [Validators.required, Validators.min(1)]],
-              stride: [1, [Validators.required, Validators.min(1)]],
-              padding: [2, [Validators.required, Validators.min(1)]]
-            }));
-          }
-        } else {
-          for (let i = this.convLayers.controls.length; i > +convLayerCount.value; i--) {
-            this.convLayers.removeAt(i - 1);
-          }
-        }
-      }
-    );
-
-
-    const fcLayerCount = this.playgroundForm.get('fcLayerCount');
-    fcLayerCount.valueChanges.pipe(debounceTime(500)).forEach(
-      () => {
-        if (+fcLayerCount.value > this.fcLayers.controls.length) {
-          for (let i = this.fcLayers.controls.length; i < +fcLayerCount.value; i++) {
-            this.fcLayers.push(this.fb.group({
-              unitCount: [1, [Validators.required, Validators.min(1)]]
-            }));
-          }
-        } else {
-          for (let i = this.fcLayers.controls.length; i > +fcLayerCount.value; i--) {
-            this.fcLayers.removeAt(i - 1);
-          }
-        }
-      }
-    );
-  }
-
   delLayer(i: number, layer: string) {
     if (layer === 'convLayer') {
       this.convLayers.removeAt(i);
@@ -173,6 +130,26 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (layer === 'fcLayer') {
       this.fcLayers.removeAt(i);
+      this.playgroundForm.get('fcLayerCount').setValue(this.fcLayers.length);
+    }
+  }
+
+  addLayer(layer: string) {
+    if (layer === 'convLayer') {
+      this.convLayers.push(this.fb.group({
+        inChannel: [1, [Validators.required, Validators.min(1)]],
+        outChannel: [1, [Validators.required, Validators.min(1)]],
+        kernelSize: [5, [Validators.required, Validators.min(1)]],
+        stride: [1, [Validators.required, Validators.min(1)]],
+        padding: [2, [Validators.required, Validators.min(1)]]
+      }));
+      this.playgroundForm.get('convLayerCount').setValue(this.convLayers.length);
+    }
+
+    if (layer === 'fcLayer') {
+      this.fcLayers.push(this.fb.group({
+        unitCount: [1, [Validators.required, Validators.min(1)]]
+      }));
       this.playgroundForm.get('fcLayerCount').setValue(this.fcLayers.length);
     }
   }

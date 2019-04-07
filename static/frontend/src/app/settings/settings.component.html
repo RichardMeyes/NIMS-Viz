@@ -32,20 +32,6 @@
             <mat-form-field>
               <input matInput placeholder="Epoch" type="text" formControlName="epoch">
             </mat-form-field>
-          </div>
-          <div fxFlex="grow"></div>
-          <div style="margin-top: 0.5rem;">
-            <strong>Model</strong>
-          </div>
-          <div fxFlex="grow"></div>
-          <div>
-            <mat-form-field>
-              <input matInput placeholder="Number of Convolutional Layers" type="number" min="0"
-                formControlName="convLayerCount">
-            </mat-form-field>
-            <mat-form-field>
-              <input matInput placeholder="Number of FC Layers" type="number" min="0" formControlName="fcLayerCount">
-            </mat-form-field>
             <mat-form-field>
               <input matInput placeholder="Learning Rate" type="text" formControlName="learning_rate"
                 [matAutocomplete]="auto">
@@ -85,8 +71,19 @@
                 <button mat-icon-button (click)="delLayer(i, 'convLayer')" class="del-button">
                   <mat-icon>delete</mat-icon>
                 </button>
+                <ng-container *ngIf="i === convLayers.length-1">
+                  <button mat-icon-button (click)="addLayer('convLayer')">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </ng-container>
               </div>
             </div>
+
+            <ng-container *ngIf="convLayers.length === 0">
+              <button mat-icon-button (click)="addLayer('convLayer')">
+                <mat-icon>add</mat-icon>
+              </button>
+            </ng-container>
           </div>
           <div fxFlex="grow"></div>
           <div style="margin-top: 0.5rem;">
@@ -105,8 +102,18 @@
                 <button mat-icon-button (click)="delLayer(i, 'fcLayer')" class="del-button">
                   <mat-icon>delete</mat-icon>
                 </button>
+                <ng-container *ngIf="i === fcLayers.length-1">
+                  <button mat-icon-button (click)="addLayer('fcLayer')">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </ng-container>
               </div>
             </div>
+            <ng-container *ngIf="fcLayers.length === 0">
+              <button mat-icon-button (click)="addLayer('fcLayer')">
+                <mat-icon>add</mat-icon>
+              </button>
+            </ng-container>
           </div>
         </form>
       </div>
