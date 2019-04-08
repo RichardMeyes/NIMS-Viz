@@ -120,6 +120,17 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         unitCount: [layer, [Validators.required, Validators.min(1)]]
       }))
     ));
+
+    this.convLayers.controls.forEach((layer, layerIndex) => {
+      const inChannel = layer.get('inChannel');
+      const outChannel = layer.get('outChannel');
+
+      outChannel.valueChanges
+        .pipe(takeUntil(this.destroyed))
+        .subscribe(val => {
+          this.convLayers.controls[layerIndex + 1].get('inChannel').setValue(val);
+        });
+    });
   }
 
   delLayer(i: number, layer: string) {
