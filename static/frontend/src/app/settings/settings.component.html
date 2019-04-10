@@ -53,12 +53,31 @@
                 <strong> {{ i+1 | ordinal }} Layer</strong>
               </div>
               <div class="layers">
-                <mat-form-field>
-                  <input matInput placeholder="In Channel" type="number" min="1" formControlName="inChannel">
-                </mat-form-field>
-                <mat-form-field>
-                  <input matInput placeholder="Out Channel" type="number" min="1" formControlName="outChannel">
-                </mat-form-field>
+
+                <ng-container *ngIf="i === 0">
+                  <mat-form-field>
+                    <input matInput placeholder="In Channel" type="number" min="1" formControlName="inChannel">
+                  </mat-form-field>
+                </ng-container>
+                <ng-container *ngIf="i > 0">
+                  <mat-form-field>
+                    <input matInput placeholder="In Channel" type="number" min="1" formControlName="inChannel"
+                      [value]="commonChannels[i-1]">
+                  </mat-form-field>
+                </ng-container>
+
+                <ng-container *ngIf="i < convLayers.length-1">
+                  <mat-form-field>
+                    <input matInput placeholder="Out Channel" type="number" min="1" formControlName="outChannel"
+                      [value]="commonChannels[i]">
+                  </mat-form-field>
+                </ng-container>
+                <ng-container *ngIf="i === convLayers.length-1">
+                  <mat-form-field>
+                    <input matInput placeholder="Out Channel" type="number" min="1" formControlName="outChannel">
+                  </mat-form-field>
+                </ng-container>
+
                 <mat-form-field>
                   <input matInput placeholder="Kernel Size" type="number" min="1" formControlName="kernelSize">
                 </mat-form-field>
