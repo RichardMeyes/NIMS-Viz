@@ -31,20 +31,6 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Chart.pluginService.register({
-    //   beforeUpdate: function (chartInstance) {
-    //     for (let i = 1; i < chartInstance.data.datasets.length; i++) {
-    //       chartInstance.data.datasets[i].backgroundColor = chartInstance.data.datasets[i].data.map(function (data) {
-    //         return data < 0 ? 'rgba(70, 130, 180, .25)' : 'rgba(205, 92, 92, .25)';
-    //       });
-
-    //       chartInstance.data.datasets[i].borderColor = chartInstance.data.datasets[i].data.map(function (data) {
-    //         return data < 0 ? 'rgba(70, 130, 180, 1)' : 'rgba(205, 92, 92, 1)';
-    //       });
-    //     }
-    //   }
-    // });
-
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
