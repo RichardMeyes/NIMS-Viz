@@ -237,11 +237,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.dataService.vizTopology.next(this.playgroundForm.value);
     this.dataService.vizWeights.next(null);
-    // this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
+    this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
-    // this.dataService.playgroundData.next(this.playgroundData);
+    this.dataService.playgroundData.next(this.playgroundData);
 
-    console.log(this.commonChannels);
+    // console.log(this.commonChannels);
     // console.log(objToSend);
   }
 

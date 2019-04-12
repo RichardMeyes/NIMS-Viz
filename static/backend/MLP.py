@@ -58,6 +58,21 @@ class Net(nn.Module):
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         return x
 
+    def save_weights(self):
+        epoch = 0
+
+        weights = self.h0.weight.data.numpy().tolist()
+        self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
+        for i_layer in range(len(self.layers)-1):
+            layer = self.__getattr__("h{0}".format(i_layer+1))
+            weights = layer.weight.data.numpy().tolist()
+            self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+        weights = self.output.weight.data.numpy().tolist()
+        self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+        
+        with open("static/data/weights/MLP_{0}_untrained.json".format(self.layers), "w") as f:
+            json.dump(self.weights_dict, f)
+
     def train_net(self, device, trainloader, criterion, optimizer):
         log_interval = 10
         newNodeStruct = True
@@ -177,6 +192,8 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size_train, shuffle=True, num_workers=2)
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
+
+    net.save_weights()
 
     net.train_net(device, trainloader, criterion, optimizer)
     acc = net.test_net(device, testloader, criterion)
