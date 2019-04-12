@@ -18,7 +18,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   @ViewChild('canvas') canvas;
   chart; barChartData;
 
-  fullNetworkData;
+  networkResultsData;
   selectedFile;
 
   @Output() finished: EventEmitter<boolean>;
@@ -75,7 +75,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
       });
   }
 
-  accTest(isFull, selectedFile, layers, units) {
+  accTest(isInit, selectedFile, layers, units) {
     const network = selectedFile.split('\\')[1]
       .split('.')[0];
 
@@ -85,47 +85,74 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         val['class specific accuracy'] = val['class specific accuracy'].map(acc => acc * 100);
         val['class specific accuracy'].unshift(val['averaged accuracy']);
 
-        if (isFull) {
-          this.fullNetworkData = val['class specific accuracy'];
+        if (isInit) {
+          this.networkResultsData = val['class specific accuracy'];
 
-          const fullNetwork = {
-            label: 'Full Network',
+          const networkResults = {
+            label: 'Classification Accuracies',
             backgroundColor: 'rgba(117, 117, 117, .1)',
             borderColor: 'rgba(117, 117, 117, 1)',
             borderWidth: 1,
-            data: val['class specific accuracy']
+            data: val['class specific accuracy'],
+            stack: 'results'
           };
 
           this.barChartData = {
             labels: val.labels,
-            datasets: [fullNetwork]
+            datasets: [networkResults]
           };
         } else {
-          this.barChartData.datasets[0].data = this.fullNetworkData.map((el, elIndex) =>
-            el - val['class specific accuracy'][elIndex]);
+          // console.log('From Backend:');
+          // console.log('before ablation:', this.networkResultsData);
+          // console.log('after ablation:', val['class specific accuracy']);
 
-          const ablatedNetwork = {
-            label: 'Ablated Network',
-            backgroundColor: 'rgba(205, 92, 92, .25)',
-            borderColor: 'rgba(205, 92, 92, 1)',
+          this.barChartData.datasets[0].data = val['class specific accuracy'];
+
+          const networkChangesData = [[], []];
+          this.networkResultsData.forEach((result, resultIndex) => {
+            const changes = result - val['class specific accuracy'][resultIndex];
+            if (changes >= 0) {
+              networkChangesData[0].push(changes);
+              networkChangesData[1].push(0);
+            } else {
+              networkChangesData[0].push(0);
+              networkChangesData[1].push(Math.abs(changes));
+            }
+          });
+
+          const networkChangesLoss = {
+            label: 'Accuracy Changes (Loss)',
+            backgroundColor: 'rgba(241, 83, 110, .25)',
+            borderColor: 'rgba(241, 83, 110, 1)',
             borderWidth: 1,
-            data: val['class specific accuracy']
+            data: networkChangesData[0],
+            stack: 'changes'
+          };
+          const networkChangesGain = {
+            label: 'Accuracy Changes (Gain)',
+            backgroundColor: 'rgba(0, 198, 137, .25)',
+            borderColor: 'rgba(0, 198, 137, 1)',
+            borderWidth: 1,
+            data: networkChangesData[1],
+            stack: 'changes'
           };
 
-          if (this.barChartData.datasets[1]) {
-            this.barChartData.datasets[1] = ablatedNetwork;
+          if (this.barChartData.datasets[1] && this.barChartData.datasets[2]) {
+            this.barChartData.datasets[1] = networkChangesGain;
+            this.barChartData.datasets[2] = networkChangesLoss;
           } else {
-            this.barChartData.datasets.push(ablatedNetwork);
+            this.barChartData.datasets.push(networkChangesGain);
+            this.barChartData.datasets.push(networkChangesLoss);
           }
         }
 
-        this.plotAccuracies(isFull);
+        this.plotAccuracies(isInit);
         this.dataService.testResult.next(val);
       });
   }
 
-  plotAccuracies(isFull) {
-    if (isFull) {
+  plotAccuracies(isInit) {
+    if (isInit) {
       if (this.chart) {
         this.chart.destroy();
         this.chart = null;
@@ -148,13 +175,15 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
               scaleLabel: {
                 display: true,
                 labelString: 'Class Label'
-              }
+              },
+              stacked: true
             }],
             yAxes: [{
               scaleLabel: {
                 display: true,
                 labelString: 'Accuracy [%]'
-              }
+              },
+              stacked: true
             }]
           },
           tooltips: {
