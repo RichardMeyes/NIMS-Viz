@@ -299,6 +299,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.selectedFile.next(this.selectedFile);
     this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
+    this.dataService.untrainedWeights.next(null);
 
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
@@ -332,6 +333,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
+
+    if (this.router.url.includes('ablation')) {
+      const untrainedFile = this.selectedFile.replace('.json', '_untrained.json');
+      this.playgroundService.visualize(untrainedFile, 0)
+        .pipe(take(1))
+        .subscribe(val => { this.dataService.untrainedWeights.next(val); });
+    }
   }
 
   resetOptions() {

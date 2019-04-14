@@ -36,6 +36,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   @ViewChild('container') container;
   inputTopology;
   inputWeights;
+  untrainedWeights;
 
   destroyed = new Subject<void>();
 
@@ -73,6 +74,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         .subscribe(val => {
           if (val) { this.detachedNodes = []; }
         });
+
+      this.dataService.untrainedWeights
+        .pipe(takeUntil(this.destroyed))
+        .subscribe(val => { this.untrainedWeights = val; });
     }
 
     this.defaultSettings = {
@@ -536,8 +541,12 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .on('mouseout', function () {
         d3.select(this).select('rect').style('fill', self.conMenuConfig.fill);
       })
-      .on('click', function () {
-        self.modifyNodes();
+      .on('click', function (menu, menuIndex) {
+        if (menuIndex === 0) {
+          self.showWeights();
+        } else if (menuIndex === 1) {
+          self.modifyNodes();
+        }
       });
 
 
@@ -570,6 +579,16 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       })
       .attr('dy', this.conMenuConfig.height)
       .attr('fill', this.conMenuConfig.color);
+  }
+
+  showWeights() {
+    const selectedLayer = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
+
+    console.log('Selected layer:', selectedLayer);
+    console.log('Selected unit:', this.conMenuSelected.unit);
+
+    console.log('Weights before training:', this.untrainedWeights[selectedLayer][this.conMenuSelected.unit]);
+    console.log('Weights after training:', this.inputWeights['epoch_0'][selectedLayer][this.conMenuSelected.unit]);
   }
 
   modifyNodes() {

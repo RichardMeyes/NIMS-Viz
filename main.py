@@ -141,20 +141,21 @@ def indexFolders():
     validFiles = []
     for subdir, dirs, files in os.walk(path):
         for currFile in files:
-            pathName = os.path.join(subdir, currFile)
-            print('Name of File: ' + pathName)
-            # try parsing name , example name: MLP[20, 15, 10].json
-            fileNameValues = []
-            idxStart = currFile.find('[')
-            idxEnd = currFile.find(']')
-            if (idxStart != -1 and idxEnd != -1):
-                fileNameValues = currFile[idxStart+1:idxEnd].split(',')
-                epochMinMax, weightMinMax = utility.getEpochAndWeightLimitsFromFile(pathName)
-            else:
-                continue
+            if not 'untrained' in currFile:
+                pathName = os.path.join(subdir, currFile)
+                print('Name of File: ' + pathName)
+                # try parsing name , example name: MLP[20, 15, 10].json
+                fileNameValues = []
+                idxStart = currFile.find('[')
+                idxEnd = currFile.find(']')
+                if (idxStart != -1 and idxEnd != -1):
+                    fileNameValues = currFile[idxStart+1:idxEnd].split(',')
+                    epochMinMax, weightMinMax = utility.getEpochAndWeightLimitsFromFile(pathName)
+                else:
+                    continue
 
-            indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName, 'epochMinMax':epochMinMax, 'weightMinMax':weightMinMax}
-            validFiles.append(indexedObj)
+                indexedObj = {'fileName': currFile, 'values': fileNameValues, 'pathName': pathName, 'epochMinMax':epochMinMax, 'weightMinMax':weightMinMax}
+                validFiles.append(indexedObj)
     
     return json.dumps({'result':validFiles})
 
