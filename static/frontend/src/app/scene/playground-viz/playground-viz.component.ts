@@ -320,7 +320,21 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
     if (this.router.url.includes('ablation')) {
+
+      enterCircles.on('mouseover', function (d) {
+        self.conMenuSelected = d;
+
+        if (!d.isOutput) {
+          self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
+        }
+      });
+
+      enterCircles.on('mouseout', function (d) {
+        if (!d.isOutput) { d3.selectAll('.weights-comparison').remove(); }
+      });
+
       enterCircles.on('click', function (d) {
+        d3.event.stopPropagation();
         d3.select('.context-menu').remove();
         self.conMenuSelected = d;
 
@@ -336,6 +350,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
           self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
         }
       });
+
     }
 
     if (runAnimation) {
@@ -543,7 +558,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       })
       .on('click', function (menu, menuIndex) {
         if (menuIndex === 0) {
-          self.showWeights();
+          // self.showWeights();
         } else if (menuIndex === 1) {
           self.modifyNodes();
         }
@@ -581,14 +596,18 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('fill', this.conMenuConfig.color);
   }
 
-  showWeights() {
+  showWeights(mouseX, mouseY) {
     const selectedLayer = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
+
+    console.clear();
 
     console.log('Selected layer:', selectedLayer);
     console.log('Selected unit:', this.conMenuSelected.unit);
 
     console.log('Weights before training:', this.untrainedWeights[selectedLayer][this.conMenuSelected.unit]);
     console.log('Weights after training:', this.inputWeights['epoch_0'][selectedLayer][this.conMenuSelected.unit]);
+
+    console.log(d3.interpolateLab('steelblue', 'brown')(0.5));
   }
 
   modifyNodes() {
