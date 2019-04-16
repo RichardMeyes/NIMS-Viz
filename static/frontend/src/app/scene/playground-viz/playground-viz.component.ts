@@ -23,6 +23,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
   conMenuItems; conMenuConfig;
   conMenuSelected;
+  showWeightsConfig;
 
   topology; edges; weights;
   topMargin; leftMargin;
@@ -597,15 +598,122 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   }
 
   showWeights(mouseX, mouseY) {
-    const selectedLayer = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
+    const self = this;
+    const incomingWeights = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
+    const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology.fcLayers.length - 1) ?
+      'output' : `h${this.conMenuSelected.layer + 1}`;
+
+    const outgoingWeightsBefore = [];
+    const outgoingWeightsAfter = [];
+    this.untrainedWeights[outgoingWeights].forEach(element => {
+      outgoingWeightsBefore.push(element[this.conMenuSelected.unit]);
+    });
+    this.inputWeights['epoch_0'][outgoingWeights].forEach(element => {
+      outgoingWeightsAfter.push(element[this.conMenuSelected.unit]);
+    });
+
+    this.showWeightsConfig = {
+      title: {
+        width: 0,
+        height: 0,
+        margin: 2.5,
+        color: '#ffffff'
+      },
+      frame: {
+        margin: 5,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      }
+    };
+
+    this.vizContainer.append('g')
+      .attr('class', 'tmp')
+      .append('text')
+      .text(`Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`)
+      .attr('class', 'tmp')
+      .each(function () {
+        const bbox = this.getBBox();
+        self.showWeightsConfig.title.width = bbox.width;
+        self.showWeightsConfig.title.height = bbox.height;
+      });
+    d3.selectAll('.tmp').remove();
+
+    const weightsComparison = this.vizContainer.append('g')
+      .attr('class', 'weights-comparison');
+
+    weightsComparison.append('rect')
+      .attr('x', (d, i) => {
+        return (mouseX + this.showWeightsConfig.frame.margin) + i * (80);
+        // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        // return mouseY + i * (this.conMenuConfig.height + margin);
+      })
+      .attr('y', mouseY + this.showWeightsConfig.frame.margin)
+      .attr('width', () => {
+        return 150;
+        // const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
+        // return this.conMenuConfig.width + margin;
+      })
+      .attr('height', () => {
+        return 75;
+        // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+        // return this.conMenuConfig.height + margin;
+      })
+      .attr('rx', this.showWeightsConfig.frame.cornerRad)
+      .attr('ry', this.showWeightsConfig.frame.cornerRad)
+      .style('fill', this.showWeightsConfig.frame.fill);
+
+    weightsComparison.append('text')
+      .text(`Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`)
+      .attr('x', mouseX + this.showWeightsConfig.frame.margin + 75 - this.showWeightsConfig.title.width / 2)
+      .attr('y', mouseY + this.showWeightsConfig.frame.margin + this.showWeightsConfig.title.margin + this.showWeightsConfig.title.height)
+      .attr('fill', this.showWeightsConfig.title.color);
+
+
+
+    // const weightsToVisualize = [];
+    // weightsToVisualize.push(this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
+    // weightsToVisualize.push(this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
+
+
+
+
+    // weightsComparison.selectAll('.comparison-item')
+    //   .data(weightsToVisualize)
+    //   .enter()
+    //   .append('g')
+    //   .attr('class', 'comparison-item');
+
+    // weightsComparison.append('rect')
+    //   .attr('x', (d, i) => {
+    //     return (mouseX + 5) + i * (80);
+    //     // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+    //     // return mouseY + i * (this.conMenuConfig.height + margin);
+    //   })
+    //   .attr('y', mouseY + 5)
+    //   .attr('width', () => {
+    //     return 75;
+    //     // const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
+    //     // return this.conMenuConfig.width + margin;
+    //   })
+    //   .attr('height', () => {
+    //     return 75;
+    //     // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
+    //     // return this.conMenuConfig.height + margin;
+    //   })
+    //   .style('fill', 'whitesmoke');
+
 
     console.clear();
 
-    console.log('Selected layer:', selectedLayer);
+    console.log('Selected layer:', this.conMenuSelected.layer);
     console.log('Selected unit:', this.conMenuSelected.unit);
+    console.log('Incoming weights:', incomingWeights);
+    console.log('Outgoing weights:', outgoingWeights);
 
-    console.log('Weights before training:', this.untrainedWeights[selectedLayer][this.conMenuSelected.unit]);
-    console.log('Weights after training:', this.inputWeights['epoch_0'][selectedLayer][this.conMenuSelected.unit]);
+    console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
+    console.log('Incoming Weights after training:', this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
+    console.log('Outgoing Weights before training:', outgoingWeightsBefore);
+    console.log('Outgoing Weights after training:', outgoingWeightsAfter);
 
     console.log(d3.interpolateLab('steelblue', 'brown')(0.5));
   }
