@@ -18,7 +18,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   @ViewChild('canvas') canvas;
   chart; barChartData;
 
-  networkResultsData;
+  networkResultsCorrectData;
   selectedFile;
 
   @Output() finished: EventEmitter<boolean>;
@@ -72,10 +72,10 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         val['class specific accuracy'].unshift(val['averaged accuracy']);
 
         if (isInit) {
-          this.networkResultsData = val['class specific accuracy'];
+          this.networkResultsCorrectData = val['class specific accuracy'];
 
-          const networkResults = {
-            label: 'Classification Accuracies',
+          const networkResultsCorrect = {
+            label: 'Correctly Classified',
             backgroundColor: 'rgba(117, 117, 117, .1)',
             borderColor: 'rgba(117, 117, 117, 1)',
             borderWidth: 1,
@@ -83,9 +83,18 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             stack: 'results'
           };
 
+          const networkResultsMisclassified = {
+            label: 'Misclassified',
+            backgroundColor: 'rgba(253, 160, 6, .1)',
+            borderColor: 'rgba(253, 160, 6, 1)',
+            borderWidth: 1,
+            data: val['class specific accuracy'].map(acc => 100 - acc),
+            stack: 'results'
+          };
+
           this.barChartData = {
             labels: val.labels,
-            datasets: [networkResults]
+            datasets: [networkResultsCorrect, networkResultsMisclassified]
           };
         } else {
           // console.log('From Backend:');
@@ -93,9 +102,10 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
           // console.log('after ablation:', val['class specific accuracy']);
 
           this.barChartData.datasets[0].data = val['class specific accuracy'];
+          this.barChartData.datasets[1].data = val['class specific accuracy'].map(acc => 100 - acc);
 
           const networkChangesData = [[], []];
-          this.networkResultsData.forEach((result, resultIndex) => {
+          this.networkResultsCorrectData.forEach((result, resultIndex) => {
             const changes = result - val['class specific accuracy'][resultIndex];
             if (changes >= 0) {
               networkChangesData[0].push(changes);
@@ -107,7 +117,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
           });
 
           const networkChangesLoss = {
-            label: 'Accuracy Changes (Loss)',
+            label: 'Misclassified After Ablation',
             backgroundColor: 'rgba(241, 83, 110, .25)',
             borderColor: 'rgba(241, 83, 110, 1)',
             borderWidth: 1,
@@ -115,7 +125,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             stack: 'changes'
           };
           const networkChangesGain = {
-            label: 'Accuracy Changes (Gain)',
+            label: 'Correctly Classified After Ablation',
             backgroundColor: 'rgba(0, 198, 137, .25)',
             borderColor: 'rgba(0, 198, 137, 1)',
             borderWidth: 1,
