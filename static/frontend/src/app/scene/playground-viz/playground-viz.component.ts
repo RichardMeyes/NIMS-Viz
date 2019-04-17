@@ -23,7 +23,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
   conMenuItems; conMenuConfig;
   conMenuSelected;
-  showWeightsConfig;
+  showWeightsConfig; showWeightsTexts;
 
   topology; edges; weights;
   topMargin; leftMargin;
@@ -326,6 +326,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         self.conMenuSelected = d;
 
         if (!d.isOutput) {
+          self.setupShowWeights();
           self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
         }
       });
@@ -597,8 +598,62 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('fill', this.conMenuConfig.color);
   }
 
-  showWeights(mouseX, mouseY) {
+  setupShowWeights() {
     const self = this;
+    this.showWeightsTexts = [
+      `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
+      `Incoming Weights`,
+      `Outgoing Weights`
+    ];
+
+    this.showWeightsConfig = {
+      outerFrame: {
+        width: 0,
+        height: 0,
+        margin: 5,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      titles: {
+        margin: 2.5,
+        color: '#ffffff',
+        dimension: []
+      },
+      weightsFrame: {
+        width: 75,
+        height: 75,
+        margin: 15,
+        fill: 'whitesmoke'
+      }
+    };
+
+    this.vizContainer.selectAll('.tmp')
+      .data(this.showWeightsTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('class', 'tmp')
+      .each(function (d, i) {
+        const bbox = this.getBBox();
+        const dimension = {
+          width: bbox.width,
+          height: bbox.height
+        };
+
+        self.showWeightsConfig.titles.dimension[i] = dimension;
+      });
+    d3.selectAll('.tmp').remove();
+
+    this.showWeightsConfig.outerFrame.width = 2 * this.showWeightsConfig.weightsFrame.width +
+      2.75 * this.showWeightsConfig.weightsFrame.margin;
+    this.showWeightsConfig.outerFrame.height =
+      this.showWeightsConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
+      2 * this.showWeightsConfig.titles.dimension.length * this.showWeightsConfig.titles.margin +
+      2 * this.showWeightsConfig.weightsFrame.height +
+      4 * this.showWeightsConfig.weightsFrame.margin;
+  }
+
+  showWeights(mouseX, mouseY) {
     const incomingWeights = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
     const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology.fcLayers.length - 1) ?
       'output' : `h${this.conMenuSelected.layer + 1}`;
@@ -612,95 +667,70 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       outgoingWeightsAfter.push(element[this.conMenuSelected.unit]);
     });
 
-    this.showWeightsConfig = {
-      title: {
-        width: 0,
-        height: 0,
-        margin: 2.5,
-        color: '#ffffff'
-      },
-      frame: {
-        margin: 5,
-        cornerRad: 7.5,
-        fill: '#2b2b2b'
-      }
-    };
-
-    this.vizContainer.append('g')
-      .attr('class', 'tmp')
-      .append('text')
-      .text(`Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`)
-      .attr('class', 'tmp')
-      .each(function () {
-        const bbox = this.getBBox();
-        self.showWeightsConfig.title.width = bbox.width;
-        self.showWeightsConfig.title.height = bbox.height;
-      });
-    d3.selectAll('.tmp').remove();
 
     const weightsComparison = this.vizContainer.append('g')
       .attr('class', 'weights-comparison');
 
     weightsComparison.append('rect')
-      .attr('x', (d, i) => {
-        return (mouseX + this.showWeightsConfig.frame.margin) + i * (80);
-        // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        // return mouseY + i * (this.conMenuConfig.height + margin);
+      .attr('x', mouseX + this.showWeightsConfig.outerFrame.margin)
+      .attr('y', mouseY + this.showWeightsConfig.outerFrame.margin)
+      .attr('width', this.showWeightsConfig.outerFrame.width)
+      .attr('height', this.showWeightsConfig.outerFrame.height)
+      .attr('rx', this.showWeightsConfig.outerFrame.cornerRad)
+      .attr('ry', this.showWeightsConfig.outerFrame.cornerRad)
+      .style('fill', this.showWeightsConfig.outerFrame.fill);
+
+    weightsComparison.selectAll('text')
+      .data(this.showWeightsTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('x', (d, i) =>
+        mouseX +
+        this.showWeightsConfig.outerFrame.width / 2 +
+        this.showWeightsConfig.outerFrame.margin -
+        this.showWeightsConfig.titles.dimension[i].width / 2
+      )
+      .attr('y', (d, i) =>
+        mouseY +
+        this.showWeightsConfig.outerFrame.margin +
+        (i + 1) * this.showWeightsConfig.titles.dimension[i].height +
+        (i * 2 + 1) * this.showWeightsConfig.titles.margin
+      )
+      .attr('fill', this.showWeightsConfig.titles.color);
+
+
+    this.showWeightsConfig.data = [];
+    this.showWeightsConfig.data.push(this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
+    this.showWeightsConfig.data.push(this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
+    this.showWeightsConfig.data.push(outgoingWeightsBefore);
+    this.showWeightsConfig.data.push(outgoingWeightsAfter);
+
+    weightsComparison.selectAll('.comparison-item')
+      .data(this.showWeightsConfig.data)
+      .enter()
+      .append('rect')
+      .attr('class', 'comparison-item')
+      .attr('x', (d, i) =>
+        mouseX +
+        this.showWeightsConfig.outerFrame.margin +
+        (i % 2) * this.showWeightsConfig.weightsFrame.width +
+        (i % 2 * .75 + 1) * this.showWeightsConfig.weightsFrame.margin
+      )
+      .attr('y', (d, i) => {
+        let titlesHeight = 0;
+        for (let j = 0; j <= Math.floor(i / 2) + 1; j++) {
+          titlesHeight += this.showWeightsConfig.titles.dimension[j].height;
+          titlesHeight += 2 * this.showWeightsConfig.titles.margin;
+        }
+
+        return mouseY +
+          titlesHeight +
+          Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height;
       })
-      .attr('y', mouseY + this.showWeightsConfig.frame.margin)
-      .attr('width', () => {
-        return 150;
-        // const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
-        // return this.conMenuConfig.width + margin;
-      })
-      .attr('height', () => {
-        return 75;
-        // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        // return this.conMenuConfig.height + margin;
-      })
-      .attr('rx', this.showWeightsConfig.frame.cornerRad)
-      .attr('ry', this.showWeightsConfig.frame.cornerRad)
-      .style('fill', this.showWeightsConfig.frame.fill);
-
-    weightsComparison.append('text')
-      .text(`Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`)
-      .attr('x', mouseX + this.showWeightsConfig.frame.margin + 75 - this.showWeightsConfig.title.width / 2)
-      .attr('y', mouseY + this.showWeightsConfig.frame.margin + this.showWeightsConfig.title.margin + this.showWeightsConfig.title.height)
-      .attr('fill', this.showWeightsConfig.title.color);
-
-
-
-    // const weightsToVisualize = [];
-    // weightsToVisualize.push(this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
-    // weightsToVisualize.push(this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
-
-
-
-
-    // weightsComparison.selectAll('.comparison-item')
-    //   .data(weightsToVisualize)
-    //   .enter()
-    //   .append('g')
-    //   .attr('class', 'comparison-item');
-
-    // weightsComparison.append('rect')
-    //   .attr('x', (d, i) => {
-    //     return (mouseX + 5) + i * (80);
-    //     // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-    //     // return mouseY + i * (this.conMenuConfig.height + margin);
-    //   })
-    //   .attr('y', mouseY + 5)
-    //   .attr('width', () => {
-    //     return 75;
-    //     // const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
-    //     // return this.conMenuConfig.width + margin;
-    //   })
-    //   .attr('height', () => {
-    //     return 75;
-    //     // const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-    //     // return this.conMenuConfig.height + margin;
-    //   })
-    //   .style('fill', 'whitesmoke');
+      .attr('width', this.showWeightsConfig.weightsFrame.width)
+      .attr('height', this.showWeightsConfig.weightsFrame.height)
+      .style('fill', this.showWeightsConfig.weightsFrame.fill);
 
 
     console.clear();
