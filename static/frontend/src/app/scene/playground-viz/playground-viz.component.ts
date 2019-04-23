@@ -620,11 +620,13 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         dimension: []
       },
       weightsFrame: {
-        width: 75,
-        height: 75,
+        width: 84,
+        height: 84,
         margin: 15,
         fill: 'whitesmoke'
-      }
+      },
+      positiveColor: d3.interpolateLab('whitesmoke', 'royalblue'),
+      negativeColor: d3.interpolateLab('whitesmoke', 'indianred')
     };
 
     this.vizContainer.selectAll('.tmp')
@@ -653,6 +655,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   }
 
   showWeights(mouseX, mouseY) {
+    const self = this;
+
     const incomingWeights = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
     const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology.fcLayers.length - 1) ?
       'output' : `h${this.conMenuSelected.layer + 1}`;
@@ -723,12 +727,24 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.showWeightsConfig.data.push(outgoingWeightsBefore);
     this.showWeightsConfig.data.push(outgoingWeightsAfter);
 
-    weightsComparison.selectAll('.comparison-item')
+    this.showWeightsConfig.weights = [];
+    this.showWeightsConfig.data.forEach(data => {
+      this.showWeightsConfig.weights.push({
+        min: Math.min(...data),
+        max: Math.max(...data),
+        width: this.showWeightsConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
+        height: this.showWeightsConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
+        numElements: Math.ceil(Math.sqrt(data.length))
+      });
+    });
+
+    const comparisonItem = weightsComparison.selectAll('.comparison-item')
       .data(this.showWeightsConfig.data)
       .enter()
       .append('g')
-      .attr('class', 'comparison-item')
-      .append('rect')
+      .attr('class', 'comparison-item');
+
+    comparisonItem.append('rect')
       .attr('x', (d, i) =>
         mouseX +
         this.showWeightsConfig.outerFrame.margin +
@@ -754,19 +770,65 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .style('fill', this.showWeightsConfig.weightsFrame.fill);
 
 
-    console.clear();
+    let tempIndex = -1;
+    comparisonItem.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        if (i === 1) { tempIndex++; }
 
-    console.log('Selected layer:', this.conMenuSelected.layer);
-    console.log('Selected unit:', this.conMenuSelected.unit);
-    console.log('Incoming weights:', incomingWeights);
-    console.log('Outgoing weights:', outgoingWeights);
+        const currIndex = tempIndex % self.showWeightsConfig.data.length;
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = ((i - 1) % self.showWeightsConfig.weights[currIndex].numElements) *
+          self.showWeightsConfig.weights[currIndex].width;
+
+        return rectXValue + xPosition;
+      })
+      .attr('y', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.showWeightsConfig.data.length;
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor((i - 1) / self.showWeightsConfig.weights[currIndex].numElements) *
+          self.showWeightsConfig.weights[currIndex].height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+
+        return this.showWeightsConfig.weights[currIndex].width;
+      })
+      .attr('height', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+
+        return this.showWeightsConfig.weights[currIndex].height;
+      })
+      .style('fill', (d, i) => {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+        let scaledValue = 0;
+
+        if (d > 0) {
+          scaledValue = d / this.showWeightsConfig.weights[currIndex].max;
+          return this.showWeightsConfig.positiveColor(scaledValue);
+        } else if (d < 0) {
+          scaledValue = d / this.showWeightsConfig.weights[currIndex].min;
+          return this.showWeightsConfig.negativeColor(scaledValue);
+        }
+      });
+
+
+    console.clear();
 
     console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
     console.log('Incoming Weights after training:', this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
     console.log('Outgoing Weights before training:', outgoingWeightsBefore);
     console.log('Outgoing Weights after training:', outgoingWeightsAfter);
-
-    console.log(d3.interpolateLab('steelblue', 'brown')(0.5));
   }
 
   modifyNodes() {
