@@ -18,7 +18,7 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, layers, num_epochs, conv_layers=[], kernel_size=5, stride=1,  padding=2):
+    def __init__(self, num_epochs, conv_layers, kernel_size, stride,  padding, layers):
         # create Net
         super(Net, self).__init__()
 
@@ -176,29 +176,29 @@ class Net(nn.Module):
         return weightMinMax, heatmapObj.heatmapFromWeights(epochWeights, weightMinMax, drawFully, newNodeStruct, density)
 
 
-def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
+def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, kernel_size, stride, padding, layers):
     # prepare GPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
 
     # build net
-    net = Net(layers=layers, num_epochs=num_epochs)
-    criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
+    net = Net(num_epochs=num_epochs, conv_layers=conv_layers, kernel_size=kernel_size, stride=stride, padding=padding, layers=layers)
+    # criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
+    # optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
 
-    # load data
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size_train, shuffle=True, num_workers=2)
-    testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
+    # # load data
+    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    # trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
+    # trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size_train, shuffle=True, num_workers=2)
+    # testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
+    # testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
 
-    net.save_weights()
+    # net.save_weights()
 
-    net.train_net(device, trainloader, criterion, optimizer)
-    acc = net.test_net(device, testloader, criterion)
+    # net.train_net(device, trainloader, criterion, optimizer)
+    # acc = net.test_net(device, testloader, criterion)
 
-    return net, acc, net.weights_dict
+    # return net, acc, net.weights_dict
 
 
 def mlp_ablation(network, ko_layers, ko_units):

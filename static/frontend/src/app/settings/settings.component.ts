@@ -85,14 +85,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       batchSizeTrain: [0, [Validators.required, Validators.min(0)]],
       batchSizeTest: [0, [Validators.required, Validators.min(0)]],
       epoch: [0, [Validators.required, Validators.min(0)]],
+      learning_rate: ['', Validators.required],
 
       convLayers: this.fb.array([]),
-      convLayerCount: [0, [Validators.required, Validators.min(0)]],
-
-      fcLayers: this.fb.array([]),
-      fcLayerCount: [0, [Validators.required, Validators.min(0)]],
-
-      learning_rate: ['', Validators.required]
+      fcLayers: this.fb.array([])
     });
 
     this.playgroundForm.patchValue({
@@ -101,10 +97,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       batchSizeTrain: this.playgroundData.batchSizeTrain,
       batchSizeTest: this.playgroundData.batchSizeTest,
       epoch: this.playgroundData.epoch,
-
-      convLayerCount: this.playgroundData.convLayerCount,
-      fcLayerCount: this.playgroundData.fcLayerCount,
-      learning_rate: this.playgroundData.learningRates[this.playgroundData.selectedLearningRates].value,
+      learning_rate: this.playgroundData.learningRates[this.playgroundData.selectedLearningRates].value
     });
 
 
@@ -158,12 +151,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       delete this.commonChannels[lastIndex];
 
       this.convLayers.removeAt(layerIndex);
-      this.playgroundForm.get('convLayerCount').setValue(this.convLayers.length);
     }
 
     if (layer === 'fcLayer') {
       this.fcLayers.removeAt(layerIndex);
-      this.playgroundForm.get('fcLayerCount').setValue(this.fcLayers.length);
     }
   }
 
@@ -179,7 +170,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         stride: [1, [Validators.required, Validators.min(1)]],
         padding: [2, [Validators.required, Validators.min(1)]]
       }));
-      this.playgroundForm.get('convLayerCount').setValue(this.convLayers.length);
 
 
       const inChannel = this.convLayers.controls[this.convLayers.length - 1].get('inChannel');
@@ -206,43 +196,40 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.fcLayers.push(this.fb.group({
         unitCount: [1, [Validators.required, Validators.min(1)]]
       }));
-      this.playgroundForm.get('fcLayerCount').setValue(this.fcLayers.length);
     }
   }
 
   trainNetwork() {
     const captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
-    // console.log(captureForm);
-
     const objToSend = {
-      learning_rate: +captureForm.learning_rate,
       batch_size_train: +captureForm.batchSizeTrain,
       batch_size_test: +captureForm.batchSizeTest,
       num_epochs: +captureForm.epoch,
-      layers: []
+      learning_rate: +captureForm.learning_rate,
+      conv_layers: captureForm.convLayers.slice(0),
+      layers: captureForm.fcLayers.map(layer => layer.unitCount)
     };
-    this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
+
+
     this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
+    this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
     this.playgroundData.epoch = +captureForm.epoch;
-    this.playgroundData.fcLayerCount = +captureForm.fcLayerCount;
     this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
       learningRate => learningRate.value === captureForm.learning_rate
     );
-    this.playgroundData.fcLayers = [];
 
-    captureForm.fcLayers.forEach(layer => {
-      objToSend.layers.push(layer.unitCount);
-      this.playgroundData.fcLayers.push(layer.unitCount);
-    });
+    this.playgroundData.convLayers = captureForm.convLayers.slice(0);
+    this.playgroundData.fcLayers = captureForm.fcLayers.map(layer => layer.unitCount);
+    this.dataService.playgroundData.next(this.playgroundData);
+
 
     this.dataService.vizTopology.next(this.playgroundForm.value);
     this.dataService.vizWeights.next(null);
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
-    this.dataService.playgroundData.next(this.playgroundData);
 
     // console.log(this.commonChannels);
-    // console.log(objToSend);
+    console.log(objToSend);
   }
 
   reset() {

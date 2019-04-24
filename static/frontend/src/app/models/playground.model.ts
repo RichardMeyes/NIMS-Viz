@@ -8,10 +8,7 @@ export class Playground {
     epoch: number;
 
     convLayers: ConvLayer[];
-    convLayerCount: number;
-
     fcLayers: number[];
-    fcLayerCount: number;
 
     learningRates: SelectForm[];
     activation: SelectForm[];
@@ -34,10 +31,7 @@ export class Playground {
             new ConvLayer(32, 32, 5, 1, 2),
             new ConvLayer(32, 64, 5, 1, 2)
         ];
-        this.convLayerCount = this.convLayers.length;
-
         this.fcLayers = [20, 15, 10];
-        this.fcLayerCount = this.fcLayers.length;
 
         this.learningRates = [
             new SelectForm('0.000001', '0.000001'),

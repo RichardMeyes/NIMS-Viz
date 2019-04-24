@@ -72,23 +72,23 @@ def convert(filename):
     return "Conversion done."
 
 
-@app.route("/nn/MLP", methods=["POST", "OPTIONS"])
-@cross_origin()
-def mlp():
+# @app.route("/nn/MLP", methods=["POST", "OPTIONS"])
+# @cross_origin()
+# def mlp():
 
-    params = request.get_json(force=True)
-    print(params)
+#     params = request.get_json(force=True)
+#     print(params)
 
-    # parse arguments from POST body
-    layers = params["layers"]
-    learning_rate = params["learning_rate"]
-    batch_size_train = params['batch_size_train']
-    batch_size_test = params['batch_size_test']
-    num_epochs = params['num_epochs']
+#     # parse arguments from POST body
+#     layers = params["layers"]
+#     learning_rate = params["learning_rate"]
+#     batch_size_train = params['batch_size_train']
+#     batch_size_test = params['batch_size_test']
+#     num_epochs = params['num_epochs']
 
-    net, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
+#     net, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
 
-    return json.dumps(weights)
+#     return json.dumps(weights)
 
 
 @app.route("/calc/heatmapfromfile", methods=["POST", "OPTIONS"])
@@ -187,13 +187,19 @@ def mlpSocketIO(params):
     # print(params)
 
     # parse arguments from POST body
-    layers = params["layers"]
-    learning_rate = params["learning_rate"]
     batch_size_train = params['batch_size_train']
     batch_size_test = params['batch_size_test']
     num_epochs = params['num_epochs']
+    learning_rate = params["learning_rate"]
 
-    net, acc, weights = MLP.mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs)
+    conv_layers = params["conv_layers"]
+    kernel_size = params["kernel_size"]
+    stride = params["stride"]
+    padding = params["padding"]
+
+    layers = params["layers"]
+
+    net, acc, weights = MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, kernel_size, stride, padding, layers)
     print('final json send')
 
 
