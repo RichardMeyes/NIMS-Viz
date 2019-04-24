@@ -229,7 +229,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
     // console.log(this.commonChannels);
-    console.log(objToSend);
+    // console.log(objToSend);
   }
 
   reset() {

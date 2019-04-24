@@ -18,20 +18,16 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, num_epochs, conv_layers, kernel_size, stride,  padding, layers):
+    def __init__(self, num_epochs, conv_layers, layers):
         # create Net
         super(Net, self).__init__()
 
 
         # Conv Layers
         self.conv_layers = conv_layers
-        self.kernel_size = kernel_size
-        self.stride = stride
-        self.padding = padding
-
         for i_layer in range(len(conv_layers)):
             self.__setattr__("c{0}".format(i_layer+1),
-                             nn.Conv2d(self.conv_layers[i_layer][0], self.conv_layers[i_layer][1], self.kernel_size, self.stride, self.padding))
+                             nn.Conv2d(self.conv_layers[i_layer]["inChannel"], self.conv_layers[i_layer]["outChannel"], self.conv_layers[i_layer]["kernelSize"], self.conv_layers[i_layer]["stride"], self.conv_layers[i_layer]["padding"]))
 
 
         # FC Layers
@@ -176,26 +172,26 @@ class Net(nn.Module):
         return weightMinMax, heatmapObj.heatmapFromWeights(epochWeights, weightMinMax, drawFully, newNodeStruct, density)
 
 
-def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, kernel_size, stride, padding, layers):
+def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers):
     # prepare GPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
 
     # build net
-    net = Net(num_epochs=num_epochs, conv_layers=conv_layers, kernel_size=kernel_size, stride=stride, padding=padding, layers=layers)
-    # criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
-    # optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
+    net = Net(num_epochs=num_epochs, conv_layers=conv_layers, layers=layers)
+    criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
 
-    # # load data
-    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    # trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
-    # trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size_train, shuffle=True, num_workers=2)
-    # testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
-    # testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
+    # load data
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size_train, shuffle=True, num_workers=2)
+    testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
 
-    # net.save_weights()
+    net.save_weights()
 
-    # net.train_net(device, trainloader, criterion, optimizer)
+    net.train_net(device, trainloader, criterion, optimizer)
     # acc = net.test_net(device, testloader, criterion)
 
     # return net, acc, net.weights_dict
