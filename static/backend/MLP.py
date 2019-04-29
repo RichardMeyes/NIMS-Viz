@@ -26,8 +26,8 @@ class Net(nn.Module):
         # Conv Layers
         self.conv_layers = conv_layers
         for i_layer in range(len(conv_layers)):
-            self.__setattr__("c{0}".format(i_layer+1),
-                             nn.Conv2d(self.conv_layers[i_layer]["inChannel"], self.conv_layers[i_layer]["outChannel"], self.conv_layers[i_layer]["kernelSize"], self.conv_layers[i_layer]["stride"], self.conv_layers[i_layer]["padding"]))
+            self.__setattr__("c{0}".format(i_layer),
+                             nn.Conv2d(self.conv_layers[i_layer]["inChannel"], self.conv_layers[i_layer]["outChannel"], kernel_size=self.conv_layers[i_layer]["kernelSize"], stride=self.conv_layers[i_layer]["stride"], padding=self.conv_layers[i_layer]["padding"]))
 
 
         # FC Layers
@@ -35,7 +35,7 @@ class Net(nn.Module):
         self.num_epochs = num_epochs
         self.weights_dict = dict()
         
-        self.h0 = nn.Linear(28 * 28, self.layers[0])
+        self.h0 = nn.Linear(1, self.layers[0])
         for i_layer in range(len(layers)-1):
             self.__setattr__("h{0}".format(i_layer+1),
                              nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
@@ -45,9 +45,10 @@ class Net(nn.Module):
         x = x.view(-1, 1, 28, 28)
         for i_layer in range(len(self.conv_layers)):
             x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
-            x = F.max_pool2d(x, self.kernel_size, self.stride)
+            x = F.max_pool2d(x, kernel_size=self.conv_layers[i_layer]["kernelSize"], stride=self.conv_layers[i_layer]["stride"])
 
         x = x.view(x.size(0), -1)
+        self.h0 = nn.Linear(x.shape[1], self.layers[0])
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
 
@@ -192,9 +193,9 @@ def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layer
     net.save_weights()
 
     net.train_net(device, trainloader, criterion, optimizer)
-    # acc = net.test_net(device, testloader, criterion)
+    acc = net.test_net(device, testloader, criterion)
 
-    # return net, acc, net.weights_dict
+    return net, acc, net.weights_dict
 
 
 def mlp_ablation(network, ko_layers, ko_units):

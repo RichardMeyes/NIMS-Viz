@@ -195,8 +195,7 @@ def mlpSocketIO(params):
     conv_layers = params["conv_layers"]
     layers = params["layers"]
 
-    # net, acc, weights = MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
-    MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    net, acc, weights = MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
     print('final json send')
 
 
