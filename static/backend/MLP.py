@@ -203,7 +203,7 @@ def mlp_ablation(network, ko_layers, ko_units):
     layers = network.split('_')[-1]
     layers = ast.literal_eval(layers)
 
-    net = Net(layers, 0)
+    net = Net(num_epochs=0, conv_layers=[], layers=layers)
     net.to(device)
     net.load_state_dict(torch.load("static/data/models/MLP_{0}_trained.pt".format(layers)))
     net.eval()
