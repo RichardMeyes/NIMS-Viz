@@ -4,7 +4,8 @@ stages:
 
 before_script:
   - cd static/frontend
-  - npm install --unsafe-perm
+  - npm install -f node-sass
+  - npm install
 
 app-build:
   stage: build
