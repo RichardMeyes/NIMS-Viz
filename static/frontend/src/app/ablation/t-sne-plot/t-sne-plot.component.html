@@ -1,3 +1,16 @@
 <div class="container">
+    <button mat-icon-button [matMenuTriggerFor]="menu" *ngIf="chart">
+        <mat-icon>more_vert</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu">
+        <button mat-menu-item>
+            <span>Source 1</span>
+        </button>
+        <button mat-menu-item>
+            <span>Source 2</span>
+        </button>
+    </mat-menu>
+
+
     <canvas #canvas>{{ chart }}</canvas>
 </div>
