@@ -146,8 +146,8 @@ class Net(nn.Module):
             test_loss += criterion(net_out, target).data.item()
             pred = net_out.data.max(1)[1]  # get the index of the max log-probability
             batch_labels = pred.eq(target.data)
-            correct_labels = np.append(correct_labels, batch_labels)
-            class_labels = np.append(class_labels, target.data)
+            correct_labels = np.append(correct_labels, batch_labels.cpu())
+            class_labels = np.append(class_labels, target.data.cpu())
             for i_label in range(len(target)):
                 label = target[i_label].item()
                 correct_class[label] += batch_labels[i_label].item()
@@ -187,7 +187,7 @@ def mlp(layers, learning_rate, batch_size_train, batch_size_test, num_epochs):
     optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
 
     # load data
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
     trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size_train, shuffle=True, num_workers=2)
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
@@ -213,7 +213,7 @@ def mlp_ablation(network, ko_layers, ko_units):
     net.eval()
     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
 
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
