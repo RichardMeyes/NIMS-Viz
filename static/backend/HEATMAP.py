@@ -106,7 +106,8 @@ class Heatmap(metaclass=Singleton):
 
     def createNetworkStruct(self, weightsObj,keyArray):
         # anzahl layer
-        layercount = len(weightsObj.keys())
+        # layercount = len(weightsObj.keys())
+        layercount = len(keyArray)
         angleSpan = 150.0
         areaPartAngle = angleSpan / layercount
         layerObjsTemp = []

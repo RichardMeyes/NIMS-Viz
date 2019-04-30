@@ -315,7 +315,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           .map(layer => +layer);
         const currEpoch = `epoch_0`;
 
+        console.log(Object.keys(val));
         fcLayers = fcLayers.map(unitCount => { return { 'unitCount': unitCount }; });
+        Object.keys(val).forEach(key => {
+          if (key.startsWith('c')) {
+            delete val[key];
+          }
+        });
+        console.log(Object.keys(val));
 
         this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }

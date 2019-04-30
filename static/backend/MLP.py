@@ -98,11 +98,19 @@ class Net(nn.Module):
             weights = self.h0.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
             temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
+
+            for i_layer in range(len(self.conv_layers)):
+                layer = self.__getattr__("c{0}".format(i_layer))
+                weights = layer.weight.data.numpy().tolist()
+                self.weights_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
+                temp_epoch_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
+
             for i_layer in range(len(self.layers)-1):
                 layer = self.__getattr__("h{0}".format(i_layer+1))
                 weights = layer.weight.data.numpy().tolist()
                 self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
                 temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+
             weights = self.output.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
             temp_epoch_dict["epoch_{0}".format(epoch)].update({"output": weights})
