@@ -98,7 +98,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
           };
         } else {
           // console.log('From Backend:');
-          // console.log('before ablation:', this.networkResultsData);
+          // console.log('before ablation:', this.networkResultsCorrectData);
           // console.log('after ablation:', val['class specific accuracy']);
 
           this.barChartData.datasets[0].data = val['class specific accuracy'];
@@ -133,9 +133,9 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             stack: 'changes'
           };
 
-          if (this.barChartData.datasets[1] && this.barChartData.datasets[2]) {
-            this.barChartData.datasets[1] = networkChangesGain;
-            this.barChartData.datasets[2] = networkChangesLoss;
+          if (this.barChartData.datasets[2] && this.barChartData.datasets[3]) {
+            this.barChartData.datasets[2] = networkChangesGain;
+            this.barChartData.datasets[3] = networkChangesLoss;
           } else {
             this.barChartData.datasets.push(networkChangesGain);
             this.barChartData.datasets.push(networkChangesLoss);
