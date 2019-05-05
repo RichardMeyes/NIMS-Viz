@@ -47,7 +47,7 @@ class Net(nn.Module):
         x = x.view(-1, 1, 28, 28)
         for i_layer in range(len(self.conv_layers)):
             x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
-            x = F.max_pool2d(x, kernel_size=self.conv_layers[i_layer]["kernelSize"], stride=self.conv_layers[i_layer]["stride"])
+            x = F.max_pool2d(x, kernel_size=2, stride=2)
 
         x = x.view(x.size(0), -1)
         self.h0 = nn.Linear(x.shape[1], self.layers[0])

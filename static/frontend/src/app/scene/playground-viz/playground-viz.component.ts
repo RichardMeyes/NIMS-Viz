@@ -82,6 +82,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     }
 
     this.defaultSettings = {
+      rectSide: 20,
       nodeRadius: 10,
       color: '#373737',
       nodeOpacity: .5,
@@ -264,30 +265,29 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('stroke', this.defaultSettings.color);
 
 
-    // const rects = this.vizContainer.selectAll('rect')
-    //   .data(this.topology.filter(nodes => nodes.isConv));
+    const rects = this.vizContainer.selectAll('rect')
+      .data(this.topology.filter(nodes => nodes.isConv));
 
-    // rects.enter()
-    //   .append('rect')
-    //   .attr('class', 'rect')
-    //   .attr('cx', function (d) {
-    //     const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-    //     return cx;
-    //   })
-    //   .attr('cy', function (d) {
-    //     const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
-    //     return cy;
-    //   })
-    //   .attr('r', this.defaultSettings.nodeRadius)
-    //   .attr('fill', this.defaultSettings.color)
-    //   .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-    //   .attr('stroke', this.defaultSettings.color)
-    //   .attr('stroke-width', this.defaultSettings.nodeStroke);
-
+    rects.enter()
+      .append('rect')
+      .attr('class', 'rect')
+      .attr('x', function (d) {
+        const x: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
+        return x;
+      })
+      .attr('y', function (d) {
+        const y: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
+        return y;
+      })
+      .attr('width', this.defaultSettings.rectSide)
+      .attr('height', this.defaultSettings.rectSide)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', this.defaultSettings.color)
+      .attr('stroke-width', this.defaultSettings.nodeStroke);
 
     const circles = this.vizContainer.selectAll('circle')
-      // .data(this.topology.filter(nodes => !nodes.isConv));
-      .data(this.topology);
+      .data(this.topology.filter(nodes => !nodes.isConv));
 
     circles.enter()
       .append('circle')
