@@ -23,6 +23,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.topology_dict = dict()
         self.weights_dict = dict()
+        self.filename = dict()
 
 
         # Conv Layers
@@ -60,14 +61,14 @@ class Net(nn.Module):
         self.topology_dict["conv_layers"] = self.conv_layers
         self.topology_dict["layers"] = self.layers
 
-        filename = []
+        self.filename = {
+            "convLayers": [],
+            "layers": self.layers
+        }
         for conv_layer in self.conv_layers:
-            filename.append(conv_layer["outChannel"])
+            self.filename["convLayers"].append(conv_layer["outChannel"])
 
-        for layer in self.layers:
-            filename.append(layer)
-
-        with open("static/data/topologies/MLP_{0}.json".format(filename), "w") as f:
+        with open("static/data/topologies/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
             json.dump(self.topology_dict, f)
 
     def save_weights(self):
@@ -82,7 +83,7 @@ class Net(nn.Module):
         weights = self.output.weight.data.numpy().tolist()
         self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
         
-        with open("static/data/weights/MLP_{0}_untrained.json".format(self.layers), "w") as f:
+        with open("static/data/weights/MLP_{convLayers}_{layers}_untrained.json".format(**self.filename), "w") as f:
             json.dump(self.weights_dict, f)
 
     def train_net(self, device, trainloader, criterion, optimizer):
@@ -144,11 +145,11 @@ class Net(nn.Module):
             print('emitted data')
 
         #save weights
-        with open("static/data/weights/MLP_{0}.json".format(self.layers), "w") as f:
+        with open("static/data/weights/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
             json.dump(self.weights_dict, f)
 
         # save trained net
-        torch.save(self.state_dict(), 'static/data/models/MLP_{0}_trained.pt'.format(self.layers))
+        torch.save(self.state_dict(), 'static/data/models/MLP_{convLayers}_{layers}_trained.pt'.format(**self.filename))
 
     def test_net(self, criterion, testloader, device):
         # test the net
