@@ -21,6 +21,8 @@ class Net(nn.Module):
     def __init__(self, num_epochs, conv_layers, layers):
         # create Net
         super(Net, self).__init__()
+        self.topology_dict = dict()
+        self.weights_dict = dict()
 
 
         # Conv Layers
@@ -33,7 +35,6 @@ class Net(nn.Module):
         # FC Layers
         self.layers = layers
         self.num_epochs = num_epochs
-        self.weights_dict = dict()
         
         self.h0 = nn.Linear(1, self.layers[0])
         for i_layer in range(len(layers)-1):
@@ -54,6 +55,20 @@ class Net(nn.Module):
 
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         return x
+
+    def save_topology(self):
+        self.topology_dict["conv_layers"] = self.conv_layers
+        self.topology_dict["layers"] = self.layers
+
+        filename = []
+        for conv_layer in self.conv_layers:
+            filename.append(conv_layer["outChannel"])
+
+        for layer in self.layers:
+            filename.append(layer)
+
+        with open("static/data/topologies/MLP_{0}.json".format(filename), "w") as f:
+            json.dump(self.topology_dict, f)
 
     def save_weights(self):
         epoch = 0
@@ -198,6 +213,7 @@ def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layer
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
 
+    net.save_topology()
     net.save_weights()
 
     net.train_net(device, trainloader, criterion, optimizer)
