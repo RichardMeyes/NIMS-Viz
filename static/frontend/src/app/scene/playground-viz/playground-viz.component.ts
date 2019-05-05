@@ -116,30 +116,64 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       }
 
       if (this.inputWeights) {
-        this.setupWeights();
-        this.bindWeights(runAnimation);
+        // this.setupWeights();
+        // this.bindWeights(runAnimation);
       }
     }
   }
 
   setupTopology() {
-    const layers: number[] = this.inputTopology.fcLayers.map(layer => +layer.unitCount);
+    const convLayers: number[] = this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel);
+    const layers: number[] = this.inputTopology['layers'].map(layer => +layer);
     layers.push(10);
     const filteredTopology = [];
     const filteredEdges = [];
+
+
+    convLayers.forEach((convLayer, convLayerIndex) => {
+      let nextLayer = layers[0];
+      if (convLayerIndex < convLayers.length - 1) {
+        nextLayer = convLayers[convLayerIndex + 1];
+      }
+
+      for (let i = 0; i < convLayer; i++) {
+        filteredTopology.push({
+          layer: convLayerIndex,
+          unit: i,
+          unitSpacing: (this.minWidthHeight / convLayer),
+          isOutput: false,
+          isConv: true
+        });
+
+        for (let j = 0; j < nextLayer; j++) {
+          filteredEdges.push({
+            layer: convLayerIndex,
+            source: i,
+            target: j,
+            unitSpacing: (this.minWidthHeight / convLayer),
+            targetUnitSpacing: (this.minWidthHeight / nextLayer)
+          });
+        }
+      }
+    });
 
     layers.forEach((layer, layerIndex) => {
       const nextLayer = layers[layerIndex + 1];
       const isOutput = (layerIndex < layers.length - 1) ? false : true;
 
       for (let i = 0; i < layer; i++) {
-        filteredTopology.push({ layer: layerIndex, unit: i, unitSpacing: (this.minWidthHeight / layer), isOutput: isOutput });
-
+        filteredTopology.push({
+          layer: convLayers.length + layerIndex,
+          unit: i,
+          unitSpacing: (this.minWidthHeight / layer),
+          isOutput: isOutput,
+          isConv: false
+        });
 
         if (!isOutput) {
           for (let j = 0; j < nextLayer; j++) {
             filteredEdges.push({
-              layer: layerIndex,
+              layer: convLayers.length + layerIndex,
               source: i,
               target: j,
               unitSpacing: (this.minWidthHeight / layer),
@@ -150,7 +184,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.layerSpacing = this.minWidthHeight / layers.length;
+
+    this.layerSpacing = this.minWidthHeight / (convLayers.length + layers.length);
     this.topology = filteredTopology;
     this.edges = filteredEdges;
   }
@@ -229,7 +264,29 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('stroke', this.defaultSettings.color);
 
 
+    // const rects = this.vizContainer.selectAll('rect')
+    //   .data(this.topology.filter(nodes => nodes.isConv));
+
+    // rects.enter()
+    //   .append('rect')
+    //   .attr('class', 'rect')
+    //   .attr('cx', function (d) {
+    //     const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+    //     return cx;
+    //   })
+    //   .attr('cy', function (d) {
+    //     const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+    //     return cy;
+    //   })
+    //   .attr('r', this.defaultSettings.nodeRadius)
+    //   .attr('fill', this.defaultSettings.color)
+    //   .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+    //   .attr('stroke', this.defaultSettings.color)
+    //   .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+
     const circles = this.vizContainer.selectAll('circle')
+      // .data(this.topology.filter(nodes => !nodes.isConv));
       .data(this.topology);
 
     circles.enter()

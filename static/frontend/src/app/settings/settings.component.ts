@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { MatTabChangeEvent } from '@angular/material';
 
-import { debounceTime, takeUntil, take } from 'rxjs/operators';
+import { takeUntil, take, concatMap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { PlaygroundService } from '../playground.service';
@@ -223,7 +223,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.playgroundData.next(this.playgroundData);
 
 
-    this.dataService.vizTopology.next(this.playgroundForm.value);
+    this.dataService.vizTopology.next(objToSend);
     this.dataService.vizWeights.next(null);
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
@@ -306,6 +306,16 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       epochToVisualize = 0;
     }
 
+    this.playgroundService.getTopology(this.selectedFile)
+      .pipe(
+        take(1),
+        concatMap(topology => {
+          this.dataService.vizTopology.next(topology);
+          return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
+        })
+      )
+      .subscribe(val => { console.log(val); });
+
     this.playgroundService.visualize(this.selectedFile, epochToVisualize)
       .pipe(take(1))
       .subscribe(val => {
@@ -324,7 +334,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         });
         console.log(Object.keys(val));
 
-        this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
 

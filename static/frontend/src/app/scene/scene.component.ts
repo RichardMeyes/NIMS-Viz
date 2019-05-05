@@ -318,7 +318,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
         fcLayers = fcLayers.map(unitCount => { return { 'unitCount': unitCount }; });
 
-        this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
+        // this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
   }

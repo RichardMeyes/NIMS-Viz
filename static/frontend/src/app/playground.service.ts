@@ -16,6 +16,11 @@ export class PlaygroundService {
 
   constructor(private http: HttpClient) { }
 
+  getTopology(selectedFile: string) {
+    const jsonBody = { 'selectedFile': selectedFile.replace('\\', '/').replace('weights', 'topologies') };
+    return this.http.post('/getTopology', jsonBody, this.httpOptions);
+  }
+
   visualize(selectedFile: string, currEpoch: number) {
     const jsonBody = {
       'selectedFile': selectedFile.replace("\\", "/"),

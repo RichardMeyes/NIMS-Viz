@@ -121,6 +121,17 @@ def calcHeatmapFromFile():
     return json.dumps(heatmapObj.heatmapFromWeights(weights, weightMinMax, drawFully, newNodeStruct, density))
 
 
+@app.route("/getTopology", methods=["POST", "OPTIONS"])
+@cross_origin()
+def getTopology():
+    params = request.get_json(force=True)
+
+    with open(params['selectedFile']) as f:
+        data = json.load(f)
+    
+    return json.dumps(data)
+
+
 @app.route("/getWeights", methods=["POST", "OPTIONS"])
 @cross_origin()
 def getWeights():
