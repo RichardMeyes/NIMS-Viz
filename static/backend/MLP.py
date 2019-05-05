@@ -18,7 +18,7 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, num_epochs, conv_layers, layers):
+    def __init__(self, num_epochs, conv_layers, layers, h0Shape=1):
         # create Net
         super(Net, self).__init__()
         self.topology_dict = dict()
@@ -37,7 +37,7 @@ class Net(nn.Module):
         self.layers = layers
         self.num_epochs = num_epochs
         
-        self.h0 = nn.Linear(1, self.layers[0])
+        self.h0 = nn.Linear(h0Shape, self.layers[0])
         for i_layer in range(len(layers)-1):
             self.__setattr__("h{0}".format(i_layer+1),
                              nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
@@ -51,6 +51,7 @@ class Net(nn.Module):
 
         x = x.view(x.size(0), -1)
         self.h0 = nn.Linear(x.shape[1], self.layers[0])
+        self.topology_dict["h0Shape"] = x.shape[1]
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
 
@@ -61,6 +62,10 @@ class Net(nn.Module):
         self.topology_dict["conv_layers"] = self.conv_layers
         self.topology_dict["layers"] = self.layers
 
+        with open("static/data/topologies/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
+            json.dump(self.topology_dict, f)
+
+    def save_weights(self):
         self.filename = {
             "convLayers": [],
             "layers": self.layers
@@ -68,10 +73,6 @@ class Net(nn.Module):
         for conv_layer in self.conv_layers:
             self.filename["convLayers"].append(conv_layer["outChannel"])
 
-        with open("static/data/topologies/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
-            json.dump(self.topology_dict, f)
-
-    def save_weights(self):
         epoch = 0
 
         weights = self.h0.weight.data.numpy().tolist()
@@ -214,24 +215,22 @@ def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layer
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size_test, shuffle=False, num_workers=2)
 
-    net.save_topology()
     net.save_weights()
 
     net.train_net(device, trainloader, criterion, optimizer)
-    acc = net.test_net(device, testloader, criterion)
+    # acc = net.test_net(device, testloader, criterion)
 
-    return net, acc, net.weights_dict
+    net.save_topology()
+
+    # return net, acc, net.weights_dict
 
 
-def mlp_ablation(network, ko_layers, ko_units):
-
+def mlp_ablation(topology, filename, ko_layers, ko_units):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    layers = network.split('_')[-1]
-    layers = ast.literal_eval(layers)
 
-    net = Net(num_epochs=0, conv_layers=[], layers=layers)
+    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"], h0Shape=topology["h0Shape"])
     net.to(device)
-    net.load_state_dict(torch.load("static/data/models/MLP_{0}_trained.pt".format(layers)))
+    net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
     net.eval()
     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
 

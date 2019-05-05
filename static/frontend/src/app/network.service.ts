@@ -120,9 +120,10 @@ export class NetworkService {
       'Something bad happened; please try again later.');
   }
 
-  public ablationTest(network, layers, units) {
+  public ablationTest(topology, filename, layers, units) {
     const body = {
-      network: network,
+      topology: topology,
+      filename: filename,
       layers: layers,
       units: units
     };

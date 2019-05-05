@@ -2,10 +2,11 @@ import { Component, OnInit, ViewChild, OnDestroy, Output, EventEmitter, } from '
 import { Chart } from 'chart.js';
 
 import { Subject } from 'rxjs';
-import { takeUntil, take } from 'rxjs/operators';
+import { takeUntil, take, concatMap, filter } from 'rxjs/operators';
 
 import { DataService } from 'src/app/services/data.service';
 import { NetworkService } from 'src/app/network.service';
+import { PlaygroundService } from 'src/app/playground.service';
 
 @Component({
   selector: 'app-accuracy-plot',
@@ -19,25 +20,37 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   chart; barChartData;
 
   networkResultsCorrectData;
-  selectedFile;
+  selectedFile; topology;
 
   @Output() finished: EventEmitter<boolean>;
 
   constructor(
     private dataService: DataService,
-    private networkService: NetworkService
+    private networkService: NetworkService,
+    private playgroundService: PlaygroundService
   ) {
     this.finished = new EventEmitter<boolean>();
   }
 
   ngOnInit() {
     this.dataService.selectedFile
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (val) {
+      .pipe(
+        filter(val => {
+          if (val) {
+            return true;
+          } else {
+            return false;
+          }
+        }),
+        concatMap(val => {
           this.selectedFile = val;
-          this.accTest(true, this.selectedFile, [], []);
-        }
+          return this.playgroundService.getTopology(this.selectedFile);
+        }),
+        takeUntil(this.destroyed)
+      )
+      .subscribe(val => {
+        this.topology = val;
+        this.accTest(true, [], []);
       });
 
     this.dataService.detachedNodes
@@ -53,19 +66,19 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
           });
 
           if (layers.length === 0 && units.length === 0) {
-            this.accTest(true, this.selectedFile, layers, units);
+            this.accTest(true, layers, units);
           } else {
-            this.accTest(false, this.selectedFile, layers, units);
+            this.accTest(false, layers, units);
           }
         }
       });
   }
 
-  accTest(isInit, selectedFile, layers, units) {
-    const network = selectedFile.split('\\')[1]
+  accTest(isInit, layers, units) {
+    const filename = this.selectedFile.split('\\')[1]
       .split('.')[0];
 
-    this.networkService.ablationTest(network, layers, units)
+    this.networkService.ablationTest(this.topology, filename, layers, units)
       .pipe(take(1))
       .subscribe((val: any) => {
         val['class specific accuracy'] = val['class specific accuracy'].map(acc => acc * 100);

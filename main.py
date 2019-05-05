@@ -176,11 +176,12 @@ def indexFolders():
 def ablationTest():
     params = request.get_json()
 
-    network = params['network']
+    topology = params['topology']
+    filename = params['filename']
     layers = params['layers']
     units = params['units']
 
-    acc, correct_labels, acc_class, class_labels = MLP.mlp_ablation(network, layers, units)
+    acc, correct_labels, acc_class, class_labels = MLP.mlp_ablation(topology, filename, layers, units)
 
     result = {
         "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
@@ -206,7 +207,8 @@ def mlpSocketIO(params):
     conv_layers = params["conv_layers"]
     layers = params["layers"]
 
-    net, acc, weights = MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    # net, acc, weights = MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
     print('final json send')
 
 
