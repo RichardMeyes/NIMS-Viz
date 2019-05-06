@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { MatTabChangeEvent } from '@angular/material';
 
 import { Subject } from 'rxjs';
-import { takeUntil, take } from 'rxjs/operators';
+import { takeUntil, take, concatMap } from 'rxjs/operators';
 
 import { DataService } from '../services/data.service';
 import { NetworkService } from '../network.service';
@@ -307,18 +307,25 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
 
-    this.playgroundService.visualize(this.selectedFile, (this.epochSliderConfig.epochValue - 1))
-      .pipe(take(1))
+    this.playgroundService.getTopology(this.selectedFile)
+      .pipe(
+        take(1),
+        concatMap(topology => {
+          this.dataService.vizTopology.next(topology);
+          return this.playgroundService.visualize(this.selectedFile, (this.epochSliderConfig.epochValue - 1));
+        })
+      )
       .subscribe(val => {
-        let fcLayers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
-          .replace(/\s/g, '')
-          .split(',')
-          .map(layer => +layer);
         const currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
 
-        fcLayers = fcLayers.map(unitCount => { return { 'unitCount': unitCount }; });
+        console.log(Object.keys(val));
+        Object.keys(val).forEach(key => {
+          if (key.startsWith('c')) {
+            delete val[key];
+          }
+        });
+        console.log(Object.keys(val));
 
-        // this.dataService.vizTopology.next({ 'fcLayers': fcLayers });
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
   }
