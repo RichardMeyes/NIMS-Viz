@@ -161,7 +161,7 @@ class Net(nn.Module):
         class_labels = np.array([], dtype=int)
         for i_batch, (data, target) in enumerate(testloader):
             data, target = Variable(data), Variable(target)
-            data, target = data.to(device), target.to(device)
+            # data, target = data.to(device), target.to(device)
             data = data.view(-1, 28 * 28)
             net_out = self(data)
             # sum up batch loss
@@ -229,7 +229,7 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"], h0Shape=topology["h0Shape"])
-    net.to(device)
+    # net.to(device)
     net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
     net.eval()
     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
