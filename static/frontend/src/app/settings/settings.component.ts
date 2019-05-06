@@ -314,19 +314,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
         })
       )
-      .subscribe(val => { console.log(val); });
-
-    this.playgroundService.visualize(this.selectedFile, epochToVisualize)
-      .pipe(take(1))
       .subscribe(val => {
-        let fcLayers: any[] = this.selectedFile.substring(this.selectedFile.indexOf('[') + 1, this.selectedFile.indexOf(']'))
-          .replace(/\s/g, '')
-          .split(',')
-          .map(layer => +layer);
         const currEpoch = `epoch_0`;
 
         console.log(Object.keys(val));
-        fcLayers = fcLayers.map(unitCount => { return { 'unitCount': unitCount }; });
         Object.keys(val).forEach(key => {
           if (key.startsWith('c')) {
             delete val[key];

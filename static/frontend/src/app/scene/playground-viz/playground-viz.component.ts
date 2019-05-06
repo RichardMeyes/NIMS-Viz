@@ -116,9 +116,9 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         this.bindTopology();
       }
 
-      if (this.inputWeights) {
-        // this.setupWeights();
-        // this.bindWeights(runAnimation);
+      if (this.inputTopology && this.inputWeights) {
+        this.setupWeights();
+        this.bindWeights(runAnimation);
       }
     }
   }
@@ -209,7 +209,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
             }
 
             filteredData.push({
-              layer: (layerIndex - 1),
+              layer: this.inputTopology['conv_layers'].length + (layerIndex - 1),
               source: sourceIndex,
               target: destinationIndex,
               value: source,
@@ -341,8 +341,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       enterWeights = enterWeights.transition()
         .duration(2.5 * this.defaultSettings.duration)
         .delay(function (d) {
-          const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
-          const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
+          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
           return nodesDelay + weightsDelay;
         });
     }
@@ -358,7 +360,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
 
     const circles = this.vizContainer.selectAll('circle')
-      .data(this.topology);
+      .data(this.topology.filter(nodes => !nodes.isConv));
 
     let enterCircles = circles.enter()
       .append('circle')
@@ -380,16 +382,17 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     if (this.router.url.includes('ablation')) {
 
       enterCircles.on('mouseover', function (d) {
-        self.conMenuSelected = d;
+        self.conMenuSelected = Object.assign({}, d);
+        self.conMenuSelected.layer -= self.inputTopology['conv_layers'].length;
 
-        if (!d.isOutput) {
+        if (!d.isOutput && !d.isConv) {
           self.setupShowWeights();
           self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
         }
       });
 
       enterCircles.on('mouseout', function (d) {
-        if (!d.isOutput) { d3.selectAll('.weights-comparison').remove(); }
+        if (!d.isOutput && !d.isConv) { d3.selectAll('.weights-comparison').remove(); }
       });
 
       enterCircles.on('click', function (d) {
@@ -397,18 +400,18 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         d3.select('.context-menu').remove();
         self.conMenuSelected = d;
 
-        if (!d.isOutput) { self.modifyNodes(); }
+        if (!d.isOutput && !d.isConv) { self.modifyNodes(); }
       });
 
-      enterCircles.on('contextmenu', function (d) {
-        d3.select('.context-menu').remove();
-        self.conMenuSelected = d;
+      // enterCircles.on('contextmenu', function (d) {
+      //   d3.select('.context-menu').remove();
+      //   self.conMenuSelected = d;
 
-        if (!d.isOutput) {
-          self.setupConMenu();
-          self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
-        }
-      });
+      //   if (!d.isOutput) {
+      //     self.setupConMenu();
+      //     self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
+      //   }
+      // });
 
     }
 
@@ -416,8 +419,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       enterCircles = enterCircles.transition()
         .duration(this.defaultSettings.duration)
         .delay(function (d) {
-          const nodesDelay = self.defaultSettings.duration * d.layer;
-          const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          // const nodesDelay = self.defaultSettings.duration * d.layer;
+          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
           return nodesDelay + weightsDelay;
         });
     }
@@ -617,7 +622,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       })
       .on('click', function (menu, menuIndex) {
         if (menuIndex === 0) {
-          // self.showWeights();
         } else if (menuIndex === 1) {
           self.modifyNodes();
         }
@@ -715,7 +719,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     const self = this;
 
     const incomingWeights = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
-    const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology.fcLayers.length - 1) ?
+    const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology['layers'].length - 1) ?
       'output' : `h${this.conMenuSelected.layer + 1}`;
 
     const outgoingWeightsBefore = [];
@@ -779,10 +783,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
 
     this.showWeightsConfig.data = [];
-    this.showWeightsConfig.data.push(this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
-    this.showWeightsConfig.data.push(this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
-    this.showWeightsConfig.data.push(outgoingWeightsBefore);
-    this.showWeightsConfig.data.push(outgoingWeightsAfter);
+    this.showWeightsConfig.data.push([...this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]]);
+    this.showWeightsConfig.data.push([...this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]]);
+    this.showWeightsConfig.data.push([...outgoingWeightsBefore]);
+    this.showWeightsConfig.data.push([...outgoingWeightsAfter]);
 
     this.showWeightsConfig.weights = [];
     this.showWeightsConfig.data.forEach(data => {
@@ -794,6 +798,9 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         numElements: Math.ceil(Math.sqrt(data.length))
       });
     });
+
+    // d3 workaround - attr's index starts from 1 instead of 0
+    this.showWeightsConfig.data.forEach(data => { data.unshift('d3 workaround'); });
 
     const comparisonItem = weightsComparison.selectAll('.comparison-item')
       .data(this.showWeightsConfig.data)
