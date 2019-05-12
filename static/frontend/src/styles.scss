@@ -13,3 +13,7 @@ body { margin: 0; }
 .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-thumb { background-color: rgb(255, 64, 129) !important; }
 
 g.menu-entry { cursor: pointer; }
+
+.mat-expansion-panel-body {
+    background-color: #303030 !important;
+}
