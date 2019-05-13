@@ -686,8 +686,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         margin: 15,
         fill: 'whitesmoke'
       },
-      positiveColor: d3.interpolateLab('whitesmoke', 'royalblue'),
-      negativeColor: d3.interpolateLab('whitesmoke', 'indianred')
+      positiveColor: d3.interpolateLab('whitesmoke', 'indianred'),
+      negativeColor: d3.interpolateLab('whitesmoke', 'royalblue')
     };
 
     this.vizContainer.selectAll('.tmp')

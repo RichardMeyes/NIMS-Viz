@@ -39,8 +39,8 @@ export class ConvFiltersVizComponent implements OnInit {
         fill: 'whitesmoke',
         numElements: 0
       },
-      positiveColor: d3.interpolateLab('whitesmoke', 'royalblue'),
-      negativeColor: d3.interpolateLab('whitesmoke', 'indianred')
+      positiveColor: d3.interpolateLab('whitesmoke', 'indianred'),
+      negativeColor: d3.interpolateLab('whitesmoke', 'royalblue')
     };
 
     this.dataService.toolbarHeight
@@ -76,9 +76,17 @@ export class ConvFiltersVizComponent implements OnInit {
   showFilterWeights() {
     const self = this;
 
+    this.showWeightsConfig.minMax = [];
     this.showWeightsConfig.data = this.weights[this.selectedConvLayer][this.selectedUnit].map(inputWeights => {
-      let tempInput = ['d3 workaround'];
+      let tempInput = [];
       inputWeights.forEach(weights => { tempInput = tempInput.concat(weights); });
+
+      this.showWeightsConfig.minMax.push({
+        min: Math.min(...tempInput),
+        max: Math.max(...tempInput)
+      });
+
+      tempInput.unshift('d3 workaround');
       return tempInput;
     });
 
@@ -115,12 +123,40 @@ export class ConvFiltersVizComponent implements OnInit {
       .style('fill', this.showWeightsConfig.weightsFrame.fill);
 
 
-    console.clear();
-    console.log(this.weights[this.selectedConvLayer]);
-    console.log(this.weights[this.selectedConvLayer][this.selectedUnit]);
+    let tempIndex = -1;
+    weightsFrame.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = ((i - 1) % self.showWeightsConfig.weight.numElements) *
+          self.showWeightsConfig.weight.width;
 
-    console.log(this.showWeightsConfig.data);
-    console.log(this.showWeightsConfig.weight);
+        return rectXValue + xPosition;
+      })
+      .attr('y', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor((i - 1) / self.showWeightsConfig.weight.numElements) *
+          self.showWeightsConfig.weight.height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', this.showWeightsConfig.weight.width)
+      .attr('height', this.showWeightsConfig.weight.height)
+      .style('fill', (d, i) => {
+        if (i === 1) { tempIndex++; }
+
+        let scaledValue = 0;
+
+        if (d > 0) {
+          scaledValue = d / this.showWeightsConfig.minMax[tempIndex].max;
+          return this.showWeightsConfig.positiveColor(scaledValue);
+        } else if (d < 0) {
+          scaledValue = d / this.showWeightsConfig.minMax[tempIndex].min;
+          return this.showWeightsConfig.negativeColor(scaledValue);
+        }
+      });
   }
 
   resetViz() {
