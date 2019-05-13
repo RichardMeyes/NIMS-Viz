@@ -62,6 +62,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
     this.dataService.untrainedWeights.next(null);
+    this.dataService.filterWeights.next(null);
 
     this.dataService.testNetwork.next(false);
     this.dataService.resetNetwork.next(false);

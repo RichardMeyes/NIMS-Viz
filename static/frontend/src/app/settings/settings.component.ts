@@ -287,6 +287,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
     this.dataService.untrainedWeights.next(null);
+    this.dataService.filterWeights.next(null);
 
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
@@ -317,17 +318,20 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       )
       .subscribe(val => {
         const currEpoch = `epoch_0`;
+        const filterWeights = {};
 
-        console.log(Object.keys(val));
         Object.keys(val).forEach(key => {
           if (key.startsWith('c')) {
+            filterWeights[key] = val[key];
             delete val[key];
           }
         });
-        console.log(Object.keys(val));
 
         this.dataService.vizTopology.next(topologyTemp);
-        if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
+        if (val) {
+          this.dataService.vizWeights.next({ [currEpoch]: val });
+          this.dataService.filterWeights.next(filterWeights);
+        }
       });
 
     if (this.router.url.includes('ablation')) {

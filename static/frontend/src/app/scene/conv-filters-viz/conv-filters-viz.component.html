@@ -1,0 +1,22 @@
+<div class="container">
+  <mat-form-field appearance="standard">
+    <mat-label>Convolutional Layer</mat-label>
+    <mat-select [(ngModel)]="selectedConvLayer" (selectionChange)="convLayerSelected()">
+      <mat-option *ngFor="let convLayer of convLayers" [value]="convLayer">
+        {{ convLayer }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="standard">
+    <mat-label>Unit</mat-label>
+    <mat-select [(ngModel)]="selectedUnit" (selectionChange)="showFilterWeights()">
+      <mat-option *ngFor="let unit of units" [value]="unit">
+        {{ unit+1 }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <div #vizContainer>
+  </div>
+</div>

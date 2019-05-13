@@ -22,6 +22,7 @@ export class DataService {
   vizTopology: BehaviorSubject<any>;
   vizWeights: BehaviorSubject<any>;
   untrainedWeights:BehaviorSubject<any>;
+  filterWeights: BehaviorSubject<any>;
 
   detachedNodes: BehaviorSubject<any>;
   testNetwork: BehaviorSubject<boolean>;
@@ -61,6 +62,7 @@ export class DataService {
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);
     this.untrainedWeights = new BehaviorSubject(null);
+    this.filterWeights = new BehaviorSubject(null);
 
     this.detachedNodes = new BehaviorSubject(undefined);
     this.testNetwork = new BehaviorSubject(false);

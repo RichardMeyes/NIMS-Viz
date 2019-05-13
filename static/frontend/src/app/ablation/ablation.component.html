@@ -6,7 +6,7 @@
 <div class="right-chart">
     <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1">
         <mat-tab label="Convolutional Filters">
-            all filters
+            <app-conv-filters-viz></app-conv-filters-viz>
         </mat-tab>
         <mat-tab label="Ablation Results">
             <app-accuracy-plot (finished)="accFinished=$event; updateSpinner()"></app-accuracy-plot>

@@ -27,6 +27,7 @@ import { ArchiveComponent } from './archive/archive.component';
 import { AblationComponent } from './ablation/ablation.component';
 import { AccuracyPlotComponent } from './ablation/accuracy-plot/accuracy-plot.component';
 import { TSNEPlotComponent } from './ablation/t-sne-plot/t-sne-plot.component';
+import { ConvFiltersVizComponent } from './scene/conv-filters-viz/conv-filters-viz.component';
 
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
@@ -46,6 +47,7 @@ import { TSNEPlotComponent } from './ablation/t-sne-plot/t-sne-plot.component';
     BuilderComponent,
     ArchiveComponent,
     AblationComponent,
+    ConvFiltersVizComponent,
     AccuracyPlotComponent,
     TSNEPlotComponent,
     SettingsComponent,
