@@ -20,8 +20,7 @@ export class ConvFiltersVizComponent implements OnInit {
   convLayers; units;
   selectedConvLayer; selectedUnit;
 
-  weights; filterWeights;
-  filterWeightsConfig;
+  weights; showWeightsConfig;
 
   destroyed = new Subject<void>();
 
@@ -32,7 +31,7 @@ export class ConvFiltersVizComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.filterWeightsConfig = {
+    this.showWeightsConfig = {
       weightsFrame: {
         width: 84,
         height: 84,
@@ -55,9 +54,7 @@ export class ConvFiltersVizComponent implements OnInit {
 
         this.convLayers = [];
         if (val) {
-          Object.keys(val).forEach(key => {
-            this.convLayers.push(key);
-          });
+          Object.keys(val).forEach(key => { this.convLayers.push(key); });
           this.selectedConvLayer = this.convLayers[0];
           this.selectedUnit = 0;
 
@@ -67,57 +64,71 @@ export class ConvFiltersVizComponent implements OnInit {
   }
 
   convLayerSelected() {
-      this.filterWeights = [...this.weights[this.selectedConvLayer]];
+    this.units = [];
+    for (let i = 0; i < this.weights[this.selectedConvLayer].length; i++) {
+      this.units.push(i);
+    }
+    this.selectedUnit = 0;
 
-      this.units = [];
-      for (let i = 0; i < this.filterWeights.length; i++) {
-        this.units.push(i);
-      }
-      this.selectedUnit = 0;
-
-      this.showFilterWeights();
+    this.showFilterWeights();
   }
 
   showFilterWeights() {
     const self = this;
-    this.filterWeights = [...this.weights[this.selectedConvLayer][this.selectedUnit]];
+
+    this.showWeightsConfig.data = this.weights[this.selectedConvLayer][this.selectedUnit].map(inputWeights => {
+      let tempInput = ['d3 workaround'];
+      inputWeights.forEach(weights => { tempInput = tempInput.concat(weights); });
+      return tempInput;
+    });
+
+    this.showWeightsConfig.weight = {
+      numElements: this.weights[this.selectedConvLayer][this.selectedUnit][0].length,
+      width: this.showWeightsConfig.weightsFrame.width / this.weights[this.selectedConvLayer][this.selectedUnit][0].length,
+      height: this.showWeightsConfig.weightsFrame.height / this.weights[this.selectedConvLayer][this.selectedUnit][0].length
+    };
+
 
     this.resetViz();
 
+
     const weightsFrame = this.vizGroup.selectAll('rect')
-      .data(this.filterWeights)
+      .data(this.showWeightsConfig.data)
       .enter()
       .append('g');
 
     weightsFrame.append('rect')
       .attr('x', function (d, i) {
-        const currIndex = i % self.filterWeightsConfig.weightsFrame.numElements;
-        const x = currIndex * (self.filterWeightsConfig.weightsFrame.width + (2 * self.filterWeightsConfig.weightsFrame.margin));
+        const currIndex = i % self.showWeightsConfig.weightsFrame.numElements;
+        const x = currIndex * (self.showWeightsConfig.weightsFrame.width + (2 * self.showWeightsConfig.weightsFrame.margin));
 
         return x;
       })
       .attr('y', function (d, i) {
-        const currIndex = Math.floor(i / self.filterWeightsConfig.weightsFrame.numElements);
-        const y = currIndex * (self.filterWeightsConfig.weightsFrame.height + (2 * self.filterWeightsConfig.weightsFrame.margin));
+        const currIndex = Math.floor(i / self.showWeightsConfig.weightsFrame.numElements);
+        const y = currIndex * (self.showWeightsConfig.weightsFrame.height + (2 * self.showWeightsConfig.weightsFrame.margin));
 
         return y;
       })
-      .attr('width', this.filterWeightsConfig.weightsFrame.width)
-      .attr('height', this.filterWeightsConfig.weightsFrame.height)
-      .style('fill', this.filterWeightsConfig.weightsFrame.fill);
+      .attr('width', this.showWeightsConfig.weightsFrame.width)
+      .attr('height', this.showWeightsConfig.weightsFrame.height)
+      .style('fill', this.showWeightsConfig.weightsFrame.fill);
+
 
     console.clear();
-    console.log(this.selectedConvLayer);
-    console.log(this.selectedUnit);
-    console.log(this.filterWeights);
+    console.log(this.weights[this.selectedConvLayer]);
+    console.log(this.weights[this.selectedConvLayer][this.selectedUnit]);
+
+    console.log(this.showWeightsConfig.data);
+    console.log(this.showWeightsConfig.weight);
   }
 
   resetViz() {
     this.svgWidth = window.innerWidth / 2;
     this.svgHeight = window.innerHeight - (this.toolbarHeight + this.dataService.bottomMargin) - 78.125;
 
-    this.filterWeightsConfig.weightsFrame.numElements = Math.floor(this.svgWidth /
-      (this.filterWeightsConfig.weightsFrame.width + 2 * this.filterWeightsConfig.weightsFrame.margin));
+    this.showWeightsConfig.weightsFrame.numElements = Math.floor(this.svgWidth /
+      (this.showWeightsConfig.weightsFrame.width + 2 * this.showWeightsConfig.weightsFrame.margin));
 
     if (this.svg) { this.svg.remove(); }
     this.svg = d3.select(this.vizContainer.nativeElement)
