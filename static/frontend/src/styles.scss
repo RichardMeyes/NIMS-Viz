@@ -17,3 +17,8 @@ g.menu-entry { cursor: pointer; }
 .mat-expansion-panel-body {
     background-color: #303030 !important;
 }
+
+.ablation-chart {
+    width: 100%;
+    height: calc(50vh - 32px - 24px);
+}

@@ -200,7 +200,8 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
               label: (tooltipItem, data) =>
                 `${Math.round(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index] * 100) / 100}%`
             }
-          }
+          },
+          maintainAspectRatio: false
         }
       });
     } else {

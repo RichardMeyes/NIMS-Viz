@@ -162,7 +162,8 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
             callbacks: {
               label: (tooltipItem, data) => `${data.labels[tooltipItem.datasetIndex][tooltipItem.index]}`
             }
-          }
+          },
+          maintainAspectRatio: false
         }
       });
     } else {
