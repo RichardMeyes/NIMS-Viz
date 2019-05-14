@@ -664,7 +664,11 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.showWeightsTexts = [
       `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
       `Incoming Weights`,
-      `Outgoing Weights`
+      `Before`,
+      `After`,
+      `Outgoing Weights`,
+      `Before`,
+      `After`
     ];
 
     this.showWeightsConfig = {
@@ -707,12 +711,12 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       });
     d3.selectAll('.tmp').remove();
 
-    this.showWeightsConfig.outerFrame.width = 2 * this.showWeightsConfig.weightsFrame.width;
+    this.showWeightsConfig.outerFrame.width = 2 * this.showWeightsConfig.weightsFrame.width +
+      2.75 * this.showWeightsConfig.weightsFrame.margin;
     this.showWeightsConfig.outerFrame.height =
       this.showWeightsConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
       2 * this.showWeightsConfig.titles.margin +
-      2 * this.showWeightsConfig.weightsFrame.height +
-      2 * 1.5 * this.showWeightsConfig.weightsFrame.margin;
+      2 * this.showWeightsConfig.weightsFrame.height;
   }
 
   showWeights(mouseX, mouseY) {
@@ -738,14 +742,12 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     weightsComparison.append('rect')
       .attr('x', mouseX + this.showWeightsConfig.outerFrame.margin)
       .attr('y', mouseY + this.showWeightsConfig.outerFrame.margin)
-      .attr('width',
-        this.showWeightsConfig.outerFrame.width +
-        2.75 * this.showWeightsConfig.weightsFrame.margin
-      )
+      .attr('width', this.showWeightsConfig.outerFrame.width)
       .attr('height', this.showWeightsConfig.outerFrame.height)
       .attr('rx', this.showWeightsConfig.outerFrame.cornerRad)
       .attr('ry', this.showWeightsConfig.outerFrame.cornerRad)
       .style('fill', this.showWeightsConfig.outerFrame.fill);
+
 
     weightsComparison.selectAll('text')
       .data(this.showWeightsTexts)
@@ -754,9 +756,17 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .text(d => d)
       .attr('x', (d, i) => {
         let centerAligned = 0;
-        if (i === 0) {
-          centerAligned += this.showWeightsConfig.outerFrame.width / 2;
+        if (i === 0 || d === 'Before' || d === 'After') {
+          if (i === 0) {
+            centerAligned += this.showWeightsConfig.outerFrame.width / 2;
+          } else if (d === 'Before') {
+            centerAligned += this.showWeightsConfig.outerFrame.width / 4;
+          } else if (d === 'After') {
+            centerAligned += 3 * this.showWeightsConfig.outerFrame.width / 4;
+          }
+
           centerAligned -= this.showWeightsConfig.titles.dimension[i].width / 2;
+          centerAligned -= this.showWeightsConfig.titles.margin;
         }
 
         return mouseX +
@@ -765,19 +775,30 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
           centerAligned;
       })
       .attr('y', (d, i) => {
-        let totalMargin = 0;
-        if (i === 0) {
-          totalMargin += this.showWeightsConfig.titles.margin;
-        } else {
-          totalMargin += 2 * this.showWeightsConfig.titles.margin;
+        let totalTitles = this.showWeightsConfig.titles.margin;
+        let totalContent = 0;
+
+        if (i > 0) {
+          totalTitles = 2 * this.showWeightsConfig.titles.margin;
         }
+        for (let j = 0; j <= i; j++) {
+          totalTitles += this.showWeightsConfig.titles.dimension[j].height;
+        }
+        if (d === 'After') {
+          totalTitles -= this.showWeightsConfig.titles.dimension[i].height;
+        }
+
+        if (i > 3) {
+          totalTitles -= this.showWeightsConfig.titles.dimension[3].height;
+          totalContent += this.showWeightsConfig.weightsFrame.height;
+          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
+        }
+
 
         return mouseY +
           this.showWeightsConfig.outerFrame.margin +
-          (i + 1) * this.showWeightsConfig.titles.dimension[i].height +
-          Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height +
-          Math.floor(i / 2) * 1.5 * this.showWeightsConfig.weightsFrame.margin +
-          totalMargin;
+          totalTitles +
+          totalContent;
       })
       .attr('fill', this.showWeightsConfig.titles.color);
 
@@ -816,18 +837,27 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         (i % 2 * .75 + 1) * this.showWeightsConfig.weightsFrame.margin
       )
       .attr('y', (d, i) => {
-        let titlesHeight = 0;
-        for (let j = 0; j <= Math.floor(i / 2) + 1; j++) {
-          titlesHeight += this.showWeightsConfig.titles.dimension[j].height;
+        let totalTitles = 2 * this.showWeightsConfig.titles.margin +
+          this.showWeightsConfig.titles.dimension[0].height;
+        let totalContent = Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height +
+          .25 * this.showWeightsConfig.weightsFrame.margin;
+
+
+        for (let j = 0; j < this.showWeightsConfig.titles.dimension.length; j++) {
+          if (Math.floor(i / 2) === 0 && j > 2) { break; }
+
+          if (j % 3 === 0) { continue; }
+          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.showWeightsConfig.titles.dimension[j].height; }
         }
-        titlesHeight += 2 * this.showWeightsConfig.titles.margin;
+
+        if (Math.floor(i / 2) === 1) {
+          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
+        }
 
         return mouseY +
           this.showWeightsConfig.outerFrame.margin +
-          Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height +
-          Math.floor(i / 2 + 1) * .5 * this.showWeightsConfig.weightsFrame.margin +
-          Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.margin +
-          titlesHeight;
+          totalTitles +
+          totalContent;
       })
       .attr('width', this.showWeightsConfig.weightsFrame.width)
       .attr('height', this.showWeightsConfig.weightsFrame.height)
