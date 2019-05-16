@@ -735,13 +735,26 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       outgoingWeightsAfter.push(element[this.conMenuSelected.unit]);
     });
 
+    this.showWeightsConfig.quadrantAdjustment = {
+      x: this.showWeightsConfig.outerFrame.margin,
+      y: this.showWeightsConfig.outerFrame.margin
+    };
+    if (mouseX > this.svgWidth / 2) {
+      this.showWeightsConfig.quadrantAdjustment.x *= -1;
+      this.showWeightsConfig.quadrantAdjustment.x += -1 * this.showWeightsConfig.outerFrame.width;
+    }
+    if (mouseY > this.svgHeight / 2) {
+      this.showWeightsConfig.quadrantAdjustment.y *= -1;
+      this.showWeightsConfig.quadrantAdjustment.y += -1 * this.showWeightsConfig.outerFrame.height;
+    }
+
 
     const weightsComparison = this.vizContainer.append('g')
       .attr('class', 'weights-comparison');
 
     weightsComparison.append('rect')
-      .attr('x', mouseX + this.showWeightsConfig.outerFrame.margin)
-      .attr('y', mouseY + this.showWeightsConfig.outerFrame.margin)
+      .attr('x', mouseX + this.showWeightsConfig.quadrantAdjustment.x)
+      .attr('y', mouseY + this.showWeightsConfig.quadrantAdjustment.y)
       .attr('width', this.showWeightsConfig.outerFrame.width)
       .attr('height', this.showWeightsConfig.outerFrame.height)
       .attr('rx', this.showWeightsConfig.outerFrame.cornerRad)
@@ -769,8 +782,9 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
           centerAligned -= this.showWeightsConfig.titles.margin;
         }
 
+
         return mouseX +
-          this.showWeightsConfig.outerFrame.margin +
+          this.showWeightsConfig.quadrantAdjustment.x +
           this.showWeightsConfig.titles.margin +
           centerAligned;
       })
@@ -796,7 +810,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
 
         return mouseY +
-          this.showWeightsConfig.outerFrame.margin +
+          this.showWeightsConfig.quadrantAdjustment.y +
           totalTitles +
           totalContent;
       })
@@ -832,7 +846,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     comparisonItem.append('rect')
       .attr('x', (d, i) =>
         mouseX +
-        this.showWeightsConfig.outerFrame.margin +
+        this.showWeightsConfig.quadrantAdjustment.x +
         (i % 2) * this.showWeightsConfig.weightsFrame.width +
         (i % 2 * .75 + 1) * this.showWeightsConfig.weightsFrame.margin
       )
@@ -855,7 +869,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         }
 
         return mouseY +
-          this.showWeightsConfig.outerFrame.margin +
+          this.showWeightsConfig.quadrantAdjustment.y +
           totalTitles +
           totalContent;
       })
