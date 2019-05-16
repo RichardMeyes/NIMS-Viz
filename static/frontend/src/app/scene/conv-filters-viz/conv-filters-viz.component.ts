@@ -74,6 +74,7 @@ export class ConvFiltersVizComponent implements OnInit {
   }
 
   showFilterWeights() {
+    this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}`);
     const self = this;
 
     this.showWeightsConfig.minMax = [];
@@ -104,6 +105,11 @@ export class ConvFiltersVizComponent implements OnInit {
       .data(this.showWeightsConfig.data)
       .enter()
       .append('g');
+
+    weightsFrame.on('mouseenter', (d, i) => {
+      this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}-${i}`);
+    })
+      .on('mouseleave', () => { this.dataService.selectedFilter.next(null); });
 
     weightsFrame.append('rect')
       .attr('x', function (d, i) {

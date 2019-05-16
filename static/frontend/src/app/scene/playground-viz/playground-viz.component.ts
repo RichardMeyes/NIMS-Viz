@@ -31,6 +31,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   minMaxDiffs; activities;
 
   detachedNodes;
+  selectedFilter;
 
   defaultSettings;
 
@@ -103,6 +104,13 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
           this.detachedNodes = [];
           this.draw(false);
         }
+      });
+
+    this.dataService.selectedFilter
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        this.selectedFilter = val;
+        this.highlightSelectedFilter();
       });
   }
 
@@ -956,6 +964,60 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
     this.setupWeights();
     this.bindWeights(false);
+  }
+
+  highlightSelectedFilter() {
+    let selectedConvLayer; let selectedUnit; let selectedWeight;
+    let highlightedTopology; let highlightedWeight;
+
+    if (this.selectedFilter) {
+      [selectedConvLayer, selectedUnit, selectedWeight] = [...this.selectedFilter.split('-')];
+
+      for (let i = 0; i < this.topology.length; i++) {
+        if (this.topology[i].isConv &&
+          this.topology[i].layer === +selectedConvLayer.substring(1) &&
+          this.topology[i].unit === +selectedUnit) {
+          highlightedTopology = this.topology[i];
+          break;
+        }
+      }
+
+      const rects = this.vizContainer.selectAll('.highlightedRect')
+        .data([this.selectedFilter], d => d);
+
+      rects.exit()
+        .remove();
+
+      rects.enter()
+        .append('rect')
+        .attr('class', 'highlightedRect')
+        .attr('x', () => {
+          const x: number = this.leftMargin +
+            (this.layerSpacing * highlightedTopology.layer) +
+            (this.layerSpacing / 2) -
+            (0.5 * this.defaultSettings.rectSide);
+          return x;
+        })
+        .attr('y', () => {
+          const y: number = this.topMargin +
+            (highlightedTopology.unitSpacing * highlightedTopology.unit) +
+            (highlightedTopology.unitSpacing / 2) -
+            (0.5 * this.defaultSettings.rectSide);
+          return y;
+        })
+        .attr('width', this.defaultSettings.rectSide)
+        .attr('height', this.defaultSettings.rectSide)
+        .attr('fill', 'royalblue')
+        .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+        .attr('stroke', this.defaultSettings.color)
+        .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+      console.clear();
+      console.log(selectedConvLayer, selectedUnit, selectedWeight);
+      console.log(highlightedTopology);
+      console.log(this.topology);
+      console.log(this.edges);
+    }
   }
 
   ngOnDestroy() {
