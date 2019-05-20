@@ -4,7 +4,7 @@
 
 <app-playground-viz></app-playground-viz>
 <div class="right-chart">
-    <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1">
+    <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1" (selectedTabChange)="tabChanged($event.index)">
         <mat-tab label="Convolutional Filters">
             <app-conv-filters-viz></app-conv-filters-viz>
         </mat-tab>

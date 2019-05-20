@@ -109,7 +109,7 @@ export class ConvFiltersVizComponent implements OnInit {
     weightsFrame.on('mouseenter', (d, i) => {
       this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}-${i}`);
     })
-      .on('mouseleave', () => { this.dataService.selectedFilter.next(null); });
+      .on('mouseleave', () => { this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}`); });
 
     weightsFrame.append('rect')
       .attr('x', function (d, i) {
