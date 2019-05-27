@@ -44,12 +44,14 @@ class Net(nn.Module):
         self.output = nn.Linear(self.layers[-1], 10)
 
     def forward(self, x):
-        x = x.view(-1, 1, 28, 28)
-        for i_layer in range(len(self.conv_layers)):
-            x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
-            x = F.max_pool2d(x, kernel_size=2, stride=2)
+        if len(self.conv_layers):
+            x = x.view(-1, 1, 28, 28)
+            print(self.conv_layers)
+            for i_layer in range(len(self.conv_layers)):
+                x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
+                x = F.max_pool2d(x, kernel_size=2, stride=2)
+            x = x.view(x.shape[0], -1)
 
-        x = x.view(x.size(0), -1)
         self.h0 = nn.Linear(x.shape[1], self.layers[0])
         self.topology_dict["h0Shape"] = x.shape[1]
         for i_layer in range(len(self.layers)):
