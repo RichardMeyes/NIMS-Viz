@@ -22,6 +22,8 @@ export class ConvFiltersVizComponent implements OnInit {
 
   weights; showWeightsConfig;
 
+  isInit;
+
   destroyed = new Subject<void>();
 
   @ViewChild('vizContainer') vizContainer;
@@ -58,6 +60,8 @@ export class ConvFiltersVizComponent implements OnInit {
           this.selectedConvLayer = this.convLayers[0];
           this.selectedUnit = 0;
 
+          this.isInit = true;
+
           this.convLayerSelected();
         }
       });
@@ -74,7 +78,12 @@ export class ConvFiltersVizComponent implements OnInit {
   }
 
   showFilterWeights() {
-    this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}`);
+    if (!this.isInit) {
+      this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}`);
+    } else {
+      this.isInit = false;
+    }
+
     const self = this;
 
     this.showWeightsConfig.minMax = [];
