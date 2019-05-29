@@ -56,25 +56,27 @@
 
                 <ng-container *ngIf="i === 0">
                   <mat-form-field>
-                    <input matInput placeholder="In Channel" type="number" min="1" formControlName="inChannel">
+                    <input matInput placeholder="In Channel" type="number" min="1" [(ngModel)]="firstChannel"
+                      [ngModelOptions]="{standalone: true}">
                   </mat-form-field>
                 </ng-container>
                 <ng-container *ngIf="i > 0">
                   <mat-form-field>
-                    <input matInput placeholder="In Channel" type="number" min="1" formControlName="inChannel"
-                      [value]="commonChannels[i-1]">
+                    <input matInput placeholder="In Channel" type="number" min="1" [(ngModel)]="commonChannels[i-1]"
+                      [ngModelOptions]="{standalone: true}">
                   </mat-form-field>
                 </ng-container>
 
                 <ng-container *ngIf="i < convLayers.length-1">
                   <mat-form-field>
-                    <input matInput placeholder="Out Channel" type="number" min="1" formControlName="outChannel"
-                      [value]="commonChannels[i]">
+                    <input matInput placeholder="Out Channel" type="number" min="1" [(ngModel)]="commonChannels[i]"
+                      [ngModelOptions]="{standalone: true}">
                   </mat-form-field>
                 </ng-container>
                 <ng-container *ngIf="i === convLayers.length-1">
                   <mat-form-field>
-                    <input matInput placeholder="Out Channel" type="number" min="1" formControlName="outChannel">
+                    <input matInput placeholder="Out Channel" type="number" min="1" [(ngModel)]="lastChannel"
+                      [ngModelOptions]="{standalone: true}">
                   </mat-form-field>
                 </ng-container>
 

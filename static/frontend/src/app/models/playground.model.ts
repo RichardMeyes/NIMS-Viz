@@ -7,6 +7,10 @@ export class Playground {
     numBatches: number;
     epoch: number;
 
+    firstChannel: number;
+    lastChannel: number;
+    commonChannels: number[];
+
     convLayers: ConvLayer[];
     fcLayers: number[];
 
@@ -26,10 +30,14 @@ export class Playground {
         this.numBatches = 150;
         this.epoch = 5;
 
+        this.firstChannel = 1;
+        this.lastChannel = 64;
+        this.commonChannels = [32, 32];
+
         this.convLayers = [
-            new ConvLayer(1, 32, 5, 1, 2),
-            new ConvLayer(32, 32, 5, 1, 2),
-            new ConvLayer(32, 64, 5, 1, 2)
+            new ConvLayer(this.firstChannel, this.commonChannels[0], 5, 1, 2),
+            new ConvLayer(this.commonChannels[0], this.commonChannels[1], 5, 1, 2),
+            new ConvLayer(this.commonChannels[1], this.lastChannel, 5, 1, 2)
         ];
         this.fcLayers = [20, 15, 10];
 

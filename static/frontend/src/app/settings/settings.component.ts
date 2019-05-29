@@ -27,6 +27,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   playgroundForm: FormGroup;
   playgroundData: Playground;
 
+  firstChannel; lastChannel;
   commonChannels;
 
   files; selectedFile;
@@ -101,13 +102,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
 
-    this.commonChannels = {};
+    this.firstChannel = this.playgroundData.firstChannel;
+    this.lastChannel = this.playgroundData.lastChannel;
+    this.commonChannels = this.playgroundData.commonChannels;
+
     this.playgroundForm.setControl('convLayers', this.fb.array(
-      this.playgroundData.convLayers.map((layer: ConvLayer, layerIndex: number) => {
-        this.commonChannels[layerIndex] = layer.outChannel;
+      this.playgroundData.convLayers.map((layer: ConvLayer) => {
         return this.fb.group({
-          inChannel: [layer.inChannel, [Validators.required, Validators.min(1)]],
-          outChannel: [layer.outChannel, [Validators.required, Validators.min(1)]],
           kernelSize: [layer.kernelSize, [Validators.required, Validators.min(1)]],
           stride: [layer.stride, [Validators.required, Validators.min(1)]],
           padding: [layer.padding, [Validators.required, Validators.min(0)]]
@@ -119,37 +120,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         unitCount: [layer, [Validators.required, Validators.min(1)]]
       }))
     ));
-
-    this.convLayers.controls.forEach((layer, layerIndex) => {
-      const inChannel = layer.get('inChannel');
-      const outChannel = layer.get('outChannel');
-
-      inChannel.valueChanges
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          if (this.commonChannels[layerIndex - 1]) {
-            this.commonChannels[layerIndex - 1] = val;
-          }
-        });
-
-      outChannel.valueChanges
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          if (this.commonChannels[layerIndex]) {
-            this.commonChannels[layerIndex] = val;
-          }
-        });
-    });
   }
 
   delLayer(layerIndex: number, layer: string) {
     if (layer === 'convLayer') {
-      const lastIndex = Object.keys(this.commonChannels).pop();
-      for (let i = layerIndex; i < +lastIndex; i++) {
-        this.commonChannels[i] = this.commonChannels[i + 1];
-      }
-      delete this.commonChannels[lastIndex];
-
+      this.commonChannels.splice(layerIndex, 1);
       this.convLayers.removeAt(layerIndex);
     }
 
@@ -160,36 +135,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   addLayer(layer: string) {
     if (layer === 'convLayer') {
-      const newIndex = +Object.keys(this.commonChannels).pop() + 1;
-      this.commonChannels[newIndex.toString()] = 1;
+      this.commonChannels.push(this.lastChannel);
+      this.lastChannel = 1;
 
       this.convLayers.push(this.fb.group({
-        inChannel: [1, [Validators.required, Validators.min(1)]],
-        outChannel: [1, [Validators.required, Validators.min(1)]],
         kernelSize: [5, [Validators.required, Validators.min(1)]],
         stride: [1, [Validators.required, Validators.min(1)]],
         padding: [2, [Validators.required, Validators.min(0)]]
       }));
-
-
-      const inChannel = this.convLayers.controls[this.convLayers.length - 1].get('inChannel');
-      const outChannel = this.convLayers.controls[this.convLayers.length - 1].get('outChannel');
-
-      inChannel.valueChanges
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          if (this.commonChannels[newIndex - 1]) {
-            this.commonChannels[newIndex - 1] = val;
-          }
-        });
-
-      outChannel.valueChanges
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          if (this.commonChannels[newIndex]) {
-            this.commonChannels[newIndex] = val;
-          }
-        });
     }
 
     if (layer === 'fcLayer') {
@@ -218,9 +171,27 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       learningRate => learningRate.value === captureForm.learning_rate
     );
 
+    this.playgroundData.firstChannel = this.firstChannel;
+    this.playgroundData.lastChannel = this.lastChannel;
+    this.playgroundData.commonChannels = this.commonChannels;
+
     this.playgroundData.convLayers = captureForm.convLayers.slice(0);
     this.playgroundData.fcLayers = captureForm.fcLayers.map(layer => layer.unitCount);
     this.dataService.playgroundData.next(this.playgroundData);
+
+    objToSend.conv_layers.forEach((convLayer, convLayerIndex) => {
+      if (convLayerIndex === 0) {
+        convLayer.inChannel = this.firstChannel;
+      } else {
+        convLayer.inChannel = this.commonChannels[convLayerIndex - 1];
+      }
+
+      if (convLayerIndex === objToSend.conv_layers.length - 1) {
+        convLayer.outChannel = this.lastChannel;
+      } else {
+        convLayer.outChannel = this.commonChannels[convLayerIndex];
+      }
+    });
 
 
     this.dataService.vizTopology.next(objToSend);
@@ -228,8 +199,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
 
-    console.clear();
-    // console.log(this.commonChannels);
+    // console.clear();
     // console.log(objToSend);
   }
 
