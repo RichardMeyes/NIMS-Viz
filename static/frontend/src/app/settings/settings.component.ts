@@ -110,7 +110,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           outChannel: [layer.outChannel, [Validators.required, Validators.min(1)]],
           kernelSize: [layer.kernelSize, [Validators.required, Validators.min(1)]],
           stride: [layer.stride, [Validators.required, Validators.min(1)]],
-          padding: [layer.padding, [Validators.required, Validators.min(1)]]
+          padding: [layer.padding, [Validators.required, Validators.min(0)]]
         });
       })
     ));
@@ -168,7 +168,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         outChannel: [1, [Validators.required, Validators.min(1)]],
         kernelSize: [5, [Validators.required, Validators.min(1)]],
         stride: [1, [Validators.required, Validators.min(1)]],
-        padding: [2, [Validators.required, Validators.min(1)]]
+        padding: [2, [Validators.required, Validators.min(0)]]
       }));
 
 
@@ -228,6 +228,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
 
+    console.clear();
     // console.log(this.commonChannels);
     // console.log(objToSend);
   }
