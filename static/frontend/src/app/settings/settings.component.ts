@@ -124,7 +124,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   delLayer(layerIndex: number, layer: string) {
     if (layer === 'convLayer') {
-      this.commonChannels.splice(layerIndex, 1);
+      if (layerIndex === 0) {
+        this.firstChannel = this.commonChannels[0];
+        this.commonChannels.splice(layerIndex, 1);
+      } else if (layerIndex === this.convLayers.length - 1) {
+        this.lastChannel = this.commonChannels.pop();
+      }
+
       this.convLayers.removeAt(layerIndex);
     }
 
@@ -135,14 +141,20 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   addLayer(layer: string) {
     if (layer === 'convLayer') {
-      this.commonChannels.push(this.lastChannel);
-      this.lastChannel = 1;
-
       this.convLayers.push(this.fb.group({
         kernelSize: [5, [Validators.required, Validators.min(1)]],
         stride: [1, [Validators.required, Validators.min(1)]],
         padding: [2, [Validators.required, Validators.min(0)]]
       }));
+
+      if (this.convLayers.length > 1) {
+        this.commonChannels.push(this.lastChannel);
+      } else {
+        this.firstChannel = 1;
+        this.commonChannels = [];
+      }
+
+      this.lastChannel = 1;
     }
 
     if (layer === 'fcLayer') {
@@ -200,6 +212,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
     // console.clear();
+    // console.log(this.firstChannel);
+    // console.log(this.commonChannels);
+    // console.log(this.lastChannel);
     // console.log(objToSend);
   }
 
