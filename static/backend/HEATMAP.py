@@ -69,6 +69,8 @@ class Heatmap(metaclass=Singleton):
         
         # convert weights to percentages
         diff = abs(weightMinMax[1] - weightMinMax[0])
+        if diff == 0:
+            diff = 1
         for i in range(len(heatmapNormalData)):
             heatmapNormalData[i][2] = (heatmapNormalData[i][2]-weightMinMax[0])/diff
         for i in range(len(heatmapNodeData)):

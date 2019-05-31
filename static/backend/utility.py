@@ -29,7 +29,7 @@ def getWeightsFromEpoch(epoch, startMinMax):
                 startMinMax[0] = currMin
             if(currMax > startMinMax[1]):
                 startMinMax[1] = currMax
-    return
+    return startMinMax
 
 def loadWeightsFromFile(filePath,epoch):
     with open(filePath) as json_data:

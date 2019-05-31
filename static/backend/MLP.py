@@ -46,7 +46,6 @@ class Net(nn.Module):
     def forward(self, x):
         if len(self.conv_layers):
             x = x.view(-1, 1, 28, 28)
-            print(self.conv_layers)
             for i_layer in range(len(self.conv_layers)):
                 x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
                 x = F.max_pool2d(x, kernel_size=2, stride=2)
@@ -192,8 +191,8 @@ class Net(nn.Module):
     def calcHeatmapFromFile(self, epochWeights, newNodeStruct):
         drawFully = False
         weightMinMax = [0,0]
-        utility.getWeightsFromEpoch(epochWeights,weightMinMax)
-        print('weightMinMax in mlp: ',weightMinMax)
+        weightMinMax = utility.getWeightsFromEpoch(epochWeights,weightMinMax)
+        print('weightMinMax in mlp: ', weightMinMax)
         density = 5
         heatmapObj = HEATMAP.Heatmap()
 
