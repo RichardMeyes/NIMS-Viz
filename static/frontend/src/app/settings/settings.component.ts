@@ -125,10 +125,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   delLayer(layerIndex: number, layer: string) {
     if (layer === 'convLayer') {
       if (layerIndex === 0) {
-        this.firstChannel = this.commonChannels[0];
-        this.commonChannels.splice(layerIndex, 1);
+        this.firstChannel = this.commonChannels.shift();
       } else if (layerIndex === this.convLayers.length - 1) {
         this.lastChannel = this.commonChannels.pop();
+      } else {
+        this.commonChannels.splice(layerIndex, 1);
       }
 
       this.convLayers.removeAt(layerIndex);
@@ -212,10 +213,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
     // console.clear();
+    // console.log(objToSend);
     // console.log(this.firstChannel);
     // console.log(this.commonChannels);
     // console.log(this.lastChannel);
-    // console.log(objToSend);
   }
 
   reset() {
