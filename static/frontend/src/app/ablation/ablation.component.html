@@ -1,8 +1,21 @@
-<div class="loading" fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showSpinner">
+<div class="container loading" fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showSpinner">
     <mat-spinner></mat-spinner>
 </div>
 
-<app-playground-viz></app-playground-viz>
+<div class="container">
+    <mat-grid-list cols="4" rowHeight="fit">
+        <mat-grid-tile *ngFor="let tile of tiles" [colspan]="tile.cols" [rowspan]="tile.rows"
+            [style.background]="tile.color">
+            {{tile.text}}
+        </mat-grid-tile>
+    </mat-grid-list>
+</div>
+
+
+
+
+
+<!-- <app-playground-viz></app-playground-viz>
 <div class="right-chart">
     <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1" (selectedTabChange)="tabChanged($event.index)">
         <mat-tab label="Convolutional Filters">
@@ -19,4 +32,4 @@
     <button mat-raised-button (click)="testNetwork()">Test Network</button>
     <div style="width: 1rem;"></div>
     <button mat-raised-button (click)="resetNetwork()">Reset Network</button>
-</div>
+</div> -->

@@ -273,10 +273,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('stroke', this.defaultSettings.color);
 
 
-    const rects = this.vizContainer.selectAll('rect')
+    let rects = this.vizContainer.selectAll('rect')
       .data(this.topology.filter(nodes => nodes.isConv));
 
-    rects.enter()
+    rects = rects.enter()
       .append('rect')
       .attr('class', 'rect')
       .attr('x', function (d) {
@@ -293,6 +293,24 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity)
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+    if (this.router.url.includes('ablation')) {
+      rects.on('mouseover', function (d) {
+        console.clear();
+        console.log('SHOW FEATURE MAPS HERE');
+        console.log(this);
+
+        d3.select(this)
+          .attr('stroke', 'whitesmoke')
+          .attr('stroke-width', .5);
+      });
+
+      rects.on('mouseout', function (d) {
+        d3.select(this)
+          .attr('stroke', self.defaultSettings.color)
+          .attr('stroke-width', self.defaultSettings.nodeStroke);
+      });
+    }
 
     const circles = this.vizContainer.selectAll('circle')
       .data(this.topology.filter(nodes => !nodes.isConv));
