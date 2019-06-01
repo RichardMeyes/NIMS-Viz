@@ -9,7 +9,13 @@
 .loading { z-index: 10; }
 
 mat-grid-list { height: 100%; }
-mat-grid-tile { background: lightblue; }
+mat-grid-tile { background: #3e3e3e; }
+
+app-accuracy-plot, app-t-sne-plot {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
 
 
 // .test-network {
@@ -17,15 +23,6 @@ mat-grid-tile { background: lightblue; }
 //     bottom: 5.5rem;
 //     width: 50vw;
 //     z-index: 10;
-// }
-
-// .right-chart {
-//     position: absolute;
-//     right: 0;
-//     top: 0;
-
-//     width: 50vw;
-//     height: calc(100vh - 64px);
 // }
 
 // .visible { visibility: visible; }

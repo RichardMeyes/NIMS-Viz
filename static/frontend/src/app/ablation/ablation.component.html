@@ -3,11 +3,18 @@
 </div>
 
 <div class="container">
-    <mat-grid-list cols="4" rowHeight="fit">
-        <mat-grid-tile *ngFor="let tile of tiles" [colspan]="tile.cols" [rowspan]="tile.rows"
-            [style.background]="tile.color">
-            {{tile.text}}
+    <mat-grid-list cols="3" gutterSize="8" rowHeight="fit">
+        <mat-grid-tile [colspan]="2" [rowspan]="3">
+            <app-playground-viz></app-playground-viz>
         </mat-grid-tile>
+        <mat-grid-tile [colspan]="1" [rowspan]="1">
+            <app-accuracy-plot (finished)="accFinished=$event; updateSpinner()"></app-accuracy-plot>
+        </mat-grid-tile>
+        <mat-grid-tile [colspan]="1" [rowspan]="1">
+            <app-t-sne-plot (finished)="tSNEFinished=$event; updateSpinner()"></app-t-sne-plot>
+        </mat-grid-tile>
+        <mat-grid-tile [colspan]="1" [rowspan]="1">Empat</mat-grid-tile>
+        <!-- <mat-grid-tile [colspan]="" [rowspan]=""></mat-grid-tile> -->
     </mat-grid-list>
 </div>
 
@@ -15,18 +22,19 @@
 
 
 
-<!-- <app-playground-viz></app-playground-viz>
-<div class="right-chart">
-    <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1" (selectedTabChange)="tabChanged($event.index)">
-        <mat-tab label="Convolutional Filters">
-            <app-conv-filters-viz></app-conv-filters-viz>
-        </mat-tab>
-        <mat-tab label="Ablation Results">
-            <app-accuracy-plot (finished)="accFinished=$event; updateSpinner()"></app-accuracy-plot>
-            <app-t-sne-plot (finished)="tSNEFinished=$event; updateSpinner()"></app-t-sne-plot>
-        </mat-tab>
-    </mat-tab-group>
-</div>
+
+
+<!-- <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1"
+    (selectedTabChange)="tabChanged($event.index)">
+    <mat-tab label="Convolutional Filters">
+        <app-conv-filters-viz></app-conv-filters-viz>
+    </mat-tab>
+    <mat-tab label="Ablation Results">
+
+
+    </mat-tab>
+</mat-tab-group>
+
 
 <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showTestNetwork" class="test-network">
     <button mat-raised-button (click)="testNetwork()">Test Network</button>
