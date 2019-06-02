@@ -17,6 +17,13 @@ app-accuracy-plot, app-t-sne-plot {
     position: relative;
 }
 
+app-accuracy-plot, app-t-sne-plot, app-input-drawing {
+    visibility: hidden;
+}
+
+.visible { visibility: visible; }
+
+
 
 // .test-network {
 //     position: absolute;
@@ -24,6 +31,3 @@ app-accuracy-plot, app-t-sne-plot {
 //     width: 50vw;
 //     z-index: 10;
 // }
-
-// .visible { visibility: visible; }
-// .hidden { visibility: hidden; }

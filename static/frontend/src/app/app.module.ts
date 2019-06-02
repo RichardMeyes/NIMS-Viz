@@ -28,6 +28,7 @@ import { AblationComponent } from './ablation/ablation.component';
 import { AccuracyPlotComponent } from './ablation/accuracy-plot/accuracy-plot.component';
 import { TSNEPlotComponent } from './ablation/t-sne-plot/t-sne-plot.component';
 import { ConvFiltersVizComponent } from './scene/conv-filters-viz/conv-filters-viz.component';
+import { InputDrawingComponent } from './ablation/input-drawing/input-drawing.component';
 
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
@@ -50,6 +51,7 @@ import { ConvFiltersVizComponent } from './scene/conv-filters-viz/conv-filters-v
     ConvFiltersVizComponent,
     AccuracyPlotComponent,
     TSNEPlotComponent,
+    InputDrawingComponent,
     SettingsComponent,
     OrdinalPipe
   ],
