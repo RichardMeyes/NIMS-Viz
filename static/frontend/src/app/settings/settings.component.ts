@@ -326,24 +326,13 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
         .pipe(
           take(1),
           concatMap(topology => {
-            topologyTemp = topology;
+            this.dataService.vizTopology.next(topology);
             return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
           })
         )
         .subscribe(val => {
-          const filterWeights = {};
-
-          Object.keys(val).forEach(key => {
-            if (key.startsWith('c')) {
-              filterWeights[key] = val[key];
-              // delete val[key];
-            }
-          });
-
-          this.dataService.vizTopology.next(topologyTemp);
           if (val) {
             this.dataService.vizWeights.next(val);
-            this.dataService.filterWeights.next(filterWeights);
           }
         });
 

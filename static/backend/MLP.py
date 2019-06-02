@@ -128,7 +128,7 @@ class Net(nn.Module):
             # store weights after each epoch
             temp_epoch_dict = dict()
             weights = self.h0.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            self.weights_dict["epoch_{0}".format(epoch)] = {"h0": weights}
             temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
 
             for i_layer in range(len(self.conv_layers)):
