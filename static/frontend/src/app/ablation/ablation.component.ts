@@ -57,14 +57,6 @@ export class AblationComponent implements OnInit, OnDestroy {
     }
   }
 
-  tabChanged(selectedTab) {
-    if (selectedTab === 1) {
-      this.dataService.selectedFilter.next(null);
-    } else {
-      // this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}`);
-    }
-  }
-
   public ngOnDestroy() {
     this.destroyed.next();
   }

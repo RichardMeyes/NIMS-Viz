@@ -293,37 +293,62 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.createHeatmap(0, true);
       epochToVisualize = 0;
+
+      this.playgroundService.getTopology(this.selectedFile)
+        .pipe(
+          take(1),
+          concatMap(topology => {
+            topologyTemp = topology;
+            return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
+          })
+        )
+        .subscribe(val => {
+          const currEpoch = `epoch_0`;
+          const filterWeights = {};
+
+          Object.keys(val).forEach(key => {
+            if (key.startsWith('c')) {
+              filterWeights[key] = val[key];
+              delete val[key];
+            }
+          });
+
+          this.dataService.vizTopology.next(topologyTemp);
+          if (val) {
+            this.dataService.vizWeights.next({ [currEpoch]: val });
+            this.dataService.filterWeights.next(filterWeights);
+          }
+        });
     }
 
-    this.playgroundService.getTopology(this.selectedFile)
-      .pipe(
-        take(1),
-        concatMap(topology => {
-          topologyTemp = topology;
-          return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
-        })
-      )
-      .subscribe(val => {
-        const currEpoch = `epoch_0`;
-        const filterWeights = {};
+    if (this.router.url.includes('ablation')) {
+      this.playgroundService.getTopology(this.selectedFile)
+        .pipe(
+          take(1),
+          concatMap(topology => {
+            topologyTemp = topology;
+            return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
+          })
+        )
+        .subscribe(val => {
+          const filterWeights = {};
 
-        Object.keys(val).forEach(key => {
-          if (key.startsWith('c')) {
-            filterWeights[key] = val[key];
-            delete val[key];
+          Object.keys(val).forEach(key => {
+            if (key.startsWith('c')) {
+              filterWeights[key] = val[key];
+              // delete val[key];
+            }
+          });
+
+          this.dataService.vizTopology.next(topologyTemp);
+          if (val) {
+            this.dataService.vizWeights.next(val);
+            this.dataService.filterWeights.next(filterWeights);
           }
         });
 
-        this.dataService.vizTopology.next(topologyTemp);
-        if (val) {
-          this.dataService.vizWeights.next({ [currEpoch]: val });
-          this.dataService.filterWeights.next(filterWeights);
-        }
-      });
-
-    if (this.router.url.includes('ablation')) {
       const untrainedFile = this.selectedFile.replace('.json', '_untrained.json');
-      this.playgroundService.visualize(untrainedFile, 0)
+      this.playgroundService.getUntrainedWeights(untrainedFile)
         .pipe(take(1))
         .subscribe(val => { this.dataService.untrainedWeights.next(val); });
     }

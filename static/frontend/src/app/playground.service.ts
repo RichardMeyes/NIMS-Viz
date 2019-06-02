@@ -21,6 +21,11 @@ export class PlaygroundService {
     return this.http.post('/getTopology', jsonBody, this.httpOptions);
   }
 
+  getUntrainedWeights(selectedFile: string) {
+    const jsonBody = { 'selectedFile': selectedFile.replace("\\", "/") };
+    return this.http.post('/getUntrainedWeights', jsonBody, this.httpOptions);
+  }
+
   visualize(selectedFile: string, currEpoch: number) {
     const jsonBody = {
       'selectedFile': selectedFile.replace("\\", "/"),

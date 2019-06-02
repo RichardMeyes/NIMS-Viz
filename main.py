@@ -143,6 +143,16 @@ def getWeights():
     
     return json.dumps(data[returnEpoch])
 
+@app.route("/getUntrainedWeights", methods=["POST", "OPTIONS"])
+@cross_origin()
+def getUntrainedWeights():
+    params = request.get_json(force=True)
+
+    with open(params['selectedFile']) as f:
+        data = json.load(f)
+    
+    return json.dumps(data)
+
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
 @cross_origin()

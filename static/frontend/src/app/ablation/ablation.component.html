@@ -5,7 +5,8 @@
 <div class="container">
     <mat-grid-list cols="3" gutterSize="8" rowHeight="fit">
         <mat-grid-tile [colspan]="2" [rowspan]="3">
-            <app-playground-viz [class.visible]="showDashboard"></app-playground-viz>
+            <!-- <app-playground-viz [class.visible]="showDashboard"></app-playground-viz> -->
+            <app-ablation-playground [class.visible]="showDashboard"></app-ablation-playground>
             <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showDashboard" class="test-network">
                 <button mat-raised-button (click)="testNetwork()">Test Network</button>
                 <div style="width: 1rem;"></div>
@@ -30,14 +31,4 @@
 
 
 
-
-
-
-<!-- <mat-tab-group [className]="showTestNetwork? 'visible': 'hidden'" [selectedIndex]="1"
-    (selectedTabChange)="tabChanged($event.index)">
-    <mat-tab label="Convolutional Filters">
-        <app-conv-filters-viz></app-conv-filters-viz>
-    </mat-tab>
-    <mat-tab label="Ablation Results">
-    </mat-tab>
-</mat-tab-group> -->
+<!-- <app-conv-filters-viz></app-conv-filters-viz> -->

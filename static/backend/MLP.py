@@ -18,12 +18,15 @@ import static.backend.HEATMAP as HEATMAP
 
 
 class Net(nn.Module):
-    def __init__(self, num_epochs, conv_layers, layers, h0Shape=1):
+    def __init__(self, num_epochs, conv_layers, layers):
         # create Net
         super(Net, self).__init__()
         self.topology_dict = dict()
         self.weights_dict = dict()
         self.filename = dict()
+
+        self.widthLinear = 28
+        self.heightLinear = 28
 
 
         # Conv Layers
@@ -32,12 +35,18 @@ class Net(nn.Module):
             self.__setattr__("c{0}".format(i_layer),
                              nn.Conv2d(self.conv_layers[i_layer]["inChannel"], self.conv_layers[i_layer]["outChannel"], kernel_size=self.conv_layers[i_layer]["kernelSize"], stride=self.conv_layers[i_layer]["stride"], padding=self.conv_layers[i_layer]["padding"]))
 
+            self.widthLinear = np.floor(((self.widthLinear - self.conv_layers[i_layer]["kernelSize"] + (2 * self.conv_layers[i_layer]["padding"])) / self.conv_layers[i_layer]["stride"]) + 1)
+            self.widthLinear = np.floor(((self.widthLinear - 2) / 2) + 1)
+
+            self.heightLinear = np.floor(((self.heightLinear - self.conv_layers[i_layer]["kernelSize"] + (2 * self.conv_layers[i_layer]["padding"])) / self.conv_layers[i_layer]["stride"]) + 1)
+            self.heightLinear = np.floor(((self.heightLinear - 2) / 2) + 1)
+
 
         # FC Layers
         self.layers = layers
         self.num_epochs = num_epochs
         
-        self.h0 = nn.Linear(h0Shape, self.layers[0])
+        self.h0 = nn.Linear(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear, self.layers[0])
         for i_layer in range(len(layers)-1):
             self.__setattr__("h{0}".format(i_layer+1),
                              nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
@@ -51,8 +60,6 @@ class Net(nn.Module):
                 x = F.max_pool2d(x, kernel_size=2, stride=2)
             x = x.view(x.shape[0], -1)
 
-        self.h0 = nn.Linear(x.shape[1], self.layers[0])
-        self.topology_dict["h0Shape"] = x.shape[1]
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
 
@@ -62,6 +69,7 @@ class Net(nn.Module):
     def save_topology(self):
         self.topology_dict["conv_layers"] = self.conv_layers
         self.topology_dict["layers"] = self.layers
+        self.topology_dict["h0Shape0"] = self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear
 
         with open("static/data/topologies/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
             json.dump(self.topology_dict, f)
@@ -74,16 +82,22 @@ class Net(nn.Module):
         for conv_layer in self.conv_layers:
             self.filename["convLayers"].append(conv_layer["outChannel"])
 
-        epoch = 0
 
         weights = self.h0.weight.data.numpy().tolist()
-        self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
+        self.weights_dict = {"h0": weights}
+
+        for i_layer in range(len(self.conv_layers)):
+                layer = self.__getattr__("c{0}".format(i_layer))
+                weights = layer.weight.data.numpy().tolist()
+                self.weights_dict.update({"c{0}".format(i_layer): weights})
+
         for i_layer in range(len(self.layers)-1):
             layer = self.__getattr__("h{0}".format(i_layer+1))
             weights = layer.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+            self.weights_dict.update({"h{0}".format(i_layer+1): weights})
+
         weights = self.output.weight.data.numpy().tolist()
-        self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+        self.weights_dict.update({"output": weights})
         
         with open("static/data/weights/MLP_{convLayers}_{layers}_untrained.json".format(**self.filename), "w") as f:
             json.dump(self.weights_dict, f)
@@ -229,7 +243,7 @@ def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layer
 def mlp_ablation(topology, filename, ko_layers, ko_units):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"], h0Shape=topology["h0Shape"])
+    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"])
     # net.to(device)
     net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
     net.eval()

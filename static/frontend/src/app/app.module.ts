@@ -24,11 +24,14 @@ import { OrdinalPipe } from './ordinal.pipe';
 import { SettingsComponent } from './settings/settings.component';
 import { BuilderComponent } from './builder/builder.component';
 import { ArchiveComponent } from './archive/archive.component';
+
 import { AblationComponent } from './ablation/ablation.component';
+import { AblationPlaygroundComponent } from './ablation/ablation-playground/ablation-playground.component';
 import { AccuracyPlotComponent } from './ablation/accuracy-plot/accuracy-plot.component';
 import { TSNEPlotComponent } from './ablation/t-sne-plot/t-sne-plot.component';
-import { ConvFiltersVizComponent } from './scene/conv-filters-viz/conv-filters-viz.component';
 import { InputDrawingComponent } from './ablation/input-drawing/input-drawing.component';
+
+import { ConvFiltersVizComponent } from './scene/conv-filters-viz/conv-filters-viz.component';
 
 // import { MqttModule, IMqttServiceOptions } from 'ngx-mqtt';
 
@@ -48,10 +51,11 @@ import { InputDrawingComponent } from './ablation/input-drawing/input-drawing.co
     BuilderComponent,
     ArchiveComponent,
     AblationComponent,
-    ConvFiltersVizComponent,
+    AblationPlaygroundComponent,
     AccuracyPlotComponent,
     TSNEPlotComponent,
     InputDrawingComponent,
+    ConvFiltersVizComponent,
     SettingsComponent,
     OrdinalPipe
   ],
