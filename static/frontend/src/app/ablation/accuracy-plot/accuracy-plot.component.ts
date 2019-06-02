@@ -89,8 +89,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const networkResultsCorrect = {
             label: 'Correctly Classified',
-            backgroundColor: 'rgba(117, 117, 117, .1)',
-            borderColor: 'rgba(117, 117, 117, 1)',
+            backgroundColor: 'rgb(117, 117, 117)',
             borderWidth: 1,
             data: val['class specific accuracy'],
             stack: 'results'
@@ -98,8 +97,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const networkResultsMisclassified = {
             label: 'Misclassified',
-            backgroundColor: 'rgba(253, 160, 6, .1)',
-            borderColor: 'rgba(253, 160, 6, 1)',
+            backgroundColor: 'rgb(238, 160, 51)',
             borderWidth: 1,
             data: val['class specific accuracy'].map(acc => 100 - acc),
             stack: 'results'
@@ -131,16 +129,14 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const networkChangesLoss = {
             label: 'Misclassified After Ablation',
-            backgroundColor: 'rgba(241, 83, 110, .25)',
-            borderColor: 'rgba(241, 83, 110, 1)',
+            backgroundColor: 'rgb(217, 84, 79)',
             borderWidth: 1,
             data: networkChangesData[0],
             stack: 'changes'
           };
           const networkChangesGain = {
             label: 'Correctly Classified After Ablation',
-            backgroundColor: 'rgba(0, 198, 137, .25)',
-            borderColor: 'rgba(0, 198, 137, 1)',
+            backgroundColor: 'rgb(91, 184, 93)',
             borderWidth: 1,
             data: networkChangesData[1],
             stack: 'changes'

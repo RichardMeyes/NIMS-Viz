@@ -93,8 +93,7 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
             datasets: [
               {
                 label: 'Correctly Classified',
-                backgroundColor: 'rgba(117, 117, 117, .1)',
-                borderColor: 'rgba(117, 117, 117, 1)',
+                backgroundColor: 'rgb(117, 117, 117)',
                 borderWidth: 1,
                 data: coloredCoor[0].map(coor => {
                   return { x: coor[0], y: coor[1] };
@@ -102,8 +101,7 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
               },
               {
                 label: 'Misclassified',
-                backgroundColor: 'rgba(253, 160, 6, .1)',
-                borderColor: 'rgba(253, 160, 6, 1)',
+                backgroundColor: 'rgb(238, 160, 51)',
                 borderWidth: 1,
                 data: coloredCoor[1].map(coor => {
                   return { x: coor[0], y: coor[1] };
@@ -116,8 +114,7 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
             this.scatterChartData.datasets.push(
               {
                 label: 'Correctly Classified After Ablation',
-                backgroundColor: 'rgba(0, 198, 137, .25)',
-                borderColor: 'rgba(0, 198, 137, 1)',
+                backgroundColor: 'rgb(91, 184, 93)',
                 borderWidth: 1,
                 data: coloredCoor[2].map(coor => {
                   return { x: coor[0], y: coor[1] };
@@ -127,8 +124,7 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
             this.scatterChartData.datasets.push(
               {
                 label: 'Misclassified After Ablation',
-                backgroundColor: 'rgba(241, 83, 110, .25)',
-                borderColor: 'rgba(241, 83, 110, 1)',
+                backgroundColor: 'rgb(217, 84, 79)',
                 borderWidth: 1,
                 data: coloredCoor[3].map(coor => {
                   return { x: coor[0], y: coor[1] };

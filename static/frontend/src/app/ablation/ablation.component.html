@@ -5,18 +5,23 @@
 <div class="container">
     <mat-grid-list cols="3" gutterSize="8" rowHeight="fit">
         <mat-grid-tile [colspan]="2" [rowspan]="3">
-            <app-playground-viz></app-playground-viz>
+            <app-playground-viz [class.visible]="showDashboard"></app-playground-viz>
+            <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showDashboard" class="test-network">
+                <button mat-raised-button (click)="testNetwork()">Test Network</button>
+                <div style="width: 1rem;"></div>
+                <button mat-raised-button (click)="resetNetwork()">Reset Network</button>
+            </div>
         </mat-grid-tile>
         <mat-grid-tile [colspan]="1" [rowspan]="1">
-            <app-accuracy-plot [class.visible]="showSpinner !== undefined && !showSpinner"
-                (finished)="accFinished=$event; updateSpinner()"></app-accuracy-plot>
+            <app-accuracy-plot [class.visible]="showDashboard" (finished)="accFinished=$event; updateSpinner()">
+            </app-accuracy-plot>
         </mat-grid-tile>
         <mat-grid-tile [colspan]="1" [rowspan]="1">
-            <app-t-sne-plot [class.visible]="showSpinner !== undefined && !showSpinner"
-                (finished)="tSNEFinished=$event; updateSpinner()"></app-t-sne-plot>
+            <app-t-sne-plot [class.visible]="showDashboard" (finished)="tSNEFinished=$event; updateSpinner()">
+            </app-t-sne-plot>
         </mat-grid-tile>
         <mat-grid-tile [colspan]="1" [rowspan]="1">
-            <app-input-drawing [class.visible]="showSpinner !== undefined && !showSpinner"></app-input-drawing>
+            <app-input-drawing [class.visible]="showDashboard"></app-input-drawing>
         </mat-grid-tile>
         <!-- <mat-grid-tile [colspan]="" [rowspan]=""></mat-grid-tile> -->
     </mat-grid-list>
@@ -36,10 +41,3 @@
     <mat-tab label="Ablation Results">
     </mat-tab>
 </mat-tab-group> -->
-
-
-<!-- <div fxLayout="row wrap" fxLayoutAlign="center center" *ngIf="showTestNetwork" class="test-network">
-    <button mat-raised-button (click)="testNetwork()">Test Network</button>
-    <div style="width: 1rem;"></div>
-    <button mat-raised-button (click)="resetNetwork()">Reset Network</button>
-</div> -->

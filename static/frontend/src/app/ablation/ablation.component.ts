@@ -13,6 +13,7 @@ import { DataService } from '../services/data.service';
 })
 export class AblationComponent implements OnInit, OnDestroy {
   showSpinner: boolean;
+  showDashboard: boolean;
 
   accFinished: boolean;
   tSNEFinished: boolean;
@@ -24,13 +25,15 @@ export class AblationComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    // this.showSpinner = false;
+    this.showSpinner = false;
+    this.showDashboard = false;
 
     this.dataService.selectedFile
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
           this.showSpinner = true;
+          this.showDashboard = false;
         }
       });
   }
@@ -47,6 +50,7 @@ export class AblationComponent implements OnInit, OnDestroy {
   updateSpinner() {
     if (this.accFinished && this.tSNEFinished) {
       this.showSpinner = false;
+      this.showDashboard = true;
 
       this.accFinished = false;
       this.tSNEFinished = false;

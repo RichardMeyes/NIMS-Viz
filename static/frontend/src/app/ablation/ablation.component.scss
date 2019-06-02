@@ -17,17 +17,18 @@ app-accuracy-plot, app-t-sne-plot {
     position: relative;
 }
 
-app-accuracy-plot, app-t-sne-plot, app-input-drawing {
+app-playground-viz,
+app-accuracy-plot,
+app-t-sne-plot,
+app-input-drawing {
     visibility: hidden;
 }
 
 .visible { visibility: visible; }
 
-
-
-// .test-network {
-//     position: absolute;
-//     bottom: 5.5rem;
-//     width: 50vw;
-//     z-index: 10;
-// }
+.test-network {
+    position: absolute;
+    bottom: 1.5rem;
+    width: 100%;
+    z-index: 10;
+}
