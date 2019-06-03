@@ -32,7 +32,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   minMaxDiffs; activities;
 
   conMenuSelected;
-  showWeightsConfig; showWeightsTexts;
+  tooltipConfig; tooltipTexts;
 
   detachedNodes;
 
@@ -225,16 +225,22 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
     rects.on('mouseover', function (d) {
-      console.clear();
-      console.log('SHOW FEATURE MAPS HERE');
-      console.log(this);
+      self.conMenuSelected = Object.assign({}, d);
+      self.conMenuSelected.layer -= 1;
 
-      d3.select(this)
-        .attr('stroke', 'whitesmoke')
-        .attr('stroke-width', .5);
+      if (self.conMenuSelected.layer >= 0) {
+        self.setupShowFilters();
+        self.showFilters(d3.mouse(this)[0], d3.mouse(this)[1]);
+
+        d3.select(this)
+          .attr('stroke', 'whitesmoke')
+          .attr('stroke-width', .5);
+      }
     });
 
     rects.on('mouseout', function (d) {
+      d3.selectAll('.filters-comparison').remove();
+
       d3.select(this)
         .attr('stroke', self.defaultSettings.color)
         .attr('stroke-width', self.defaultSettings.nodeStroke);
@@ -489,7 +495,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
   setupShowWeights() {
     const self = this;
-    this.showWeightsTexts = [
+    this.tooltipTexts = [
       `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
       `Incoming Weights`,
       `Before`,
@@ -499,7 +505,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       `After`
     ];
 
-    this.showWeightsConfig = {
+    this.tooltipConfig = {
       outerFrame: {
         width: 0,
         height: 0,
@@ -523,7 +529,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     };
 
     this.vizContainer.selectAll('.tmp')
-      .data(this.showWeightsTexts)
+      .data(this.tooltipTexts)
       .enter()
       .append('text')
       .text(d => d)
@@ -535,16 +541,16 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           height: bbox.height
         };
 
-        self.showWeightsConfig.titles.dimension[i] = dimension;
+        self.tooltipConfig.titles.dimension[i] = dimension;
       });
     d3.selectAll('.tmp').remove();
 
-    this.showWeightsConfig.outerFrame.width = 2 * this.showWeightsConfig.weightsFrame.width +
-      2.75 * this.showWeightsConfig.weightsFrame.margin;
-    this.showWeightsConfig.outerFrame.height =
-      this.showWeightsConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
-      2 * this.showWeightsConfig.titles.margin +
-      2 * this.showWeightsConfig.weightsFrame.height;
+    this.tooltipConfig.outerFrame.width = 2 * this.tooltipConfig.weightsFrame.width +
+      2.75 * this.tooltipConfig.weightsFrame.margin;
+    this.tooltipConfig.outerFrame.height =
+      this.tooltipConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
+      2 * this.tooltipConfig.titles.margin +
+      2 * this.tooltipConfig.weightsFrame.height;
   }
 
   showWeights(mouseX, mouseY) {
@@ -563,17 +569,17 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       outgoingWeightsAfter.push(element[this.conMenuSelected.unit]);
     });
 
-    this.showWeightsConfig.quadrantAdjustment = {
-      x: this.showWeightsConfig.outerFrame.margin,
-      y: this.showWeightsConfig.outerFrame.margin
+    this.tooltipConfig.quadrantAdjustment = {
+      x: this.tooltipConfig.outerFrame.margin,
+      y: this.tooltipConfig.outerFrame.margin
     };
     if (mouseX > this.svgWidth / 2) {
-      this.showWeightsConfig.quadrantAdjustment.x *= -1;
-      this.showWeightsConfig.quadrantAdjustment.x += -1 * this.showWeightsConfig.outerFrame.width;
+      this.tooltipConfig.quadrantAdjustment.x *= -1;
+      this.tooltipConfig.quadrantAdjustment.x += -1 * this.tooltipConfig.outerFrame.width;
     }
     if (mouseY > this.svgHeight / 2) {
-      this.showWeightsConfig.quadrantAdjustment.y *= -1;
-      this.showWeightsConfig.quadrantAdjustment.y += -1 * this.showWeightsConfig.outerFrame.height;
+      this.tooltipConfig.quadrantAdjustment.y *= -1;
+      this.tooltipConfig.quadrantAdjustment.y += -1 * this.tooltipConfig.outerFrame.height;
     }
 
 
@@ -581,17 +587,17 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('class', 'weights-comparison');
 
     weightsComparison.append('rect')
-      .attr('x', mouseX + this.showWeightsConfig.quadrantAdjustment.x)
-      .attr('y', mouseY + this.showWeightsConfig.quadrantAdjustment.y)
-      .attr('width', this.showWeightsConfig.outerFrame.width)
-      .attr('height', this.showWeightsConfig.outerFrame.height)
-      .attr('rx', this.showWeightsConfig.outerFrame.cornerRad)
-      .attr('ry', this.showWeightsConfig.outerFrame.cornerRad)
-      .style('fill', this.showWeightsConfig.outerFrame.fill);
+      .attr('x', mouseX + this.tooltipConfig.quadrantAdjustment.x)
+      .attr('y', mouseY + this.tooltipConfig.quadrantAdjustment.y)
+      .attr('width', this.tooltipConfig.outerFrame.width)
+      .attr('height', this.tooltipConfig.outerFrame.height)
+      .attr('rx', this.tooltipConfig.outerFrame.cornerRad)
+      .attr('ry', this.tooltipConfig.outerFrame.cornerRad)
+      .style('fill', this.tooltipConfig.outerFrame.fill);
 
 
     weightsComparison.selectAll('text')
-      .data(this.showWeightsTexts)
+      .data(this.tooltipTexts)
       .enter()
       .append('text')
       .text(d => d)
@@ -599,74 +605,74 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         let centerAligned = 0;
         if (i === 0 || d === 'Before' || d === 'After') {
           if (i === 0) {
-            centerAligned += this.showWeightsConfig.outerFrame.width / 2;
+            centerAligned += this.tooltipConfig.outerFrame.width / 2;
           } else if (d === 'Before') {
-            centerAligned += this.showWeightsConfig.outerFrame.width / 4;
+            centerAligned += this.tooltipConfig.outerFrame.width / 4;
           } else if (d === 'After') {
-            centerAligned += 3 * this.showWeightsConfig.outerFrame.width / 4;
+            centerAligned += 3 * this.tooltipConfig.outerFrame.width / 4;
           }
 
-          centerAligned -= this.showWeightsConfig.titles.dimension[i].width / 2;
-          centerAligned -= this.showWeightsConfig.titles.margin;
+          centerAligned -= this.tooltipConfig.titles.dimension[i].width / 2;
+          centerAligned -= this.tooltipConfig.titles.margin;
         }
 
 
         return mouseX +
-          this.showWeightsConfig.quadrantAdjustment.x +
-          this.showWeightsConfig.titles.margin +
+          this.tooltipConfig.quadrantAdjustment.x +
+          this.tooltipConfig.titles.margin +
           centerAligned;
       })
       .attr('y', (d, i) => {
-        let totalTitles = this.showWeightsConfig.titles.margin;
+        let totalTitles = this.tooltipConfig.titles.margin;
         let totalContent = 0;
 
         if (i > 0) {
-          totalTitles = 2 * this.showWeightsConfig.titles.margin;
+          totalTitles = 2 * this.tooltipConfig.titles.margin;
         }
         for (let j = 0; j <= i; j++) {
-          totalTitles += this.showWeightsConfig.titles.dimension[j].height;
+          totalTitles += this.tooltipConfig.titles.dimension[j].height;
         }
         if (d === 'After') {
-          totalTitles -= this.showWeightsConfig.titles.dimension[i].height;
+          totalTitles -= this.tooltipConfig.titles.dimension[i].height;
         }
 
         if (i > 3) {
-          totalTitles -= this.showWeightsConfig.titles.dimension[3].height;
-          totalContent += this.showWeightsConfig.weightsFrame.height;
-          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
+          totalTitles -= this.tooltipConfig.titles.dimension[3].height;
+          totalContent += this.tooltipConfig.weightsFrame.height;
+          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
         }
 
 
         return mouseY +
-          this.showWeightsConfig.quadrantAdjustment.y +
+          this.tooltipConfig.quadrantAdjustment.y +
           totalTitles +
           totalContent;
       })
-      .attr('fill', this.showWeightsConfig.titles.color);
+      .attr('fill', this.tooltipConfig.titles.color);
 
 
-    this.showWeightsConfig.data = [];
-    this.showWeightsConfig.data.push([...this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]]);
-    this.showWeightsConfig.data.push([...this.inputWeights[incomingWeights][this.conMenuSelected.unit]]);
-    this.showWeightsConfig.data.push([...outgoingWeightsBefore]);
-    this.showWeightsConfig.data.push([...outgoingWeightsAfter]);
+    this.tooltipConfig.data = [];
+    this.tooltipConfig.data.push([...this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]]);
+    this.tooltipConfig.data.push([...this.inputWeights[incomingWeights][this.conMenuSelected.unit]]);
+    this.tooltipConfig.data.push([...outgoingWeightsBefore]);
+    this.tooltipConfig.data.push([...outgoingWeightsAfter]);
 
-    this.showWeightsConfig.weights = [];
-    this.showWeightsConfig.data.forEach(data => {
-      this.showWeightsConfig.weights.push({
+    this.tooltipConfig.weights = [];
+    this.tooltipConfig.data.forEach(data => {
+      this.tooltipConfig.weights.push({
         min: Math.min(...data),
         max: Math.max(...data),
-        width: this.showWeightsConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
-        height: this.showWeightsConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
+        width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
+        height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
         numElements: Math.ceil(Math.sqrt(data.length))
       });
     });
 
     // d3 workaround - attr's index starts from 1 instead of 0
-    this.showWeightsConfig.data.forEach(data => { data.unshift('d3 workaround'); });
+    this.tooltipConfig.data.forEach(data => { data.unshift('d3 workaround'); });
 
     const comparisonItem = weightsComparison.selectAll('.comparison-item')
-      .data(this.showWeightsConfig.data)
+      .data(this.tooltipConfig.data)
       .enter()
       .append('g')
       .attr('class', 'comparison-item');
@@ -674,36 +680,36 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     comparisonItem.append('rect')
       .attr('x', (d, i) =>
         mouseX +
-        this.showWeightsConfig.quadrantAdjustment.x +
-        (i % 2) * this.showWeightsConfig.weightsFrame.width +
-        (i % 2 * .75 + 1) * this.showWeightsConfig.weightsFrame.margin
+        this.tooltipConfig.quadrantAdjustment.x +
+        (i % 2) * this.tooltipConfig.weightsFrame.width +
+        (i % 2 * .75 + 1) * this.tooltipConfig.weightsFrame.margin
       )
       .attr('y', (d, i) => {
-        let totalTitles = 2 * this.showWeightsConfig.titles.margin +
-          this.showWeightsConfig.titles.dimension[0].height;
-        let totalContent = Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height +
-          .25 * this.showWeightsConfig.weightsFrame.margin;
+        let totalTitles = 2 * this.tooltipConfig.titles.margin +
+          this.tooltipConfig.titles.dimension[0].height;
+        let totalContent = Math.floor(i / 2) * this.tooltipConfig.weightsFrame.height +
+          .25 * this.tooltipConfig.weightsFrame.margin;
 
 
-        for (let j = 0; j < this.showWeightsConfig.titles.dimension.length; j++) {
+        for (let j = 0; j < this.tooltipConfig.titles.dimension.length; j++) {
           if (Math.floor(i / 2) === 0 && j > 2) { break; }
 
           if (j % 3 === 0) { continue; }
-          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.showWeightsConfig.titles.dimension[j].height; }
+          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.tooltipConfig.titles.dimension[j].height; }
         }
 
         if (Math.floor(i / 2) === 1) {
-          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
+          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
         }
 
         return mouseY +
-          this.showWeightsConfig.quadrantAdjustment.y +
+          this.tooltipConfig.quadrantAdjustment.y +
           totalTitles +
           totalContent;
       })
-      .attr('width', this.showWeightsConfig.weightsFrame.width)
-      .attr('height', this.showWeightsConfig.weightsFrame.height)
-      .style('fill', this.showWeightsConfig.weightsFrame.fill);
+      .attr('width', this.tooltipConfig.weightsFrame.width)
+      .attr('height', this.tooltipConfig.weightsFrame.height)
+      .style('fill', this.tooltipConfig.weightsFrame.fill);
 
 
     let tempIndex = -1;
@@ -714,57 +720,57 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('x', function (d, i) {
         if (i === 1) { tempIndex++; }
 
-        const currIndex = tempIndex % self.showWeightsConfig.data.length;
+        const currIndex = tempIndex % self.tooltipConfig.data.length;
         const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
-        const xPosition = ((i - 1) % self.showWeightsConfig.weights[currIndex].numElements) *
-          self.showWeightsConfig.weights[currIndex].width;
+        const xPosition = ((i - 1) % self.tooltipConfig.weights[currIndex].numElements) *
+          self.tooltipConfig.weights[currIndex].width;
 
         return rectXValue + xPosition;
       })
       .attr('y', function (d, i) {
         if (i === 1) { tempIndex++; }
 
-        const currIndex = tempIndex % self.showWeightsConfig.data.length;
+        const currIndex = tempIndex % self.tooltipConfig.data.length;
         const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
-        const yPosition = Math.floor((i - 1) / self.showWeightsConfig.weights[currIndex].numElements) *
-          self.showWeightsConfig.weights[currIndex].height;
+        const yPosition = Math.floor((i - 1) / self.tooltipConfig.weights[currIndex].numElements) *
+          self.tooltipConfig.weights[currIndex].height;
 
         return rectYValue + yPosition;
       })
       .attr('width', (d, i) => {
         if (i === 1) { tempIndex++; }
-        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
 
-        return this.showWeightsConfig.weights[currIndex].width;
+        return this.tooltipConfig.weights[currIndex].width;
       })
       .attr('height', (d, i) => {
         if (i === 1) { tempIndex++; }
-        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
 
-        return this.showWeightsConfig.weights[currIndex].height;
+        return this.tooltipConfig.weights[currIndex].height;
       })
       .style('fill', (d, i) => {
         if (i === 1) { tempIndex++; }
 
-        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
         let scaledValue = 0;
 
         if (d > 0) {
-          scaledValue = d / this.showWeightsConfig.weights[currIndex].max;
-          return this.showWeightsConfig.positiveColor(scaledValue);
+          scaledValue = d / this.tooltipConfig.weights[currIndex].max;
+          return this.tooltipConfig.positiveColor(scaledValue);
         } else if (d < 0) {
-          scaledValue = d / this.showWeightsConfig.weights[currIndex].min;
-          return this.showWeightsConfig.negativeColor(scaledValue);
+          scaledValue = d / this.tooltipConfig.weights[currIndex].min;
+          return this.tooltipConfig.negativeColor(scaledValue);
         }
       });
 
 
     console.clear();
 
-    console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
-    console.log('Incoming Weights after training:', this.inputWeights[incomingWeights][this.conMenuSelected.unit]);
-    console.log('Outgoing Weights before training:', outgoingWeightsBefore);
-    console.log('Outgoing Weights after training:', outgoingWeightsAfter);
+    // console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
+    // console.log('Incoming Weights after training:', this.inputWeights[incomingWeights][this.conMenuSelected.unit]);
+    // console.log('Outgoing Weights before training:', outgoingWeightsBefore);
+    // console.log('Outgoing Weights after training:', outgoingWeightsAfter);
   }
 
   modifyNodes() {
@@ -784,6 +790,273 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
     this.setupWeights();
     this.bindWeights(false);
+  }
+
+  setupShowFilters() {
+    const self = this;
+    this.tooltipTexts = [
+      `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
+      `Incoming Filters`,
+      `Before`,
+      `After`
+    ];
+
+    this.tooltipConfig = {
+      outerFrame: {
+        width: 0,
+        height: 0,
+        margin: 5,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      titles: {
+        margin: 15,
+        color: '#ffffff',
+        dimension: []
+      },
+      weightsFrame: {
+        width: 84,
+        height: 84,
+        margin: 15,
+        fill: 'whitesmoke'
+      },
+      negativeColor: d3.interpolateLab('whitesmoke', 'black')
+    };
+
+    this.vizContainer.selectAll('.tmp')
+      .data(this.tooltipTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('class', 'tmp')
+      .each(function (d, i) {
+        const bbox = this.getBBox();
+        const dimension = {
+          width: bbox.width,
+          height: bbox.height
+        };
+
+        self.tooltipConfig.titles.dimension[i] = dimension;
+      });
+    d3.selectAll('.tmp').remove();
+
+    this.tooltipConfig.outerFrame.width = 2 * this.tooltipConfig.weightsFrame.width +
+      2.75 * this.tooltipConfig.weightsFrame.margin;
+    this.tooltipConfig.outerFrame.height =
+      this.tooltipConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
+      2 * this.tooltipConfig.titles.margin +
+      this.tooltipConfig.weightsFrame.height;
+  }
+
+  showFilters(mouseX, mouseY) {
+    const self = this;
+    const incomingFilters = `c${this.conMenuSelected.layer}`;
+
+
+    this.tooltipConfig.quadrantAdjustment = {
+      x: this.tooltipConfig.outerFrame.margin,
+      y: this.tooltipConfig.outerFrame.margin
+    };
+    if (mouseX > this.svgWidth / 2) {
+      this.tooltipConfig.quadrantAdjustment.x *= -1;
+      this.tooltipConfig.quadrantAdjustment.x += -1 * this.tooltipConfig.outerFrame.width;
+    }
+    if (mouseY > this.svgHeight / 2) {
+      this.tooltipConfig.quadrantAdjustment.y *= -1;
+      this.tooltipConfig.quadrantAdjustment.y += -1 * this.tooltipConfig.outerFrame.height;
+    }
+
+
+    const filtersComparison = this.vizContainer.append('g')
+      .attr('class', 'filters-comparison');
+
+    filtersComparison.append('rect')
+      .attr('x', mouseX + this.tooltipConfig.quadrantAdjustment.x)
+      .attr('y', mouseY + this.tooltipConfig.quadrantAdjustment.y)
+      .attr('width', this.tooltipConfig.outerFrame.width)
+      .attr('height', this.tooltipConfig.outerFrame.height)
+      .attr('rx', this.tooltipConfig.outerFrame.cornerRad)
+      .attr('ry', this.tooltipConfig.outerFrame.cornerRad)
+      .style('fill', this.tooltipConfig.outerFrame.fill);
+
+
+    filtersComparison.selectAll('text')
+      .data(this.tooltipTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('x', (d, i) => {
+        let centerAligned = 0;
+        if (i === 0 || d === 'Before' || d === 'After') {
+          if (i === 0) {
+            centerAligned += this.tooltipConfig.outerFrame.width / 2;
+          } else if (d === 'Before') {
+            centerAligned += this.tooltipConfig.outerFrame.width / 4;
+          } else if (d === 'After') {
+            centerAligned += 3 * this.tooltipConfig.outerFrame.width / 4;
+          }
+
+          centerAligned -= this.tooltipConfig.titles.dimension[i].width / 2;
+          centerAligned -= this.tooltipConfig.titles.margin;
+        }
+
+
+        return mouseX +
+          this.tooltipConfig.quadrantAdjustment.x +
+          this.tooltipConfig.titles.margin +
+          centerAligned;
+      })
+      .attr('y', (d, i) => {
+        let totalTitles = this.tooltipConfig.titles.margin;
+        let totalContent = 0;
+
+        if (i > 0) {
+          totalTitles = 2 * this.tooltipConfig.titles.margin;
+        }
+        for (let j = 0; j <= i; j++) {
+          totalTitles += this.tooltipConfig.titles.dimension[j].height;
+        }
+        if (d === 'After') {
+          totalTitles -= this.tooltipConfig.titles.dimension[i].height;
+        }
+
+        if (i > 3) {
+          totalTitles -= this.tooltipConfig.titles.dimension[3].height;
+          totalContent += this.tooltipConfig.weightsFrame.height;
+          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
+        }
+
+
+        return mouseY +
+          this.tooltipConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('fill', this.tooltipConfig.titles.color);
+
+    console.clear();
+
+    console.log('Incoming Weights before training:', this.untrainedWeights[incomingFilters]);
+    console.log('Incoming Weights after training:', this.inputFilterWeights[incomingFilters]);
+
+    this.tooltipConfig.data = [];
+    this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
+    this.tooltipConfig.data.push([...this.inputFilterWeights[incomingFilters][this.conMenuSelected.unit]]);
+
+    console.log(this.tooltipConfig.data);
+
+    this.tooltipConfig.weights = [];
+    this.tooltipConfig.data.forEach(data => {
+      this.tooltipConfig.weights.push({
+        min: Math.min(...data),
+        max: Math.max(...data),
+        width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
+        height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
+        numElements: Math.ceil(Math.sqrt(data.length))
+      });
+    });
+
+    // d3 workaround - attr's index starts from 1 instead of 0
+    this.tooltipConfig.data.forEach(data => { data.unshift('d3 workaround'); });
+
+    const comparisonItem = filtersComparison.selectAll('.comparison-item')
+      .data(this.tooltipConfig.data)
+      .enter()
+      .append('g')
+      .attr('class', 'comparison-item');
+
+    comparisonItem.append('rect')
+      .attr('x', (d, i) =>
+        mouseX +
+        this.tooltipConfig.quadrantAdjustment.x +
+        (i % 2) * this.tooltipConfig.weightsFrame.width +
+        (i % 2 * .75 + 1) * this.tooltipConfig.weightsFrame.margin
+      )
+      .attr('y', (d, i) => {
+        let totalTitles = 2 * this.tooltipConfig.titles.margin +
+          this.tooltipConfig.titles.dimension[0].height;
+        let totalContent = Math.floor(i / 2) * this.tooltipConfig.weightsFrame.height +
+          .25 * this.tooltipConfig.weightsFrame.margin;
+
+
+        for (let j = 0; j < this.tooltipConfig.titles.dimension.length; j++) {
+          if (Math.floor(i / 2) === 0 && j > 2) { break; }
+
+          if (j % 3 === 0) { continue; }
+          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.tooltipConfig.titles.dimension[j].height; }
+        }
+
+        if (Math.floor(i / 2) === 1) {
+          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
+        }
+
+        return mouseY +
+          this.tooltipConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('width', this.tooltipConfig.weightsFrame.width)
+      .attr('height', this.tooltipConfig.weightsFrame.height)
+      .style('fill', this.tooltipConfig.weightsFrame.fill);
+
+
+    let tempIndex = -1;
+    comparisonItem.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.tooltipConfig.data.length;
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = ((i - 1) % self.tooltipConfig.weights[currIndex].numElements) *
+          self.tooltipConfig.weights[currIndex].width;
+
+        return rectXValue + xPosition;
+      })
+      .attr('y', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.tooltipConfig.data.length;
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor((i - 1) / self.tooltipConfig.weights[currIndex].numElements) *
+          self.tooltipConfig.weights[currIndex].height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
+
+        return this.tooltipConfig.weights[currIndex].width;
+      })
+      .attr('height', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
+
+        return this.tooltipConfig.weights[currIndex].height;
+      })
+      .style('fill', (d, i) => {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
+        let scaledValue = 0;
+
+        if (d > 0) {
+          scaledValue = d / this.tooltipConfig.weights[currIndex].max;
+          return this.tooltipConfig.positiveColor(scaledValue);
+        } else if (d < 0) {
+          scaledValue = d / this.tooltipConfig.weights[currIndex].min;
+          return this.tooltipConfig.negativeColor(scaledValue);
+        }
+      });
+
+
+    // console.clear();
+
+    // console.log('Incoming Weights before training:', this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]);
+    // console.log('Incoming Weights after training:', this.inputFilterWeights[incomingFilters][this.conMenuSelected.unit]);
   }
 
   resetViz() {
