@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, HostListener } from '@angular/core';
 
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -16,7 +16,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   @ViewChild('container') container;
 
   defaultSettings;
-  inputTopology; inputWeights;
+  inputTopology; inputFilterWeights; inputWeights;
 
   svg; svgWidth; svgHeight;
   zoom; currTransform;
@@ -25,13 +25,22 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   minWidthHeight;
   topMargin; leftMargin;
 
-  edges;
-  layerSpacing;
+  topology; edges;
+  weights; untrainedWeights;
 
-  topology; weights;
-  untrainedWeights;
+  layerSpacing;
+  minMaxDiffs; activities;
+
+  conMenuSelected;
+  showWeightsConfig; showWeightsTexts;
+
+  detachedNodes;
 
   destroyed = new Subject<void>();
+
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event) { this.draw(false); }
 
   constructor(
     private dataService: DataService
@@ -46,19 +55,31 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       nodeStroke: 0,
       duration: 500
     };
+    this.inputFilterWeights = {};
+    this.detachedNodes = [];
 
     this.dataService.vizTopology
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         this.inputTopology = val;
-        this.draw();
+        this.draw(true);
       });
 
     this.dataService.vizWeights
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
-        this.inputWeights = val;
-        this.draw();
+        if (val) {
+
+          Object.keys(val).forEach(key => {
+            if (key.startsWith('c')) {
+              this.inputFilterWeights[key] = val[key];
+              delete val[key];
+            }
+          });
+          this.inputWeights = val;
+
+          this.draw(true);
+        }
       });
 
     this.dataService.untrainedWeights
@@ -66,8 +87,8 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .subscribe(val => { this.untrainedWeights = val; });
   }
 
-  draw() {
-    // this.activities = [];
+  draw(runAnimation) {
+    this.activities = [];
     this.resetViz();
 
     if (this.inputTopology) {
@@ -75,10 +96,10 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       this.bindTopology();
     }
 
-    // if (this.inputTopology && this.inputWeights) {
-    //   this.setupWeights();
-    //   this.bindWeights(runAnimation);
-    // }
+    if (this.inputTopology && this.inputWeights) {
+      this.setupWeights();
+      this.bindWeights(runAnimation);
+    }
 
   }
 
@@ -241,6 +262,530 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('stroke-width', this.defaultSettings.nodeStroke);
   }
 
+  setupWeights() {
+    const filteredData = [];
+    const diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
+
+    Object.keys(this.inputWeights).forEach((layer, layerIndex) => {
+      if (layer !== 'h0') {
+        this.inputWeights[layer].forEach((destination, destinationIndex) => {
+          destination.forEach((source, sourceIndex) => {
+            if (sourceIndex === 0) {
+              diffsPerEpoch.minDiff = source;
+              diffsPerEpoch.maxDiff = source;
+            } else {
+              if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
+              if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
+            }
+
+            filteredData.push({
+              layer: (this.inputTopology['conv_layers'].length + 1) + (layerIndex - 1),
+              source: sourceIndex,
+              target: destinationIndex,
+              value: source,
+              unitSpacing: (this.minWidthHeight / +destination.length),
+              targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[layer].length)
+            });
+          });
+        });
+      }
+    });
+
+    this.weights = filteredData;
+    this.minMaxDiffs = diffsPerEpoch;
+
+    this.weights.forEach(el => { el.stroke = this.generateWeightsColor(el); });
+    this.topology.forEach(el => {
+      const nodeColor = this.generateNodesColor(el);
+      el.fill = nodeColor.color;
+      el.opacity = nodeColor.opacity;
+    });
+
+    this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
+  }
+
+  bindWeights(runAnimation) {
+    d3.selectAll('.weights').remove();
+    d3.selectAll('circle').remove();
+    const self = this;
+
+
+    const line = this.vizContainer.selectAll('.weights')
+      .data(this.weights);
+
+    let enterWeights = line.enter()
+      .append('line')
+      .attr('class', 'weights')
+      .attr('x1', function (d) {
+        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return x1;
+      })
+      .attr('y1', function (d) {
+        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        return y1;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        return y2;
+      })
+      .attr('stroke', function (d) { return d.stroke; });
+
+    if (runAnimation) {
+      enterWeights = enterWeights.transition()
+        .duration(2.5 * this.defaultSettings.duration)
+        .delay(function (d) {
+          // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
+          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          return nodesDelay + weightsDelay;
+        });
+    }
+
+    enterWeights
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        return y2;
+      });
+
+
+    const circles = this.vizContainer.selectAll('circle')
+      .data(this.topology.filter(nodes => !nodes.isConv));
+
+    let enterCircles = circles.enter()
+      .append('circle')
+      .attr('class', 'circle')
+      .attr('cx', function (d) {
+        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return cx;
+      })
+      .attr('cy', function (d) {
+        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        return cy;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', this.defaultSettings.color)
+      .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+    enterCircles.on('mouseover', function (d) {
+      self.conMenuSelected = Object.assign({}, d);
+      self.conMenuSelected.layer -= (self.inputTopology['conv_layers'].length + 1);
+
+      if (!d.isOutput && !d.isConv) {
+        self.setupShowWeights();
+        self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
+      }
+    });
+
+    enterCircles.on('mouseout', function (d) {
+      if (!d.isOutput && !d.isConv) { d3.selectAll('.weights-comparison').remove(); }
+    });
+
+    enterCircles.on('click', function (d) {
+      d3.event.stopPropagation();
+      d3.select('.context-menu').remove();
+      self.conMenuSelected = d;
+
+      if (!d.isOutput && !d.isConv) { self.modifyNodes(); }
+    });
+
+    if (runAnimation) {
+      enterCircles = enterCircles.transition()
+        .duration(this.defaultSettings.duration)
+        .delay(function (d) {
+          // const nodesDelay = self.defaultSettings.duration * d.layer;
+          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          return nodesDelay + weightsDelay;
+        });
+    }
+
+    enterCircles
+      .attr('fill', function (d) { return d.fill; })
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
+  }
+
+  generateWeightsColor(el) {
+    let color = this.defaultSettings.color;
+    let activity = 0;
+    let recordActivities = false;
+
+    const range = Math.abs(this.minMaxDiffs.maxDiff - this.minMaxDiffs.minDiff);
+    const valuePercentage = el.value / range;
+
+    if (valuePercentage > .5) {
+      color = '#EF5350';
+      activity = valuePercentage;
+      recordActivities = true;
+    } else if (valuePercentage > .35) {
+      color = '#EF9A9A';
+      activity = valuePercentage;
+      recordActivities = true;
+    }
+
+    if (recordActivities) {
+      this.activities.push({
+        layer: el.layer,
+        source: el.source,
+        target: el.target,
+        activity: activity
+      });
+    }
+
+    for (let i = 0; i < this.detachedNodes.length; i++) {
+      if ((this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.source) ||
+        ((this.detachedNodes[i].layer - 1) === el.layer && this.detachedNodes[i].unit === el.target)) {
+        color = this.defaultSettings.color;
+        break;
+      }
+    }
+
+    return color;
+  }
+
+  generateNodesColor(el) {
+    const allActivities = [];
+
+    let color = this.defaultSettings.color;
+    let opacity = 1;
+
+    for (let i = 0; i < this.activities.length; i++) {
+      if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
+        (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
+        color = '#FF7373';
+        allActivities.push(this.activities[i].activity);
+      }
+    }
+
+    if (allActivities.length > 0) {
+      opacity = allActivities.reduce((a, b) => a + b) / allActivities.length;
+    }
+
+    for (let i = 0; i < this.detachedNodes.length; i++) {
+      if (this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.unit) {
+        color = this.defaultSettings.color;
+        break;
+      }
+    }
+
+    return {
+      'color': color,
+      'opacity': opacity
+    };
+  }
+
+  setupShowWeights() {
+    const self = this;
+    this.showWeightsTexts = [
+      `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
+      `Incoming Weights`,
+      `Before`,
+      `After`,
+      `Outgoing Weights`,
+      `Before`,
+      `After`
+    ];
+
+    this.showWeightsConfig = {
+      outerFrame: {
+        width: 0,
+        height: 0,
+        margin: 5,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      titles: {
+        margin: 15,
+        color: '#ffffff',
+        dimension: []
+      },
+      weightsFrame: {
+        width: 84,
+        height: 84,
+        margin: 15,
+        fill: 'whitesmoke'
+      },
+      positiveColor: d3.interpolateLab('whitesmoke', 'indianred'),
+      negativeColor: d3.interpolateLab('whitesmoke', 'royalblue')
+    };
+
+    this.vizContainer.selectAll('.tmp')
+      .data(this.showWeightsTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('class', 'tmp')
+      .each(function (d, i) {
+        const bbox = this.getBBox();
+        const dimension = {
+          width: bbox.width,
+          height: bbox.height
+        };
+
+        self.showWeightsConfig.titles.dimension[i] = dimension;
+      });
+    d3.selectAll('.tmp').remove();
+
+    this.showWeightsConfig.outerFrame.width = 2 * this.showWeightsConfig.weightsFrame.width +
+      2.75 * this.showWeightsConfig.weightsFrame.margin;
+    this.showWeightsConfig.outerFrame.height =
+      this.showWeightsConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
+      2 * this.showWeightsConfig.titles.margin +
+      2 * this.showWeightsConfig.weightsFrame.height;
+  }
+
+  showWeights(mouseX, mouseY) {
+    const self = this;
+
+    const incomingWeights = `h${this.conMenuSelected.layer}`;
+    const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology['layers'].length - 1) ?
+      'output' : `h${this.conMenuSelected.layer + 1}`;
+
+    const outgoingWeightsBefore = [];
+    const outgoingWeightsAfter = [];
+    this.untrainedWeights[outgoingWeights].forEach(element => {
+      outgoingWeightsBefore.push(element[this.conMenuSelected.unit]);
+    });
+    this.inputWeights[outgoingWeights].forEach(element => {
+      outgoingWeightsAfter.push(element[this.conMenuSelected.unit]);
+    });
+
+    this.showWeightsConfig.quadrantAdjustment = {
+      x: this.showWeightsConfig.outerFrame.margin,
+      y: this.showWeightsConfig.outerFrame.margin
+    };
+    if (mouseX > this.svgWidth / 2) {
+      this.showWeightsConfig.quadrantAdjustment.x *= -1;
+      this.showWeightsConfig.quadrantAdjustment.x += -1 * this.showWeightsConfig.outerFrame.width;
+    }
+    if (mouseY > this.svgHeight / 2) {
+      this.showWeightsConfig.quadrantAdjustment.y *= -1;
+      this.showWeightsConfig.quadrantAdjustment.y += -1 * this.showWeightsConfig.outerFrame.height;
+    }
+
+
+    const weightsComparison = this.vizContainer.append('g')
+      .attr('class', 'weights-comparison');
+
+    weightsComparison.append('rect')
+      .attr('x', mouseX + this.showWeightsConfig.quadrantAdjustment.x)
+      .attr('y', mouseY + this.showWeightsConfig.quadrantAdjustment.y)
+      .attr('width', this.showWeightsConfig.outerFrame.width)
+      .attr('height', this.showWeightsConfig.outerFrame.height)
+      .attr('rx', this.showWeightsConfig.outerFrame.cornerRad)
+      .attr('ry', this.showWeightsConfig.outerFrame.cornerRad)
+      .style('fill', this.showWeightsConfig.outerFrame.fill);
+
+
+    weightsComparison.selectAll('text')
+      .data(this.showWeightsTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('x', (d, i) => {
+        let centerAligned = 0;
+        if (i === 0 || d === 'Before' || d === 'After') {
+          if (i === 0) {
+            centerAligned += this.showWeightsConfig.outerFrame.width / 2;
+          } else if (d === 'Before') {
+            centerAligned += this.showWeightsConfig.outerFrame.width / 4;
+          } else if (d === 'After') {
+            centerAligned += 3 * this.showWeightsConfig.outerFrame.width / 4;
+          }
+
+          centerAligned -= this.showWeightsConfig.titles.dimension[i].width / 2;
+          centerAligned -= this.showWeightsConfig.titles.margin;
+        }
+
+
+        return mouseX +
+          this.showWeightsConfig.quadrantAdjustment.x +
+          this.showWeightsConfig.titles.margin +
+          centerAligned;
+      })
+      .attr('y', (d, i) => {
+        let totalTitles = this.showWeightsConfig.titles.margin;
+        let totalContent = 0;
+
+        if (i > 0) {
+          totalTitles = 2 * this.showWeightsConfig.titles.margin;
+        }
+        for (let j = 0; j <= i; j++) {
+          totalTitles += this.showWeightsConfig.titles.dimension[j].height;
+        }
+        if (d === 'After') {
+          totalTitles -= this.showWeightsConfig.titles.dimension[i].height;
+        }
+
+        if (i > 3) {
+          totalTitles -= this.showWeightsConfig.titles.dimension[3].height;
+          totalContent += this.showWeightsConfig.weightsFrame.height;
+          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
+        }
+
+
+        return mouseY +
+          this.showWeightsConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('fill', this.showWeightsConfig.titles.color);
+
+
+    this.showWeightsConfig.data = [];
+    this.showWeightsConfig.data.push([...this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]]);
+    this.showWeightsConfig.data.push([...this.inputWeights[incomingWeights][this.conMenuSelected.unit]]);
+    this.showWeightsConfig.data.push([...outgoingWeightsBefore]);
+    this.showWeightsConfig.data.push([...outgoingWeightsAfter]);
+
+    this.showWeightsConfig.weights = [];
+    this.showWeightsConfig.data.forEach(data => {
+      this.showWeightsConfig.weights.push({
+        min: Math.min(...data),
+        max: Math.max(...data),
+        width: this.showWeightsConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
+        height: this.showWeightsConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
+        numElements: Math.ceil(Math.sqrt(data.length))
+      });
+    });
+
+    // d3 workaround - attr's index starts from 1 instead of 0
+    this.showWeightsConfig.data.forEach(data => { data.unshift('d3 workaround'); });
+
+    const comparisonItem = weightsComparison.selectAll('.comparison-item')
+      .data(this.showWeightsConfig.data)
+      .enter()
+      .append('g')
+      .attr('class', 'comparison-item');
+
+    comparisonItem.append('rect')
+      .attr('x', (d, i) =>
+        mouseX +
+        this.showWeightsConfig.quadrantAdjustment.x +
+        (i % 2) * this.showWeightsConfig.weightsFrame.width +
+        (i % 2 * .75 + 1) * this.showWeightsConfig.weightsFrame.margin
+      )
+      .attr('y', (d, i) => {
+        let totalTitles = 2 * this.showWeightsConfig.titles.margin +
+          this.showWeightsConfig.titles.dimension[0].height;
+        let totalContent = Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height +
+          .25 * this.showWeightsConfig.weightsFrame.margin;
+
+
+        for (let j = 0; j < this.showWeightsConfig.titles.dimension.length; j++) {
+          if (Math.floor(i / 2) === 0 && j > 2) { break; }
+
+          if (j % 3 === 0) { continue; }
+          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.showWeightsConfig.titles.dimension[j].height; }
+        }
+
+        if (Math.floor(i / 2) === 1) {
+          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
+        }
+
+        return mouseY +
+          this.showWeightsConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('width', this.showWeightsConfig.weightsFrame.width)
+      .attr('height', this.showWeightsConfig.weightsFrame.height)
+      .style('fill', this.showWeightsConfig.weightsFrame.fill);
+
+
+    let tempIndex = -1;
+    comparisonItem.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.showWeightsConfig.data.length;
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = ((i - 1) % self.showWeightsConfig.weights[currIndex].numElements) *
+          self.showWeightsConfig.weights[currIndex].width;
+
+        return rectXValue + xPosition;
+      })
+      .attr('y', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.showWeightsConfig.data.length;
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor((i - 1) / self.showWeightsConfig.weights[currIndex].numElements) *
+          self.showWeightsConfig.weights[currIndex].height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+
+        return this.showWeightsConfig.weights[currIndex].width;
+      })
+      .attr('height', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+
+        return this.showWeightsConfig.weights[currIndex].height;
+      })
+      .style('fill', (d, i) => {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % this.showWeightsConfig.data.length;
+        let scaledValue = 0;
+
+        if (d > 0) {
+          scaledValue = d / this.showWeightsConfig.weights[currIndex].max;
+          return this.showWeightsConfig.positiveColor(scaledValue);
+        } else if (d < 0) {
+          scaledValue = d / this.showWeightsConfig.weights[currIndex].min;
+          return this.showWeightsConfig.negativeColor(scaledValue);
+        }
+      });
+
+
+    console.clear();
+
+    console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
+    console.log('Incoming Weights after training:', this.inputWeights[incomingWeights][this.conMenuSelected.unit]);
+    console.log('Outgoing Weights before training:', outgoingWeightsBefore);
+    console.log('Outgoing Weights after training:', outgoingWeightsAfter);
+  }
+
+  modifyNodes() {
+    if (this.detachedNodes.length === 0) {
+      this.detachedNodes.push(this.conMenuSelected);
+    } else {
+      for (let i = 0; i < this.detachedNodes.length; i++) {
+        if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
+          this.detachedNodes.splice(i, 1);
+          break;
+        } else if (i === this.detachedNodes.length - 1) {
+          this.detachedNodes.push(this.conMenuSelected);
+          break;
+        }
+      }
+    }
+
+    this.setupWeights();
+    this.bindWeights(false);
+  }
+
   resetViz() {
     this.svgWidth = this.container.nativeElement.offsetWidth;
     this.svgHeight = Math.max(this.container.nativeElement.offsetHeight - 60, 0);
@@ -274,6 +819,9 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     console.clear();
     console.log('source topology:', this.inputTopology);
     console.log('source weights:', this.inputWeights);
+    console.log('source filter weights:', this.inputFilterWeights);
+
+    console.log('untrained weights', this.untrainedWeights);
 
     console.log('filtered topology:', this.topology);
     console.log('filtered weights (trained):', this.weights);
