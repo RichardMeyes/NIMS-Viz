@@ -40,7 +40,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
   @HostListener('window:resize', ['$event'])
-  onResize(event) { this.draw(false); }
+  onResize(event) { this.draw(); }
 
   constructor(
     private dataService: DataService
@@ -62,7 +62,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         this.inputTopology = val;
-        this.draw(true);
+        this.draw();
       });
 
     this.dataService.vizWeights
@@ -78,7 +78,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           });
           this.inputWeights = val;
 
-          this.draw(true);
+          this.draw();
         }
       });
 
@@ -87,7 +87,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .subscribe(val => { this.untrainedWeights = val; });
   }
 
-  draw(runAnimation) {
+  draw() {
     this.activities = [];
     this.resetViz();
 
@@ -95,12 +95,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       this.setupTopology();
       this.bindTopology();
     }
-
-    if (this.inputTopology && this.inputWeights) {
-      this.setupWeights();
-      this.bindWeights(runAnimation);
-    }
-
   }
 
   setupTopology() {
@@ -246,11 +240,21 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         .attr('stroke-width', self.defaultSettings.nodeStroke);
     });
 
+    rects.on('click', function (d) {
+      d3.event.stopPropagation();
+      self.conMenuSelected = Object.assign({}, d);
+      self.conMenuSelected.layer -= 1;
 
-    const circles = this.vizContainer.selectAll('circle')
+      if (self.conMenuSelected.layer >= 0) {
+        console.log('PERFORM ABLATION');
+      }
+    });
+
+
+    let circles = this.vizContainer.selectAll('circle')
       .data(this.topology.filter(nodes => !nodes.isConv));
 
-    circles.enter()
+    circles = circles.enter()
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
@@ -266,6 +270,38 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity)
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
+
+    circles.on('mouseover', function (d) {
+      self.conMenuSelected = Object.assign({}, d);
+      self.conMenuSelected.layer -= (self.inputTopology['conv_layers'].length + 1);
+
+      if (!d.isOutput) {
+        self.setupShowWeights();
+        self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
+      }
+
+      d3.select(this)
+        .attr('stroke', 'whitesmoke')
+        .attr('stroke-width', .5);
+    });
+
+    circles.on('mouseout', function (d) {
+      if (!d.isOutput) { d3.selectAll('.weights-comparison').remove(); }
+
+      d3.select(this)
+        .attr('stroke', self.defaultSettings.color)
+        .attr('stroke-width', self.defaultSettings.nodeStroke);
+    });
+
+    circles.on('click', function (d) {
+      d3.event.stopPropagation();
+      self.conMenuSelected = Object.assign({}, d);
+
+      if (!d.isOutput) {
+        console.log('PERFORM ABLATION');
+        // self.modifyNodes();
+      }
+    });
   }
 
   setupWeights() {
@@ -383,27 +419,26 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
-    enterCircles.on('mouseover', function (d) {
-      self.conMenuSelected = Object.assign({}, d);
-      self.conMenuSelected.layer -= (self.inputTopology['conv_layers'].length + 1);
+    // enterCircles.on('mouseover', function (d) {
+    //   self.conMenuSelected = Object.assign({}, d);
+    //   self.conMenuSelected.layer -= (self.inputTopology['conv_layers'].length + 1);
 
-      if (!d.isOutput && !d.isConv) {
-        self.setupShowWeights();
-        self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
-      }
-    });
+    //   if (!d.isOutput && !d.isConv) {
+    //     self.setupShowWeights();
+    //     self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
+    //   }
+    // });
 
-    enterCircles.on('mouseout', function (d) {
-      if (!d.isOutput && !d.isConv) { d3.selectAll('.weights-comparison').remove(); }
-    });
+    // enterCircles.on('mouseout', function (d) {
+    //   if (!d.isOutput && !d.isConv) { d3.selectAll('.weights-comparison').remove(); }
+    // });
 
-    enterCircles.on('click', function (d) {
-      d3.event.stopPropagation();
-      d3.select('.context-menu').remove();
-      self.conMenuSelected = d;
+    // enterCircles.on('click', function (d) {
+    //   d3.event.stopPropagation();
+    //   self.conMenuSelected = d;
 
-      if (!d.isOutput && !d.isConv) { self.modifyNodes(); }
-    });
+    //   if (!d.isOutput && !d.isConv) { self.modifyNodes(); }
+    // });
 
     if (runAnimation) {
       enterCircles = enterCircles.transition()
@@ -1077,7 +1112,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .scaleExtent([0.1, 10])
       .on('zoom', () => {
         self.vizContainer.attr('transform', d3.event.transform);
-        d3.select('.context-menu').remove();
       })
       .on('end', () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
