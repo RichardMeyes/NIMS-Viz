@@ -231,11 +231,11 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       if (self.conMenuSelected.layer >= 0) {
         self.setupShowFilters();
         self.showFilters(d3.mouse(this)[0], d3.mouse(this)[1]);
-
-        d3.select(this)
-          .attr('stroke', 'whitesmoke')
-          .attr('stroke-width', .5);
       }
+
+      d3.select(this)
+        .attr('stroke', 'whitesmoke')
+        .attr('stroke-width', .5);
     });
 
     rects.on('mouseout', function (d) {
@@ -496,7 +496,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   setupShowWeights() {
     const self = this;
     this.tooltipTexts = [
-      `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
+      `FC Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
       `Incoming Weights`,
       `Before`,
       `After`,
@@ -765,7 +765,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       });
 
 
-    console.clear();
+    // console.clear();
 
     // console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
     // console.log('Incoming Weights after training:', this.inputWeights[incomingWeights][this.conMenuSelected.unit]);
@@ -795,7 +795,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   setupShowFilters() {
     const self = this;
     this.tooltipTexts = [
-      `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
+      `Conv Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
       `Incoming Filters`,
       `Before`,
       `After`
@@ -820,7 +820,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         margin: 15,
         fill: 'whitesmoke'
       },
-      negativeColor: d3.interpolateLab('whitesmoke', 'black')
+      color: d3.interpolateLab('white', 'black')
     };
 
     this.vizContainer.selectAll('.tmp')
@@ -879,7 +879,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('ry', this.tooltipConfig.outerFrame.cornerRad)
       .style('fill', this.tooltipConfig.outerFrame.fill);
 
-
     filtersComparison.selectAll('text')
       .data(this.tooltipTexts)
       .enter()
@@ -934,30 +933,34 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       })
       .attr('fill', this.tooltipConfig.titles.color);
 
-    console.clear();
-
-    console.log('Incoming Weights before training:', this.untrainedWeights[incomingFilters]);
-    console.log('Incoming Weights after training:', this.inputFilterWeights[incomingFilters]);
 
     this.tooltipConfig.data = [];
     this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
     this.tooltipConfig.data.push([...this.inputFilterWeights[incomingFilters][this.conMenuSelected.unit]]);
-
-    console.log(this.tooltipConfig.data);
-
-    this.tooltipConfig.weights = [];
-    this.tooltipConfig.data.forEach(data => {
-      this.tooltipConfig.weights.push({
-        min: Math.min(...data),
-        max: Math.max(...data),
-        width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
-        height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
-        numElements: Math.ceil(Math.sqrt(data.length))
+    this.tooltipConfig.data.forEach((data, dataIndex) => {
+      data.forEach((filter, filterIndex) => {
+        this.tooltipConfig.data[dataIndex][filterIndex] = filter.flat();
       });
     });
 
+    this.tooltipConfig.filtersFrame = {
+      width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
+      height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
+      numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length))
+    };
+
+    this.tooltipConfig.filter = {
+      width: this.tooltipConfig.filtersFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
+      height: this.tooltipConfig.filtersFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
+      numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length))
+    };
+
     // d3 workaround - attr's index starts from 1 instead of 0
-    this.tooltipConfig.data.forEach(data => { data.unshift('d3 workaround'); });
+    this.tooltipConfig.data.forEach(data => {
+      data.forEach(filter => {
+        filter.unshift('d3 workaround');
+      });
+    });
 
     const comparisonItem = filtersComparison.selectAll('.comparison-item')
       .data(this.tooltipConfig.data)
@@ -1000,57 +1003,51 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .style('fill', this.tooltipConfig.weightsFrame.fill);
 
 
-    let tempIndex = -1;
-    comparisonItem.selectAll('rect')
+    const filtersFrames = comparisonItem.selectAll('.filters-frames')
       .data(d => d)
       .enter()
-      .append('rect')
-      .attr('x', function (d, i) {
-        if (i === 1) { tempIndex++; }
+      .append('g')
+      .attr('class', 'filters-frames');
 
-        const currIndex = tempIndex % self.tooltipConfig.data.length;
-        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
-        const xPosition = ((i - 1) % self.tooltipConfig.weights[currIndex].numElements) *
-          self.tooltipConfig.weights[currIndex].width;
+    filtersFrames.append('rect')
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+        const xPosition = (i % self.tooltipConfig.filtersFrame.numElements) *
+          self.tooltipConfig.filtersFrame.width;
 
         return rectXValue + xPosition;
       })
       .attr('y', function (d, i) {
-        if (i === 1) { tempIndex++; }
-
-        const currIndex = tempIndex % self.tooltipConfig.data.length;
-        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
-        const yPosition = Math.floor((i - 1) / self.tooltipConfig.weights[currIndex].numElements) *
-          self.tooltipConfig.weights[currIndex].height;
+        const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
+          self.tooltipConfig.filtersFrame.height;
 
         return rectYValue + yPosition;
       })
-      .attr('width', (d, i) => {
-        if (i === 1) { tempIndex++; }
-        const currIndex = tempIndex % this.tooltipConfig.data.length;
+      .attr('width', this.tooltipConfig.filtersFrame.width)
+      .attr('height', this.tooltipConfig.filtersFrame.height);
 
-        return this.tooltipConfig.weights[currIndex].width;
+    filtersFrames.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = ((i - 1) % self.tooltipConfig.filter.numElements) *
+          self.tooltipConfig.filter.width;
+
+        return rectXValue + xPosition;
       })
-      .attr('height', (d, i) => {
-        if (i === 1) { tempIndex++; }
-        const currIndex = tempIndex % this.tooltipConfig.data.length;
+      .attr('y', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor((i - 1) / self.tooltipConfig.filter.numElements) *
+          self.tooltipConfig.filter.height;
 
-        return this.tooltipConfig.weights[currIndex].height;
+        return rectYValue + yPosition;
       })
-      .style('fill', (d, i) => {
-        if (i === 1) { tempIndex++; }
-
-        const currIndex = tempIndex % this.tooltipConfig.data.length;
-        let scaledValue = 0;
-
-        if (d > 0) {
-          scaledValue = d / this.tooltipConfig.weights[currIndex].max;
-          return this.tooltipConfig.positiveColor(scaledValue);
-        } else if (d < 0) {
-          scaledValue = d / this.tooltipConfig.weights[currIndex].min;
-          return this.tooltipConfig.negativeColor(scaledValue);
-        }
-      });
+      .attr('width', this.tooltipConfig.filter.width)
+      .attr('height', this.tooltipConfig.filter.height)
+      .style('fill', d => this.tooltipConfig.color(d));
 
 
     // console.clear();
