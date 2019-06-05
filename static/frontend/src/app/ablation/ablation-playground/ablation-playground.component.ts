@@ -855,7 +855,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         margin: 15,
         fill: 'whitesmoke'
       },
-      color: d3.interpolateLab('white', 'black')
+      color: d3.interpolateLab('black', 'white')
     };
 
     this.vizContainer.selectAll('.tmp')
@@ -997,6 +997,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       });
     });
 
+
     const comparisonItem = filtersComparison.selectAll('.comparison-item')
       .data(this.tooltipConfig.data)
       .enter()
@@ -1082,7 +1083,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       })
       .attr('width', this.tooltipConfig.filter.width)
       .attr('height', this.tooltipConfig.filter.height)
-      .style('fill', d => this.tooltipConfig.color(d));
+      .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
 
 
     // console.clear();
