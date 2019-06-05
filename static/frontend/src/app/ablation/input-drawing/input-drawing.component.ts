@@ -1,5 +1,10 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild, OnDestroy } from '@angular/core';
+
+import { Subject } from 'rxjs';
+import { takeUntil, concatMap } from 'rxjs/operators';
+
 import { AblationService } from 'src/app/services/ablation.service';
+import { DataService } from 'src/app/services/data.service';
 
 import 'fabric';
 declare const fabric: any;
@@ -9,14 +14,18 @@ declare const fabric: any;
   templateUrl: './input-drawing.component.html',
   styleUrls: ['./input-drawing.component.scss']
 })
-export class InputDrawingComponent implements OnChanges, OnInit {
+export class InputDrawingComponent implements OnChanges, OnInit, OnDestroy {
   @Input('clearCanvas') clearCanvasInput;
   @ViewChild('container') container;
 
   canvas;
+  selectedFile;
+
+  destroyed = new Subject<void>();
 
   constructor(
-    private ablationService: AblationService
+    private ablationService: AblationService,
+    private dataService: DataService
   ) { }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -37,9 +46,14 @@ export class InputDrawingComponent implements OnChanges, OnInit {
 
   classify() {
     this.canvas.getElement().toBlob(blob => {
-      this.ablationService.saveDigit(blob).subscribe(() => {
-        console.log('done');
-      });
+      this.ablationService.saveDigit(blob)
+        .pipe(
+          takeUntil(this.destroyed),
+          concatMap(() => this.ablationService.testDigit(this.dataService.selectedFile.getValue()))
+        )
+        .subscribe(() => {
+          console.log('done');
+        });
     });
   }
 
@@ -54,5 +68,9 @@ export class InputDrawingComponent implements OnChanges, OnInit {
     this.canvas.freeDrawingBrush.width = multiplier;
     this.canvas.setHeight(28 * multiplier);
     this.canvas.setWidth(28 * multiplier);
+  }
+
+  ngOnDestroy() {
+    this.destroyed.next();
   }
 }

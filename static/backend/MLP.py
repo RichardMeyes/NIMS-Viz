@@ -15,6 +15,7 @@ from flask_socketio import emit, send
 import eventlet
 import static.backend.utility as utility
 import static.backend.HEATMAP as HEATMAP
+import cv2
 
 
 class Net(nn.Module):
@@ -264,6 +265,36 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
 
     return acc, correct_labels, acc_class, class_labels
 
+
+def preprocess_digit():
+    digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
+    digit = cv2.resize(digit, (28, 28))
+    cv2.imwrite("static/data/digit/digit.png", digit)
+
+
+def test_digit(filename):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"])
+    # net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
+    # print(net)
+    # net.eval()
+    # criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
+
+    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+    # testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
+    # testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
+
+    # ko_layers = map(lambda x: x - len(topology["conv_layers"]), ko_layers)
+    
+    # for i_layer, i_unit in zip(ko_layers, ko_units):
+    #     print("knockout layer {0}, unit {1}".format(i_layer, i_unit))
+    #     n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape"]
+    #     net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
+    #     net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
+    # acc, correct_labels, acc_class, class_labels = net.test_net(criterion, testloader, device)
+
+    # return acc, correct_labels, acc_class, class_labels
 
 # def mlpContinue():
 #     net.train_net(device, trainloader, criterion, optimizer)
