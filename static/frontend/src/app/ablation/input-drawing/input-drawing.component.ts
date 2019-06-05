@@ -1,4 +1,6 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { AblationService } from 'src/app/services/ablation.service';
+
 import 'fabric';
 declare const fabric: any;
 
@@ -13,7 +15,9 @@ export class InputDrawingComponent implements OnChanges, OnInit {
 
   canvas;
 
-  constructor() { }
+  constructor(
+    private ablationService: AblationService
+  ) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.clearCanvasInput.currentValue) {
@@ -23,12 +27,19 @@ export class InputDrawingComponent implements OnChanges, OnInit {
 
   ngOnInit() {
     this.setupCanvas();
-    this.clearCanvas();
   }
 
   setupCanvas() {
     this.canvas = new fabric.Canvas('freeDrawing', {
       isDrawingMode: true
+    });
+  }
+
+  classify() {
+    this.canvas.getElement().toBlob(blob => {
+      this.ablationService.saveDigit(blob).subscribe(() => {
+        console.log('done');
+      });
     });
   }
 

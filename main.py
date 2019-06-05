@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, emit, send
 import eventlet
 from flask_cors import CORS, cross_origin
 from werkzeug.routing import BaseConverter
+from werkzeug.utils import secure_filename
 
 import os
 import json
@@ -18,6 +19,7 @@ FRONTEND_DIR = "static/frontend/dist"
 ASSETS_DIR = "static/frontend/dist/assets"
 SOURCE_DIR = "static/frontend/dist/assets/ann/h5/"
 DESTINATION_DIR = "static/frontend/dist/assets/ann/json"
+DIGIT_DIR = "static/data/digit"
 # set up Flask webservices
 app = Flask(__name__, static_folder=FRONTEND_DIR)
 CORS(app)
@@ -25,6 +27,7 @@ CORS(app)
 app.config['SECRET_KEY'] = 'braindead'
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
+app.config['DIGIT_DIR'] = DIGIT_DIR
 # keep socketio alive for x minutes (60s*x)
 socketio = SocketIO(app, ping_timeout=(60*60))
 
@@ -236,6 +239,21 @@ def default_error_handler(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return angular()
+
+
+@app.route("/saveDigit", methods=["POST", "OPTIONS"])
+@cross_origin()
+def saveDigit():
+    digit = request.files['digit']
+
+    if digit:
+        if not(os.path.exists(app.config['DIGIT_DIR'])):
+            os.mkdir(app.config['DIGIT_DIR'])
+
+        filename = secure_filename(digit.filename)
+        digit.save(os.path.join(app.config['DIGIT_DIR'], filename))
+
+    return json.dumps({})
 
 
 if __name__ == "__main__":
