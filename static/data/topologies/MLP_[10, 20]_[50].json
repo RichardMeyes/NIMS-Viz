@@ -1,0 +1,1 @@
+{"h0Shape": 320, "conv_layers": [{"kernelSize": 5, "stride": 1, "padding": 0, "inChannel": 1, "outChannel": 10}, {"kernelSize": 5, "stride": 1, "padding": 0, "inChannel": 10, "outChannel": 20}], "layers": [50]}
