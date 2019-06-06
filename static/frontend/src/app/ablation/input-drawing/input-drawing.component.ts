@@ -1,10 +1,9 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild, OnDestroy } from '@angular/core';
-
-import { Subject } from 'rxjs';
-import { takeUntil, concatMap } from 'rxjs/operators';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { concatMap, take } from 'rxjs/operators';
 
 import { AblationService } from 'src/app/services/ablation.service';
 import { DataService } from 'src/app/services/data.service';
+import { PlaygroundService } from 'src/app/playground.service';
 
 import 'fabric';
 declare const fabric: any;
@@ -14,18 +13,17 @@ declare const fabric: any;
   templateUrl: './input-drawing.component.html',
   styleUrls: ['./input-drawing.component.scss']
 })
-export class InputDrawingComponent implements OnChanges, OnInit, OnDestroy {
+export class InputDrawingComponent implements OnChanges, OnInit {
   @Input('clearCanvas') clearCanvasInput;
   @ViewChild('container') container;
 
   canvas;
   selectedFile;
 
-  destroyed = new Subject<void>();
-
   constructor(
     private ablationService: AblationService,
-    private dataService: DataService
+    private dataService: DataService,
+    private playgroundService: PlaygroundService
   ) { }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -48,11 +46,12 @@ export class InputDrawingComponent implements OnChanges, OnInit, OnDestroy {
     this.canvas.getElement().toBlob(blob => {
       this.ablationService.saveDigit(blob)
         .pipe(
-          takeUntil(this.destroyed),
-          concatMap(() => this.ablationService.testDigit(this.dataService.selectedFile.getValue()))
+          take(1),
+          concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile.getValue())),
+          concatMap(val => this.ablationService.testDigit(val, this.dataService.selectedFile.getValue()))
         )
-        .subscribe(() => {
-          console.log('done');
+        .subscribe(val => {
+          console.log(val);
         });
     });
   }
@@ -68,9 +67,5 @@ export class InputDrawingComponent implements OnChanges, OnInit, OnDestroy {
     this.canvas.freeDrawingBrush.width = multiplier;
     this.canvas.setHeight(28 * multiplier);
     this.canvas.setWidth(28 * multiplier);
-  }
-
-  ngOnDestroy() {
-    this.destroyed.next();
   }
 }

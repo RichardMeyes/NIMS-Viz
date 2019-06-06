@@ -253,18 +253,17 @@ def saveDigit():
         filename = secure_filename(digit.filename)
         digit.save(os.path.join(app.config['DIGIT_DIR'], filename))
 
-        MLP.preprocess_digit()
-
     return json.dumps({})
 
 @app.route("/testDigit", methods=["POST", "OPTIONS"])
 @cross_origin()
 def testDigit():
     params = request.get_json()
+    topology = params['topology']
     filename = params['filename']
 
-    MLP.test_digit(filename)
-    result = {}
+    pred = MLP.test_digit(topology, filename)
+    result = { "pred": pred.tolist() }
     
     return json.dumps(result)
 

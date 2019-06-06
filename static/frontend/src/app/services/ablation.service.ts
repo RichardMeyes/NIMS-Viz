@@ -18,8 +18,12 @@ export class AblationService {
     return this.http.post(`${this.baseURL}/saveDigit`, form);
   }
 
-  testDigit(selectedFile) {
-    const body = { filename: selectedFile.split('\\')[1].split('.')[0] };
+  testDigit(topology, selectedFile) {
+    const body = {
+      topology: topology,
+      filename: selectedFile.split('\\')[1].split('.')[0]
+    };
+
     return this.http.post(`${this.baseURL}/testDigit`, body);
   }
 
