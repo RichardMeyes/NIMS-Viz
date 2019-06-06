@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { Playground } from '../models/playground.model';
 import { Option } from '../models/option.model';
 import { HeatmapConfig } from '../models/heatmap-config.model';
@@ -8,6 +8,18 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
   providedIn: 'root'
 })
 export class DataService {
+  selectedFile: BehaviorSubject<string>;
+
+  visualize: Subject<boolean>;
+
+
+
+
+
+
+
+
+
   toolbarHeight: BehaviorSubject<number>;
   readonly tabsHeight: number;
   readonly bottomMargin: number;
@@ -16,7 +28,6 @@ export class DataService {
   createHeatmap: BehaviorSubject<any>;
 
   playgroundData: BehaviorSubject<Playground>;
-  selectedFile: BehaviorSubject<string>;
   optionData: BehaviorSubject<Option>;
 
   vizTopology: BehaviorSubject<any>;
@@ -38,6 +49,18 @@ export class DataService {
   classifyResult: BehaviorSubject<any>;
 
   constructor() {
+    this.selectedFile = new BehaviorSubject(null);
+
+    this.visualize = new Subject();
+
+
+
+
+
+
+
+
+
     this.toolbarHeight = new BehaviorSubject(56);
     this.tabsHeight = 49;
     this.bottomMargin = 72;
@@ -60,7 +83,6 @@ export class DataService {
     this.createHeatmap = new BehaviorSubject(null);
 
     this.playgroundData = new BehaviorSubject(new Playground());
-    this.selectedFile = new BehaviorSubject(null);
     this.optionData = new BehaviorSubject(new Option(null, new HeatmapConfig(), false));
 
     this.vizTopology = new BehaviorSubject(null);

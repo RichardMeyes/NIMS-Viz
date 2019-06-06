@@ -135,9 +135,9 @@ def getTopology():
     return json.dumps(data)
 
 
-@app.route("/getWeights", methods=["POST", "OPTIONS"])
+@app.route("/getAllWeights", methods=["POST", "OPTIONS"])
 @cross_origin()
-def getWeights():
+def getAllWeights():
     params = request.get_json(force=True)
 
     with open(params['selectedFile']) as f:
@@ -145,6 +145,7 @@ def getWeights():
     returnEpoch = 'epoch_' + str(params['currEpoch'])
     
     return json.dumps(data[returnEpoch])
+
 
 @app.route("/getUntrainedWeights", methods=["POST", "OPTIONS"])
 @cross_origin()
@@ -154,6 +155,17 @@ def getUntrainedWeights():
     with open(params['selectedFile']) as f:
         data = json.load(f)
     
+    return json.dumps(data)
+
+
+@app.route("/getWeights", methods=["POST", "OPTIONS"])
+@cross_origin()
+def getWeights():
+    params = request.get_json(force=True)
+
+    with open(params['selectedFile']) as f:
+        data = json.load(f)
+
     return json.dumps(data)
 
 

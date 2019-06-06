@@ -271,6 +271,16 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   visualize() {
     this.dataService.selectedFile.next(this.selectedFile);
+    this.dataService.visualize.next(true);
+
+
+
+
+
+
+
+
+
     this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
     this.dataService.untrainedWeights.next(null);
@@ -319,27 +329,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
             this.dataService.filterWeights.next(filterWeights);
           }
         });
-    }
-
-    if (this.router.url.includes('ablation')) {
-      this.playgroundService.getTopology(this.selectedFile)
-        .pipe(
-          take(1),
-          concatMap(topology => {
-            this.dataService.vizTopology.next(topology);
-            return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
-          })
-        )
-        .subscribe(val => {
-          if (val) {
-            this.dataService.vizWeights.next(val);
-          }
-        });
-
-      const untrainedFile = this.selectedFile.replace('.json', '_untrained.json');
-      this.playgroundService.getUntrainedWeights(untrainedFile)
-        .pipe(take(1))
-        .subscribe(val => { this.dataService.untrainedWeights.next(val); });
     }
   }
 

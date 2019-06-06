@@ -28,7 +28,7 @@ export class AblationComponent implements OnInit, OnDestroy {
     this.showSpinner = false;
     this.showDashboard = false;
 
-    this.dataService.selectedFile
+    this.dataService.visualize
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
@@ -57,7 +57,7 @@ export class AblationComponent implements OnInit, OnDestroy {
     }
   }
 
-  public ngOnDestroy() {
+  ngOnDestroy() {
     this.destroyed.next();
   }
 }

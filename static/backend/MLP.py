@@ -112,6 +112,8 @@ class Net(nn.Module):
             json.dump(self.weights_dict, f)
 
     def train_net(self, device, trainloader, criterion, optimizer):
+        self.weights_dict = dict()
+
         log_interval = 10
         newNodeStruct = True
         isDone = False
