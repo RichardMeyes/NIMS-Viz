@@ -35,6 +35,8 @@ export class DataService {
 
   lastTraining: BehaviorSubject<any>;
 
+  classifyResult: BehaviorSubject<any>;
+
   constructor() {
     this.toolbarHeight = new BehaviorSubject(56);
     this.tabsHeight = 49;
@@ -76,5 +78,7 @@ export class DataService {
     this.activeSceneTab = new BehaviorSubject(0);
 
     this.lastTraining = new BehaviorSubject(null);
+
+    this.classifyResult = new BehaviorSubject(null);
   }
 }

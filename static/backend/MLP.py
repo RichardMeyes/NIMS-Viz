@@ -22,8 +22,12 @@ class Net(nn.Module):
     def __init__(self, num_epochs, conv_layers, layers):
         # create Net
         super(Net, self).__init__()
+
         self.topology_dict = dict()
+
+        self.nodes_dict = dict()
         self.weights_dict = dict()
+
         self.filename = dict()
 
         self.widthLinear = 28
@@ -54,15 +58,19 @@ class Net(nn.Module):
         self.output = nn.Linear(self.layers[-1], 10)
 
     def forward(self, x):
+        self.nodess_dict = {}
+
         if len(self.conv_layers):
             x = x.view(-1, 1, 28, 28)
             for i_layer in range(len(self.conv_layers)):
                 x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
                 x = F.max_pool2d(x, kernel_size=2, stride=2)
+                self.nodes_dict.update({"c{0}".format(i_layer): x.data.numpy().tolist()})
             x = x.view(x.shape[0], -1)
 
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
+            self.nodes_dict.update({"h{0}".format(i_layer+1): x.data.numpy().tolist()})
 
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         return x
@@ -205,9 +213,7 @@ class Net(nn.Module):
 
     def test_net_digit(self, digit):
         net_out = self(digit)
-        pred = net_out.data.max(1)[1]
-
-        return pred
+        return net_out.tolist()
 
     def calcHeatmapFromFile(self, epochWeights, newNodeStruct):
         drawFully = False
@@ -298,9 +304,9 @@ def test_digit(topology, filename):
     #     net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
 
 
-    pred = net.test_net_digit(digit)
+    net_out = net.test_net_digit(digit)
 
-    return pred
+    return net_out, net.nodes_dict
 
 # def mlpContinue():
 #     net.train_net(device, trainloader, criterion, optimizer)

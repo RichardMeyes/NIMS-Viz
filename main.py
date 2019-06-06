@@ -262,8 +262,11 @@ def testDigit():
     topology = params['topology']
     filename = params['filename']
 
-    pred = MLP.test_digit(topology, filename)
-    result = { "pred": pred.tolist() }
+    net_out, nodes_dict = MLP.test_digit(topology, filename)
+    result = {
+        "net_out": net_out,
+        "nodes_dict": nodes_dict
+    }
     
     return json.dumps(result)
 

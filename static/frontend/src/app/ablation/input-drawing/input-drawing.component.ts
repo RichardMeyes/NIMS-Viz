@@ -51,7 +51,10 @@ export class InputDrawingComponent implements OnChanges, OnInit {
           concatMap(val => this.ablationService.testDigit(val, this.dataService.selectedFile.getValue()))
         )
         .subscribe(val => {
-          console.log(val);
+          Object.keys(val['nodes_dict']).forEach(key => {
+            val['nodes_dict'][key] = val['nodes_dict'][key].flat();
+          });
+          this.dataService.classifyResult.next(val);
         });
     });
   }
