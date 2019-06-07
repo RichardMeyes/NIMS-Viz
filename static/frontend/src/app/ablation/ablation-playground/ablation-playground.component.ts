@@ -336,16 +336,21 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         dimension: []
       },
       featureMapFrame: {
-        width: 84,
-        height: 84,
+        width: 117,
+        height: 117,
         margin: 15,
         fill: 'black'
       },
       weightsFrame: {
-        width: 25,
-        height: 25,
+        width: 150,
+        height: 30,
         margin: 15,
         fill: 'black'
+      },
+      filtersFrame: {
+        width: 15,
+        height: 15,
+        numElements: 10
       },
       color: d3.interpolateLab('black', 'white')
     };
@@ -368,12 +373,14 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     d3.selectAll('.tmp').remove();
 
     this.tooltipConfig.outerFrame.width = this.tooltipConfig.featureMapFrame.width +
-      2 * this.tooltipConfig.featureMapFrame.margin;
+      2 * this.tooltipConfig.featureMapFrame.margin +
+      this.tooltipConfig.weightsFrame.width +
+      .75 * this.tooltipConfig.weightsFrame.margin;
     this.tooltipConfig.outerFrame.height =
       this.tooltipConfig.title.dimension[0].height +
       2 * this.tooltipConfig.title.margin +
       this.tooltipConfig.featureMapFrame.height +
-      .2 * this.tooltipConfig.featureMapFrame.height;;
+      .2 * this.tooltipConfig.featureMapFrame.height;
   }
 
   showFilters(mouseX, mouseY) {
@@ -443,7 +450,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         }
         if (d === 'After') {
           totalTitles += this.tooltipConfig.weightsFrame.height;
-          totalTitles += this.tooltipConfig.weightsFrame.margin;
+          totalTitles += .5 * this.tooltipConfig.weightsFrame.margin;
         }
 
         return mouseY +
@@ -467,15 +474,10 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     }
 
     this.tooltipConfig.data = [];
-    this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
-    this.tooltipConfig.data.push([...this.inputWeights[incomingFilters][this.conMenuSelected.unit]]);
-    console.clear();
-    console.log(this.tooltipConfig.data);
-    // this.tooltipConfig.data.forEach((data, dataIndex) => {
-    //   data.forEach((filter, filterIndex) => {
-    //     this.tooltipConfig.data[dataIndex][filterIndex] = filter.flat();
-    //   });
-    // });
+    const untrainedWeightsCloned = JSON.parse(JSON.stringify(this.untrainedWeights));
+    const inputWeightsCloned = JSON.parse(JSON.stringify(this.inputWeights));
+    this.tooltipConfig.data.push(untrainedWeightsCloned[incomingFilters][this.conMenuSelected.unit]);
+    this.tooltipConfig.data.push(inputWeightsCloned[incomingFilters][this.conMenuSelected.unit]);
 
     // this.tooltipConfig.filtersFrame = {
     //   width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
@@ -483,21 +485,24 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     //   numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length))
     // };
 
-    // this.tooltipConfig.filter = {
-    //   width: this.tooltipConfig.filtersFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
-    //   height: this.tooltipConfig.filtersFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
-    //   numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length))
-    // };
+    this.tooltipConfig.filter = {
+      width: this.tooltipConfig.filtersFrame.width / this.tooltipConfig.data[0][0].length,
+      height: this.tooltipConfig.filtersFrame.height / this.tooltipConfig.data[0][0].length,
+      numElements: this.tooltipConfig.data[0][0].length
+    };
 
     // d3 workaround - attr's index starts from 1 instead of 0
     if (this.classifyResult) {
       this.tooltipConfig.featureMapData[0].map(featureMap => featureMap.unshift('d3 workaround'));
     }
-    // this.tooltipConfig.data.forEach(data => {
-    //   data.forEach(filter => {
-    //     filter.unshift('d3 workaround');
-    //   });
-    // });
+    this.tooltipConfig.data.forEach((data, dataIndex) => {
+      this.tooltipConfig.data[dataIndex] = this.tooltipConfig.data[dataIndex].slice(0, 20);
+      data.forEach(filterRow => {
+        filterRow.forEach(filter => {
+          filter.unshift('d3 workaround');
+        });
+      });
+    });
 
 
     const featureMaps = filtersComparison.selectAll('.feature-maps')
@@ -563,51 +568,105 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     }
 
 
-    // const filtersFrames = comparisonItem.selectAll('.filters-frames')
-    //   .data(d => d)
-    //   .enter()
-    //   .append('g')
-    //   .attr('class', 'filters-frames');
+    const comparisonItem = filtersComparison.selectAll('.comparison-item')
+      .data(this.tooltipConfig.data)
+      .enter()
+      .append('g')
+      .attr('class', 'comparison-item');
 
-    // filtersFrames.append('rect')
-    //   .attr('x', function (d, i) {
-    //     const rectXValue = +d3.select(this.parentNode.parentNode).select('rect').attr('x');
-    //     const xPosition = (i % self.tooltipConfig.filtersFrame.numElements) *
-    //       self.tooltipConfig.filtersFrame.width;
+    comparisonItem.append('rect')
+      .attr('x', (d, i) =>
+        mouseX +
+        this.tooltipConfig.quadrantAdjustment.x +
+        this.tooltipConfig.featureMapFrame.width +
+        2 * this.tooltipConfig.featureMapFrame.margin
+      )
+      .attr('y', (d, i) => {
+        let totalTitles = 2 * this.tooltipConfig.title.margin;
+        let totalContent = 0;
 
-    //     return rectXValue + xPosition;
-    //   })
-    //   .attr('y', function (d, i) {
-    //     const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
-    //     const yPosition = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
-    //       self.tooltipConfig.filtersFrame.height;
+        for (let j = 0; j < this.tooltipConfig.title.dimension.length; j++) {
+          if (i === 0 && j === this.tooltipConfig.title.dimension.length - 1) {
+            break;
+          }
+          totalTitles += this.tooltipConfig.title.dimension[j].height;
+        }
 
-    //     return rectYValue + yPosition;
-    //   })
-    //   .attr('width', this.tooltipConfig.filtersFrame.width)
-    //   .attr('height', this.tooltipConfig.filtersFrame.height);
+        if (i === 1) {
+          totalContent += this.tooltipConfig.weightsFrame.height;
+          totalContent += .5 * this.tooltipConfig.weightsFrame.margin;
+        }
 
-    // filtersFrames.selectAll('rect')
-    //   .data(d => d)
-    //   .enter()
-    //   .append('rect')
-    //   .attr('x', function (d, i) {
-    //     const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
-    //     const xPosition = ((i - 1) % self.tooltipConfig.filter.numElements) *
-    //       self.tooltipConfig.filter.width;
+        return mouseY +
+          this.tooltipConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('width', this.tooltipConfig.weightsFrame.width)
+      .attr('height', this.tooltipConfig.weightsFrame.height)
+      .attr('fill', 'transparent');
 
-    //     return rectXValue + xPosition;
-    //   })
-    //   .attr('y', function (d, i) {
-    //     const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
-    //     const yPosition = Math.floor((i - 1) / self.tooltipConfig.filter.numElements) *
-    //       self.tooltipConfig.filter.height;
 
-    //     return rectYValue + yPosition;
-    //   })
-    //   .attr('width', this.tooltipConfig.filter.width)
-    //   .attr('height', this.tooltipConfig.filter.height)
-    //   .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
+    const filtersFrames = comparisonItem.selectAll('.filters-frames')
+      .data(d => d)
+      .enter()
+      .append('g')
+      .attr('class', 'filters-frames');
+
+    filtersFrames.append('rect')
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+        const xPosition = (i % self.tooltipConfig.filtersFrame.numElements) *
+          self.tooltipConfig.filtersFrame.width;
+
+        return rectXValue + xPosition;
+      })
+      .attr('y', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
+          self.tooltipConfig.filtersFrame.height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', this.tooltipConfig.filtersFrame.width)
+      .attr('height', this.tooltipConfig.filtersFrame.height);
+
+
+    const filtersRows = filtersFrames.selectAll('.filters-rows')
+      .data(d => d)
+      .enter()
+      .append('g')
+      .attr('class', 'filters-rows');
+
+    filtersRows.append('rect')
+      .attr('x', function () {
+        return +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+      })
+      .attr('y', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+        const yPosition = i * self.tooltipConfig.filter.height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', this.tooltipConfig.filtersFrame.width)
+      .attr('height', this.tooltipConfig.filter.height);
+
+    filtersRows.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = (i - 1) * self.tooltipConfig.filter.width;
+
+        return rectXValue + xPosition;
+      })
+      .attr('y', function () {
+        return +d3.select(this.parentNode).select('rect').attr('y');
+      })
+      .attr('width', this.tooltipConfig.filter.width)
+      .attr('height', this.tooltipConfig.filter.height)
+      .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
 
 
     // console.clear();
