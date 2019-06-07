@@ -77,7 +77,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .subscribe(val => {
         const allKeys = Object.keys(val).sort();
         this.inputWeights = val[allKeys[allKeys.length - 1]];
-        // this.draw();
       });
 
     this.dataService.classifyResult
@@ -343,8 +342,8 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         fill: 'black'
       },
       weightsFrame: {
-        width: 84,
-        height: 84,
+        width: 25,
+        height: 25,
         margin: 15,
         fill: 'black'
       },
@@ -415,31 +414,26 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .text(d => d)
       .attr('x', (d, i) => {
         let centerAligned = 0;
-        if (i === 0 || d === 'Before' || d === 'After') {
-          if (i === 0) {
-            centerAligned += this.tooltipConfig.outerFrame.width / 2;
-          } else if (d === 'Before') {
-            centerAligned += this.tooltipConfig.outerFrame.width / 4;
-          } else if (d === 'After') {
-            centerAligned += 3 * this.tooltipConfig.outerFrame.width / 4;
-          }
+        let leftSpacing = 0;
 
-          centerAligned -= this.tooltipConfig.title.dimension[i].width / 2;
+        if (i === 0) {
+          centerAligned += this.tooltipConfig.outerFrame.width / 2;
+          centerAligned -= this.tooltipConfig.title.dimension[0].width / 2;
           centerAligned -= this.tooltipConfig.title.margin;
         }
-
-
-        if (i > 0) { centerAligned += 250; }
-
+        if (i > 0) {
+          leftSpacing += this.tooltipConfig.featureMapFrame.width;
+          leftSpacing += this.tooltipConfig.featureMapFrame.margin;
+        }
 
         return mouseX +
           this.tooltipConfig.quadrantAdjustment.x +
           this.tooltipConfig.title.margin +
-          centerAligned;
+          centerAligned +
+          leftSpacing;
       })
       .attr('y', (d, i) => {
         let totalTitles = this.tooltipConfig.title.margin;
-        let totalContent = 0;
 
         if (i > 0) {
           totalTitles = 2 * this.tooltipConfig.title.margin;
@@ -448,20 +442,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           totalTitles += this.tooltipConfig.title.dimension[j].height;
         }
         if (d === 'After') {
-          totalTitles -= this.tooltipConfig.title.dimension[i].height;
+          totalTitles += this.tooltipConfig.weightsFrame.height;
+          totalTitles += this.tooltipConfig.weightsFrame.margin;
         }
-
-        if (i > 3) {
-          totalTitles -= this.tooltipConfig.title.dimension[3].height;
-          totalContent += this.tooltipConfig.weightsFrame.height;
-          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
-        }
-
 
         return mouseY +
           this.tooltipConfig.quadrantAdjustment.y +
-          totalTitles +
-          totalContent;
+          totalTitles;
       })
       .attr('fill', this.tooltipConfig.title.color);
 
@@ -479,9 +466,11 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       this.tooltipConfig.featureMapData.push([undefined]);
     }
 
-    // this.tooltipConfig.data = [];
-    // this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
-    // this.tooltipConfig.data.push([...this.inputWeights[incomingFilters][this.conMenuSelected.unit]]);
+    this.tooltipConfig.data = [];
+    this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
+    this.tooltipConfig.data.push([...this.inputWeights[incomingFilters][this.conMenuSelected.unit]]);
+    console.clear();
+    console.log(this.tooltipConfig.data);
     // this.tooltipConfig.data.forEach((data, dataIndex) => {
     //   data.forEach((filter, filterIndex) => {
     //     this.tooltipConfig.data[dataIndex][filterIndex] = filter.flat();
@@ -511,13 +500,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     // });
 
 
-    const comparisonItem = filtersComparison.selectAll('.comparison-item')
+    const featureMaps = filtersComparison.selectAll('.feature-maps')
       .data(this.tooltipConfig.featureMapData)
       .enter()
       .append('g')
-      .attr('class', 'comparison-item');
+      .attr('class', 'feature-maps');
 
-    comparisonItem.append('rect')
+    featureMaps.append('rect')
       .attr('x', () =>
         mouseX +
         this.tooltipConfig.quadrantAdjustment.x +
@@ -536,13 +525,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .style('fill', this.tooltipConfig.featureMapFrame.fill);
 
     if (this.classifyResult) {
-      const featureMaps = comparisonItem.selectAll('.feature-maps')
+      const featureMapRows = featureMaps.selectAll('.feature-map-rows')
         .data(d => d)
         .enter()
         .append('g')
-        .attr('class', 'feature-maps');
+        .attr('class', 'feature-map-rows');
 
-      featureMaps.append('rect')
+      featureMapRows.append('rect')
         .attr('x', function () {
           return +d3.select(this.parentNode.parentNode).select('rect').attr('x');
         })
@@ -555,7 +544,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         .attr('width', this.tooltipConfig.featureMapFrame.width)
         .attr('height', this.tooltipConfig.featureMap.height);
 
-      featureMaps.selectAll('rect')
+      featureMapRows.selectAll('rect')
         .data(d => d)
         .enter()
         .append('rect')
