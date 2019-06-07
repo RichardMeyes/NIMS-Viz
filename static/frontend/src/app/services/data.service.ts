@@ -9,6 +9,7 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
 })
 export class DataService {
   selectedFile: BehaviorSubject<string>;
+  classifyResult: Subject<any>;
 
   visualize: Subject<boolean>;
 
@@ -46,10 +47,10 @@ export class DataService {
 
   lastTraining: BehaviorSubject<any>;
 
-  classifyResult: BehaviorSubject<any>;
 
   constructor() {
     this.selectedFile = new BehaviorSubject(null);
+    this.classifyResult = new Subject();
 
     this.visualize = new Subject();
 
@@ -101,6 +102,5 @@ export class DataService {
 
     this.lastTraining = new BehaviorSubject(null);
 
-    this.classifyResult = new BehaviorSubject(null);
   }
 }

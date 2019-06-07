@@ -34,6 +34,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
   conMenuSelected;
   tooltipConfig; tooltipTexts;
+  classifyResult;
 
   destroyed = new Subject<void>();
 
@@ -79,6 +80,12 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         // this.draw();
       });
 
+    this.dataService.classifyResult
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => {
+        this.classifyResult = val;
+        this.drawTopology();
+      });
 
 
 
@@ -324,16 +331,22 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         cornerRad: 7.5,
         fill: '#2b2b2b'
       },
-      titles: {
+      title: {
         margin: 15,
         color: '#ffffff',
         dimension: []
+      },
+      featureMapFrame: {
+        width: 84,
+        height: 84,
+        margin: 15,
+        fill: 'black'
       },
       weightsFrame: {
         width: 84,
         height: 84,
         margin: 15,
-        fill: 'whitesmoke'
+        fill: 'black'
       },
       color: d3.interpolateLab('black', 'white')
     };
@@ -351,16 +364,17 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           height: bbox.height
         };
 
-        self.tooltipConfig.titles.dimension[i] = dimension;
+        self.tooltipConfig.title.dimension[i] = dimension;
       });
     d3.selectAll('.tmp').remove();
 
-    this.tooltipConfig.outerFrame.width = 2 * this.tooltipConfig.weightsFrame.width +
-      2.75 * this.tooltipConfig.weightsFrame.margin;
+    this.tooltipConfig.outerFrame.width = this.tooltipConfig.featureMapFrame.width +
+      2 * this.tooltipConfig.featureMapFrame.margin;
     this.tooltipConfig.outerFrame.height =
-      this.tooltipConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
-      2 * this.tooltipConfig.titles.margin +
-      this.tooltipConfig.weightsFrame.height;
+      this.tooltipConfig.title.dimension[0].height +
+      2 * this.tooltipConfig.title.margin +
+      this.tooltipConfig.featureMapFrame.height +
+      .2 * this.tooltipConfig.featureMapFrame.height;;
   }
 
   showFilters(mouseX, mouseY) {
@@ -410,32 +424,35 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
             centerAligned += 3 * this.tooltipConfig.outerFrame.width / 4;
           }
 
-          centerAligned -= this.tooltipConfig.titles.dimension[i].width / 2;
-          centerAligned -= this.tooltipConfig.titles.margin;
+          centerAligned -= this.tooltipConfig.title.dimension[i].width / 2;
+          centerAligned -= this.tooltipConfig.title.margin;
         }
+
+
+        if (i > 0) { centerAligned += 250; }
 
 
         return mouseX +
           this.tooltipConfig.quadrantAdjustment.x +
-          this.tooltipConfig.titles.margin +
+          this.tooltipConfig.title.margin +
           centerAligned;
       })
       .attr('y', (d, i) => {
-        let totalTitles = this.tooltipConfig.titles.margin;
+        let totalTitles = this.tooltipConfig.title.margin;
         let totalContent = 0;
 
         if (i > 0) {
-          totalTitles = 2 * this.tooltipConfig.titles.margin;
+          totalTitles = 2 * this.tooltipConfig.title.margin;
         }
         for (let j = 0; j <= i; j++) {
-          totalTitles += this.tooltipConfig.titles.dimension[j].height;
+          totalTitles += this.tooltipConfig.title.dimension[j].height;
         }
         if (d === 'After') {
-          totalTitles -= this.tooltipConfig.titles.dimension[i].height;
+          totalTitles -= this.tooltipConfig.title.dimension[i].height;
         }
 
         if (i > 3) {
-          totalTitles -= this.tooltipConfig.titles.dimension[3].height;
+          totalTitles -= this.tooltipConfig.title.dimension[3].height;
           totalContent += this.tooltipConfig.weightsFrame.height;
           totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
         }
@@ -446,124 +463,162 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           totalTitles +
           totalContent;
       })
-      .attr('fill', this.tooltipConfig.titles.color);
+      .attr('fill', this.tooltipConfig.title.color);
 
 
-    this.tooltipConfig.data = [];
-    this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
-    this.tooltipConfig.data.push([...this.inputWeights[incomingFilters][this.conMenuSelected.unit]]);
-    this.tooltipConfig.data.forEach((data, dataIndex) => {
-      data.forEach((filter, filterIndex) => {
-        this.tooltipConfig.data[dataIndex][filterIndex] = filter.flat();
-      });
-    });
+    this.tooltipConfig.featureMapData = [];
+    if (this.classifyResult) {
+      const classifyResultCloned = JSON.parse(JSON.stringify(this.classifyResult));
+      this.tooltipConfig.featureMapData.push(classifyResultCloned['nodes_dict'][incomingFilters][this.conMenuSelected.unit]);
+      this.tooltipConfig.featureMap = {
+        width: this.tooltipConfig.featureMapFrame.width / this.tooltipConfig.featureMapData[0].length,
+        height: this.tooltipConfig.featureMapFrame.height / this.tooltipConfig.featureMapData[0].length,
+        numElements: this.tooltipConfig.featureMapData[0].length
+      };
+    } else {
+      this.tooltipConfig.featureMapData.push([undefined]);
+    }
 
-    this.tooltipConfig.filtersFrame = {
-      width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
-      height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
-      numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length))
-    };
+    // this.tooltipConfig.data = [];
+    // this.tooltipConfig.data.push([...this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]]);
+    // this.tooltipConfig.data.push([...this.inputWeights[incomingFilters][this.conMenuSelected.unit]]);
+    // this.tooltipConfig.data.forEach((data, dataIndex) => {
+    //   data.forEach((filter, filterIndex) => {
+    //     this.tooltipConfig.data[dataIndex][filterIndex] = filter.flat();
+    //   });
+    // });
 
-    this.tooltipConfig.filter = {
-      width: this.tooltipConfig.filtersFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
-      height: this.tooltipConfig.filtersFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
-      numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length))
-    };
+    // this.tooltipConfig.filtersFrame = {
+    //   width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
+    //   height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
+    //   numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length))
+    // };
+
+    // this.tooltipConfig.filter = {
+    //   width: this.tooltipConfig.filtersFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
+    //   height: this.tooltipConfig.filtersFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length)),
+    //   numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0][0].length))
+    // };
 
     // d3 workaround - attr's index starts from 1 instead of 0
-    this.tooltipConfig.data.forEach(data => {
-      data.forEach(filter => {
-        filter.unshift('d3 workaround');
-      });
-    });
+    if (this.classifyResult) {
+      this.tooltipConfig.featureMapData[0].map(featureMap => featureMap.unshift('d3 workaround'));
+    }
+    // this.tooltipConfig.data.forEach(data => {
+    //   data.forEach(filter => {
+    //     filter.unshift('d3 workaround');
+    //   });
+    // });
 
 
     const comparisonItem = filtersComparison.selectAll('.comparison-item')
-      .data(this.tooltipConfig.data)
+      .data(this.tooltipConfig.featureMapData)
       .enter()
       .append('g')
       .attr('class', 'comparison-item');
 
     comparisonItem.append('rect')
-      .attr('x', (d, i) =>
+      .attr('x', () =>
         mouseX +
         this.tooltipConfig.quadrantAdjustment.x +
-        (i % 2) * this.tooltipConfig.weightsFrame.width +
-        (i % 2 * .75 + 1) * this.tooltipConfig.weightsFrame.margin
+        this.tooltipConfig.featureMapFrame.margin
       )
-      .attr('y', (d, i) => {
-        let totalTitles = 2 * this.tooltipConfig.titles.margin +
-          this.tooltipConfig.titles.dimension[0].height;
-        let totalContent = Math.floor(i / 2) * this.tooltipConfig.weightsFrame.height +
-          .25 * this.tooltipConfig.weightsFrame.margin;
-
-
-        for (let j = 0; j < this.tooltipConfig.titles.dimension.length; j++) {
-          if (Math.floor(i / 2) === 0 && j > 2) { break; }
-
-          if (j % 3 === 0) { continue; }
-          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.tooltipConfig.titles.dimension[j].height; }
-        }
-
-        if (Math.floor(i / 2) === 1) {
-          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
-        }
+      .attr('y', () => {
+        const totalTitles = 2 * this.tooltipConfig.title.margin +
+          this.tooltipConfig.title.dimension[0].height;
 
         return mouseY +
           this.tooltipConfig.quadrantAdjustment.y +
-          totalTitles +
-          totalContent;
+          totalTitles;
       })
-      .attr('width', this.tooltipConfig.weightsFrame.width)
-      .attr('height', this.tooltipConfig.weightsFrame.height)
-      .style('fill', this.tooltipConfig.weightsFrame.fill);
+      .attr('width', this.tooltipConfig.featureMapFrame.width)
+      .attr('height', this.tooltipConfig.featureMapFrame.height)
+      .style('fill', this.tooltipConfig.featureMapFrame.fill);
+
+    if (this.classifyResult) {
+      const featureMaps = comparisonItem.selectAll('.feature-maps')
+        .data(d => d)
+        .enter()
+        .append('g')
+        .attr('class', 'feature-maps');
+
+      featureMaps.append('rect')
+        .attr('x', function () {
+          return +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+        })
+        .attr('y', function (d, i) {
+          const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+          const yPosition = i * self.tooltipConfig.featureMap.height;
+
+          return rectYValue + yPosition;
+        })
+        .attr('width', this.tooltipConfig.featureMapFrame.width)
+        .attr('height', this.tooltipConfig.featureMap.height);
+
+      featureMaps.selectAll('rect')
+        .data(d => d)
+        .enter()
+        .append('rect')
+        .attr('x', function (d, i) {
+          const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+          const xPosition = (i - 1) * self.tooltipConfig.featureMap.width;
+
+          return rectXValue + xPosition;
+        })
+        .attr('y', function (d, i) {
+          return +d3.select(this.parentNode).select('rect').attr('y');
+        })
+        .attr('width', this.tooltipConfig.featureMap.width)
+        .attr('height', this.tooltipConfig.featureMap.height)
+        .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
+    }
 
 
-    const filtersFrames = comparisonItem.selectAll('.filters-frames')
-      .data(d => d)
-      .enter()
-      .append('g')
-      .attr('class', 'filters-frames');
+    // const filtersFrames = comparisonItem.selectAll('.filters-frames')
+    //   .data(d => d)
+    //   .enter()
+    //   .append('g')
+    //   .attr('class', 'filters-frames');
 
-    filtersFrames.append('rect')
-      .attr('x', function (d, i) {
-        const rectXValue = +d3.select(this.parentNode.parentNode).select('rect').attr('x');
-        const xPosition = (i % self.tooltipConfig.filtersFrame.numElements) *
-          self.tooltipConfig.filtersFrame.width;
+    // filtersFrames.append('rect')
+    //   .attr('x', function (d, i) {
+    //     const rectXValue = +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+    //     const xPosition = (i % self.tooltipConfig.filtersFrame.numElements) *
+    //       self.tooltipConfig.filtersFrame.width;
 
-        return rectXValue + xPosition;
-      })
-      .attr('y', function (d, i) {
-        const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
-        const yPosition = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
-          self.tooltipConfig.filtersFrame.height;
+    //     return rectXValue + xPosition;
+    //   })
+    //   .attr('y', function (d, i) {
+    //     const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+    //     const yPosition = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
+    //       self.tooltipConfig.filtersFrame.height;
 
-        return rectYValue + yPosition;
-      })
-      .attr('width', this.tooltipConfig.filtersFrame.width)
-      .attr('height', this.tooltipConfig.filtersFrame.height);
+    //     return rectYValue + yPosition;
+    //   })
+    //   .attr('width', this.tooltipConfig.filtersFrame.width)
+    //   .attr('height', this.tooltipConfig.filtersFrame.height);
 
-    filtersFrames.selectAll('rect')
-      .data(d => d)
-      .enter()
-      .append('rect')
-      .attr('x', function (d, i) {
-        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
-        const xPosition = ((i - 1) % self.tooltipConfig.filter.numElements) *
-          self.tooltipConfig.filter.width;
+    // filtersFrames.selectAll('rect')
+    //   .data(d => d)
+    //   .enter()
+    //   .append('rect')
+    //   .attr('x', function (d, i) {
+    //     const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+    //     const xPosition = ((i - 1) % self.tooltipConfig.filter.numElements) *
+    //       self.tooltipConfig.filter.width;
 
-        return rectXValue + xPosition;
-      })
-      .attr('y', function (d, i) {
-        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
-        const yPosition = Math.floor((i - 1) / self.tooltipConfig.filter.numElements) *
-          self.tooltipConfig.filter.height;
+    //     return rectXValue + xPosition;
+    //   })
+    //   .attr('y', function (d, i) {
+    //     const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+    //     const yPosition = Math.floor((i - 1) / self.tooltipConfig.filter.numElements) *
+    //       self.tooltipConfig.filter.height;
 
-        return rectYValue + yPosition;
-      })
-      .attr('width', this.tooltipConfig.filter.width)
-      .attr('height', this.tooltipConfig.filter.height)
-      .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
+    //     return rectYValue + yPosition;
+    //   })
+    //   .attr('width', this.tooltipConfig.filter.width)
+    //   .attr('height', this.tooltipConfig.filter.height)
+    //   .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
 
 
     // console.clear();
@@ -592,7 +647,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         cornerRad: 7.5,
         fill: '#2b2b2b'
       },
-      titles: {
+      title: {
         margin: 15,
         color: '#ffffff',
         dimension: []
@@ -620,15 +675,15 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           height: bbox.height
         };
 
-        self.tooltipConfig.titles.dimension[i] = dimension;
+        self.tooltipConfig.title.dimension[i] = dimension;
       });
     d3.selectAll('.tmp').remove();
 
     this.tooltipConfig.outerFrame.width = 2 * this.tooltipConfig.weightsFrame.width +
       2.75 * this.tooltipConfig.weightsFrame.margin;
     this.tooltipConfig.outerFrame.height =
-      this.tooltipConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
-      2 * this.tooltipConfig.titles.margin +
+      this.tooltipConfig.title.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
+      2 * this.tooltipConfig.title.margin +
       2 * this.tooltipConfig.weightsFrame.height;
   }
 
@@ -691,32 +746,32 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
             centerAligned += 3 * this.tooltipConfig.outerFrame.width / 4;
           }
 
-          centerAligned -= this.tooltipConfig.titles.dimension[i].width / 2;
-          centerAligned -= this.tooltipConfig.titles.margin;
+          centerAligned -= this.tooltipConfig.title.dimension[i].width / 2;
+          centerAligned -= this.tooltipConfig.title.margin;
         }
 
 
         return mouseX +
           this.tooltipConfig.quadrantAdjustment.x +
-          this.tooltipConfig.titles.margin +
+          this.tooltipConfig.title.margin +
           centerAligned;
       })
       .attr('y', (d, i) => {
-        let totalTitles = this.tooltipConfig.titles.margin;
+        let totalTitles = this.tooltipConfig.title.margin;
         let totalContent = 0;
 
         if (i > 0) {
-          totalTitles = 2 * this.tooltipConfig.titles.margin;
+          totalTitles = 2 * this.tooltipConfig.title.margin;
         }
         for (let j = 0; j <= i; j++) {
-          totalTitles += this.tooltipConfig.titles.dimension[j].height;
+          totalTitles += this.tooltipConfig.title.dimension[j].height;
         }
         if (d === 'After') {
-          totalTitles -= this.tooltipConfig.titles.dimension[i].height;
+          totalTitles -= this.tooltipConfig.title.dimension[i].height;
         }
 
         if (i > 3) {
-          totalTitles -= this.tooltipConfig.titles.dimension[3].height;
+          totalTitles -= this.tooltipConfig.title.dimension[3].height;
           totalContent += this.tooltipConfig.weightsFrame.height;
           totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
         }
@@ -727,7 +782,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           totalTitles +
           totalContent;
       })
-      .attr('fill', this.tooltipConfig.titles.color);
+      .attr('fill', this.tooltipConfig.title.color);
 
 
     this.tooltipConfig.data = [];
@@ -764,17 +819,17 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         (i % 2 * .75 + 1) * this.tooltipConfig.weightsFrame.margin
       )
       .attr('y', (d, i) => {
-        let totalTitles = 2 * this.tooltipConfig.titles.margin +
-          this.tooltipConfig.titles.dimension[0].height;
+        let totalTitles = 2 * this.tooltipConfig.title.margin +
+          this.tooltipConfig.title.dimension[0].height;
         let totalContent = Math.floor(i / 2) * this.tooltipConfig.weightsFrame.height +
           .25 * this.tooltipConfig.weightsFrame.margin;
 
 
-        for (let j = 0; j < this.tooltipConfig.titles.dimension.length; j++) {
+        for (let j = 0; j < this.tooltipConfig.title.dimension.length; j++) {
           if (Math.floor(i / 2) === 0 && j > 2) { break; }
 
           if (j % 3 === 0) { continue; }
-          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.tooltipConfig.titles.dimension[j].height; }
+          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.tooltipConfig.title.dimension[j].height; }
         }
 
         if (Math.floor(i / 2) === 1) {
