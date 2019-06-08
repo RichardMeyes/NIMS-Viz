@@ -40,6 +40,9 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
   destroyed = new Subject<void>();
 
+  @HostListener('window:resize', ['$event'])
+  onResize(event) { this.drawTopology(); }
+
   constructor(
     private dataService: DataService,
     private playgroundService: PlaygroundService
@@ -194,13 +197,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   bindTopology() {
     const self = this;
 
-    // d3 workaround - attr's index starts from 1 instead of 0
-    const rectsSource = this.topology.filter(nodes => nodes.isConv);
-    const circlesSource = this.topology.filter(nodes => !nodes.isConv);
-    rectsSource.splice(0, 0, 'd3 workaround');
-    circlesSource.splice(0, 0, 'd3 workaround');
-    circlesSource.splice(0, 0, 'd3 workaround');
-
 
     const line = this.vizContainer.selectAll('.edges')
       .data(this.edges);
@@ -227,11 +223,20 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
     let rects = this.vizContainer.selectAll('rect')
-      .data(rectsSource);
+      .data(this.topology.filter(nodes => nodes.isConv));
 
     rects = rects.enter()
       .append('rect')
-      .attr('class', 'rect')
+      .attr('class', function (d) {
+        self.conMenuSelected = Object.assign({}, d);
+
+        let className = 'rect';
+        const ablated = self.findAblated();
+
+        if (ablated !== -1) { className += ' ablated'; }
+
+        return className;
+      })
       .attr('x', function (d) {
         const x: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
         return x;
@@ -285,11 +290,20 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
     let circles = this.vizContainer.selectAll('circle')
-      .data(circlesSource);
+      .data(this.topology.filter(nodes => !nodes.isConv));
 
     circles = circles.enter()
       .append('circle')
-      .attr('class', 'circle')
+      .attr('class', function (d) {
+        self.conMenuSelected = Object.assign({}, d);
+
+        let className = 'circle';
+        const ablated = self.findAblated();
+
+        if (ablated !== -1) { className += ' ablated'; }
+
+        return className;
+      })
       .attr('cx', function (d) {
         const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
         return cx;
@@ -1044,7 +1058,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       data: ['ablated', 'not ablated']
     };
 
-    const legend = this.vizContainer.append('g')
+    const legend = this.svg.append('g')
       .attr('class', 'legend');
 
     legend.append('rect')
@@ -1150,8 +1164,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
 
-  // @HostListener('window:resize', ['$event'])
-  // onResize(event) { this.drawTopology(); }
+
 
 
 
