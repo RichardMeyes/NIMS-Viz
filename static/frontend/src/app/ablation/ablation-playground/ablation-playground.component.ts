@@ -92,6 +92,15 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         console.log(this.classifyResult);
       });
 
+    this.dataService.resetNetwork
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(() => {
+        this.detachedNodes = [];
+        this.dataService.detachedNodes.next(this.detachedNodes);
+
+        d3.selectAll('.ablated')
+          .classed('ablated', false);
+      });
 
 
 
@@ -185,6 +194,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   bindTopology() {
     const self = this;
 
+    // d3 workaround - attr's index starts from 1 instead of 0
+    const rectsSource = this.topology.filter(nodes => nodes.isConv);
+    const circlesSource = this.topology.filter(nodes => !nodes.isConv);
+    rectsSource.splice(0, 0, 'd3 workaround');
+    circlesSource.splice(0, 0, 'd3 workaround');
+    circlesSource.splice(0, 0, 'd3 workaround');
+
 
     const line = this.vizContainer.selectAll('.edges')
       .data(this.edges);
@@ -211,7 +227,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
     let rects = this.vizContainer.selectAll('rect')
-      .data(this.topology.filter(nodes => nodes.isConv));
+      .data(rectsSource);
 
     rects = rects.enter()
       .append('rect')
@@ -269,7 +285,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
     let circles = this.vizContainer.selectAll('circle')
-      .data(this.topology.filter(nodes => !nodes.isConv));
+      .data(circlesSource);
 
     circles = circles.enter()
       .append('circle')
@@ -505,7 +521,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
     // d3 workaround - attr's index starts from 1 instead of 0
     if (this.classifyResult) {
-      this.tooltipConfig.featureMapData[0].map(featureMap => featureMap.unshift('d3 workaround'));
+      this.tooltipConfig.featureMapData[0].forEach(featureMap => { featureMap.unshift('d3 workaround'); });
     }
     this.tooltipConfig.data.forEach((data, dataIndex) => {
       this.tooltipConfig.data[dataIndex] = this.tooltipConfig.data[dataIndex].slice(0, 20);
@@ -1046,7 +1062,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .append('circle')
       .attr('class', function (d) {
         let className = 'legend-circles';
-        if (d === 'ablated') { className += ' ablated'; }
+        if (d === 'ablated') { className += ' legend-ablated'; }
         return className;
       })
       .attr('cx', function () {

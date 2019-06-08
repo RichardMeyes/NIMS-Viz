@@ -14,6 +14,7 @@ export class DataService {
   detachedNodes: Subject<any>;
 
   visualize: Subject<boolean>;
+  resetNetwork: Subject<boolean>;
 
 
 
@@ -42,7 +43,6 @@ export class DataService {
 
 
   testNetwork: BehaviorSubject<boolean>;
-  resetNetwork: BehaviorSubject<boolean>;
   testResult: BehaviorSubject<any>;
 
   activeSceneTab: BehaviorSubject<number>;
@@ -57,6 +57,7 @@ export class DataService {
     this.detachedNodes = new Subject();
 
     this.visualize = new Subject();
+    this.resetNetwork = new Subject();
 
 
 
@@ -98,7 +99,6 @@ export class DataService {
     this.selectedFilter = new BehaviorSubject(null);
 
     this.testNetwork = new BehaviorSubject(false);
-    this.resetNetwork = new BehaviorSubject(false);
     this.testResult = new BehaviorSubject(null);
 
     this.activeSceneTab = new BehaviorSubject(0);
