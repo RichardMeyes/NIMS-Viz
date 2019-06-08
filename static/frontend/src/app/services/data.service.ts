@@ -9,11 +9,13 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
 })
 export class DataService {
   selectedFile: BehaviorSubject<string>;
-  classifyResult: Subject<any>;
+  detachedNodes: BehaviorSubject<any>;
 
-  detachedNodes: Subject<any>;
+  classifyResult: Subject<any>;
+  ablationTestResult: Subject<any>;
 
   visualize: Subject<boolean>;
+  testNetwork: Subject<boolean>;
   resetNetwork: Subject<boolean>;
 
 
@@ -42,8 +44,7 @@ export class DataService {
   selectedFilter: BehaviorSubject<any>;
 
 
-  testNetwork: BehaviorSubject<boolean>;
-  testResult: BehaviorSubject<any>;
+
 
   activeSceneTab: BehaviorSubject<number>;
 
@@ -51,12 +52,14 @@ export class DataService {
 
 
   constructor() {
-    this.selectedFile = new BehaviorSubject(null);
-    this.classifyResult = new Subject();
+    this.selectedFile = new BehaviorSubject(undefined);
+    this.detachedNodes = new BehaviorSubject([]);
 
-    this.detachedNodes = new Subject();
+    this.classifyResult = new Subject();
+    this.ablationTestResult = new Subject();
 
     this.visualize = new Subject();
+    this.testNetwork = new Subject();
     this.resetNetwork = new Subject();
 
 
@@ -98,8 +101,6 @@ export class DataService {
     this.filterWeights = new BehaviorSubject(null);
     this.selectedFilter = new BehaviorSubject(null);
 
-    this.testNetwork = new BehaviorSubject(false);
-    this.testResult = new BehaviorSubject(null);
 
     this.activeSceneTab = new BehaviorSubject(0);
 

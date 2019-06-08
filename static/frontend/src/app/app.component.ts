@@ -63,9 +63,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.vizWeights.next(null);
     this.dataService.untrainedWeights.next(null);
     this.dataService.filterWeights.next(null);
-
-    this.dataService.testNetwork.next(false);
-    this.dataService.testResult.next(null);
   }
 
   ngOnDestroy(): void {

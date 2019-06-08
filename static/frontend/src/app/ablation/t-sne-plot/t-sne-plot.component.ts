@@ -13,19 +13,21 @@ import { NetworkService } from 'src/app/network.service';
   styleUrls: ['./t-sne-plot.component.scss']
 })
 export class TSNEPlotComponent implements OnInit, OnDestroy {
-  destroyed = new Subject<void>();
-
+  @Output() finished: EventEmitter<boolean>;
   @ViewChild('canvas') canvas;
+
+  tSNECoor;
+
+  isInit;
+  colorLabels;
+
   chart; scatterChartData;
 
-  tSNECoor; colorLabels;
-  isInit;
-
-  @Output() finished: EventEmitter<boolean>;
+  destroyed = new Subject<void>();
 
   constructor(
-    private dataService: DataService,
-    private networkService: NetworkService
+    private networkService: NetworkService,
+    private dataService: DataService
   ) {
     this.finished = new EventEmitter<boolean>();
   }
@@ -33,35 +35,22 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.isInit = true;
 
-    this.dataService.detachedNodes
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (val) {
-          const layers = [];
-          const units = [];
-
-          val.forEach(element => {
-            layers.push(element.layer);
-            units.push(element.unit);
-          });
-
-          if (layers.length === 0 && units.length === 0) {
-            this.isInit = true;
-          } else {
-            this.isInit = false;
-          }
-        }
-      });
-
     this.networkService.getTSNECoordinate()
       .pipe(take(1))
       .subscribe(val => { if (val) { this.tSNECoor = val; } });
 
-    this.dataService.testResult
+    this.dataService.ablationTestResult
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
-          if (this.isInit) { this.colorLabels = val['color labels']; }
+          if (this.dataService.detachedNodes.getValue().length === 0) {
+            this.isInit = true;
+          } else {
+            this.isInit = false;
+          }
+
+          if (this.isInit) { this.colorLabels = val['color labels'].slice(); }
+
 
           const coloredCoor = [[], [], [], []];
           const labels = [[], [], [], []];
