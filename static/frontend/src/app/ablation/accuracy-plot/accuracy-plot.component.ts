@@ -48,30 +48,26 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         this.accTest(true, [], []);
       });
 
+    this.dataService.testNetwork
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        const layers = [];
+        const units = [];
 
+        this.dataService.detachedNodes.getValue().forEach(element => {
+          layers.push(element.layer - 1);
+          units.push(element.unit);
+        });
 
-
-
-
-    // this.dataService.detachedNodes
-    //   .pipe(takeUntil(this.destroyed))
-    //   .subscribe((val: any) => {
-    //     if (val) {
-    //       const layers = [];
-    //       const units = [];
-
-    //       val.forEach(element => {
-    //         layers.push(element.layer);
-    //         units.push(element.unit);
-    //       });
-
-    //       if (layers.length === 0 && units.length === 0) {
-    //         this.accTest(true, layers, units);
-    //       } else {
-    //         this.accTest(false, layers, units);
-    //       }
-    //     }
-    //   });
+        if (layers.length === 0 && units.length === 0) {
+          this.accTest(true, layers, units);
+        } else {
+          this.accTest(false, layers, units);
+        }
+      });
   }
 
   accTest(isInit, layers, units) {

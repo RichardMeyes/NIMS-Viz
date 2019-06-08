@@ -268,13 +268,18 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
-    ko_layers = map(lambda x: x - len(topology["conv_layers"]), ko_layers)
     
     for i_layer, i_unit in zip(ko_layers, ko_units):
-        print("knockout layer {0}, unit {1}".format(i_layer, i_unit))
-        n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape"]
-        net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-        net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
+        if i_layer < len(topology["conv_layers"]):
+            print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
+        else:
+            i_layer = i_layer - len(topology["conv_layers"])
+            print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
+
+            n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape0"]
+            net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
+            net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
+
     acc, correct_labels, acc_class, class_labels = net.test_net(criterion, testloader, device)
 
     return acc, correct_labels, acc_class, class_labels
