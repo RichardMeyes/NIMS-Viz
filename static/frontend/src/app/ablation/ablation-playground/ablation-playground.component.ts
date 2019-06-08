@@ -52,10 +52,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       color: '#373737',
       nodeOpacity: .5,
       nodeStroke: 0,
-      duration: 500,
-      ablatedColor: 'rgb(238, 160, 51)',
-      focusStroke: 1,
-      focusColor: 'whitesmoke'
+      duration: 500
     };
     this.detachedNodes = [];
 
@@ -210,8 +207,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('y2', function (d) {
         const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
         return y2;
-      })
-      .attr('stroke', this.defaultSettings.color);
+      });
 
 
     let rects = this.vizContainer.selectAll('rect')
@@ -231,9 +227,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .attr('width', this.defaultSettings.rectSide)
       .attr('height', this.defaultSettings.rectSide)
       .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
     rects.on('mouseover', function (d) {
       self.conMenuSelected = Object.assign({}, d);
@@ -245,17 +239,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       }
 
       d3.select(this)
-        .attr('stroke', self.defaultSettings.focusColor)
-        .attr('stroke-width', self.defaultSettings.focusStroke);
+        .classed('focused', true);
     });
 
     rects.on('mouseout', function (d) {
-      self.conMenuSelected = Object.assign({}, d);
-
       d3.selectAll('.filters-comparison').remove();
-
-      const isAblated = (self.findAblated() === -1) ? false : true;
-      self.drawAblated(isAblated, this);
+      d3.select(this)
+        .classed('focused', false);
     });
 
     rects.on('click', function (d) {
@@ -264,17 +254,16 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
       if (self.conMenuSelected.layer >= 0) {
         const ablated = self.findAblated();
-        let isAblated = false;
 
         if (ablated === -1) {
           self.detachedNodes.push(self.conMenuSelected);
-          isAblated = true;
         } else {
           self.detachedNodes.splice(ablated, 1);
         }
 
-        self.drawAblated(isAblated, this);
         self.dataService.detachedNodes.next(self.detachedNodes);
+        d3.select(this)
+          .classed('ablated', !d3.select(this).classed('ablated'));
       }
     });
 
@@ -295,9 +284,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       })
       .attr('r', this.defaultSettings.nodeRadius)
       .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
     circles.on('mouseover', function (d) {
       self.conMenuSelected = Object.assign({}, d);
@@ -309,17 +296,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       }
 
       d3.select(this)
-        .attr('stroke', self.defaultSettings.focusColor)
-        .attr('stroke-width', self.defaultSettings.focusStroke);
+        .classed('focused', true);
     });
 
     circles.on('mouseout', function (d) {
-      self.conMenuSelected = Object.assign({}, d);
-
-      if (!d.isOutput) { d3.selectAll('.weights-comparison').remove(); }
-
-      const isAblated = (self.findAblated() === -1) ? false : true;
-      self.drawAblated(isAblated, this);
+      d3.selectAll('.weights-comparison').remove();
+      d3.select(this)
+        .classed('focused', false);
     });
 
     circles.on('click', function (d) {
@@ -328,17 +311,16 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
       if (!d.isOutput) {
         const ablated = self.findAblated();
-        let isAblated = false;
 
         if (ablated === -1) {
           self.detachedNodes.push(self.conMenuSelected);
-          isAblated = true;
         } else {
           self.detachedNodes.splice(ablated, 1);
         }
 
-        self.drawAblated(isAblated, this);
         self.dataService.detachedNodes.next(self.detachedNodes);
+        d3.select(this)
+          .classed('ablated', !d3.select(this).classed('ablated'));
       }
     });
   }
@@ -1000,18 +982,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     return ablated;
   }
 
-  drawAblated(isAblated, currNode) {
-    if (isAblated) {
-      d3.select(currNode)
-        .attr('stroke', this.defaultSettings.ablatedColor)
-        .attr('stroke-width', this.defaultSettings.focusStroke);
-    } else {
-      d3.select(currNode)
-        .attr('stroke', this.defaultSettings.color)
-        .attr('stroke-width', this.defaultSettings.nodeStroke);
-    }
-  }
-
   resetViz() {
     this.svgWidth = this.container.nativeElement.offsetWidth;
     this.svgHeight = Math.max(this.container.nativeElement.offsetHeight - 60, 0);
@@ -1074,7 +1044,11 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .data(legendConfig.data)
       .enter()
       .append('circle')
-      .attr('class', 'legend-circles')
+      .attr('class', function (d) {
+        let className = 'legend-circles';
+        if (d === 'ablated') { className += ' ablated'; }
+        return className;
+      })
       .attr('cx', function () {
         const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
 
@@ -1091,15 +1065,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       })
       .attr('r', this.defaultSettings.nodeRadius)
       .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', function (d, i) {
-        if (d === 'ablated') {
-          return self.defaultSettings.ablatedColor;
-        } else {
-          return self.defaultSettings.color;
-        }
-      })
-      .attr('stroke-width', this.defaultSettings.focusStroke);
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
     legend.selectAll('text')
       .data(legendConfig.data)

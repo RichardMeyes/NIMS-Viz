@@ -17,3 +17,20 @@ g.menu-entry { cursor: pointer; }
 .mat-expansion-panel-body {
     background-color: #303030 !important;
 }
+
+svg {
+    .edges, .rect, .circle, .legend-circles { stroke: #373737; }
+    .rect, .circle { stroke-width: 0; }
+
+    .legend-circles { stroke: 1; }
+
+    .focused {
+        stroke: #f5f5f5;
+        stroke-width: 1;
+    }
+
+    .ablated {
+        stroke: rgb(238, 160, 51);
+        stroke-width: 1;
+    }
+}
