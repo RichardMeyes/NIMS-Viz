@@ -272,6 +272,10 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
     for i_layer, i_unit in zip(ko_layers, ko_units):
         if i_layer < len(topology["conv_layers"]):
             print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
+
+            n_inputs = net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit].shape
+            net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
+            net.__getattr__("c{0}".format(i_layer)).bias.data[i_unit] = 0
         else:
             i_layer = i_layer - len(topology["conv_layers"])
             print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
