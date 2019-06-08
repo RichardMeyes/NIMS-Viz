@@ -273,8 +273,10 @@ def testDigit():
     params = request.get_json()
     topology = params['topology']
     filename = params['filename']
+    layers = params['layers']
+    units = params['units']
 
-    net_out, nodes_dict = MLP.test_digit(topology, filename)
+    net_out, nodes_dict = MLP.test_digit(topology, filename, layers, units)
     result = {
         "net_out": net_out,
         "nodes_dict": nodes_dict

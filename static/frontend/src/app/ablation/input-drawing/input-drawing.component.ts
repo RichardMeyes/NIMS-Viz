@@ -48,7 +48,17 @@ export class InputDrawingComponent implements OnChanges, OnInit {
         .pipe(
           take(1),
           concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile.getValue())),
-          concatMap(val => this.ablationService.testDigit(val, this.dataService.selectedFile.getValue()))
+          concatMap(val => {
+            const layers = [];
+            const units = [];
+
+            this.dataService.detachedNodes.getValue().forEach(element => {
+              layers.push(element.layer - 1);
+              units.push(element.unit);
+            });
+
+            return this.ablationService.testDigit(val, this.dataService.selectedFile.getValue(), layers, units);
+          })
         )
         .subscribe(val => {
           Object.keys(val['nodes_dict']).forEach(key => {
