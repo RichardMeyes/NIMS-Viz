@@ -11,6 +11,8 @@ export class DataService {
   selectedFile: BehaviorSubject<string>;
   classifyResult: Subject<any>;
 
+  detachedNodes: Subject<any>;
+
   visualize: Subject<boolean>;
 
 
@@ -38,7 +40,7 @@ export class DataService {
   filterWeights: BehaviorSubject<any>;
   selectedFilter: BehaviorSubject<any>;
 
-  detachedNodes: BehaviorSubject<any>;
+
   testNetwork: BehaviorSubject<boolean>;
   resetNetwork: BehaviorSubject<boolean>;
   testResult: BehaviorSubject<any>;
@@ -51,6 +53,8 @@ export class DataService {
   constructor() {
     this.selectedFile = new BehaviorSubject(null);
     this.classifyResult = new Subject();
+
+    this.detachedNodes = new Subject();
 
     this.visualize = new Subject();
 
@@ -93,7 +97,6 @@ export class DataService {
     this.filterWeights = new BehaviorSubject(null);
     this.selectedFilter = new BehaviorSubject(null);
 
-    this.detachedNodes = new BehaviorSubject(undefined);
     this.testNetwork = new BehaviorSubject(false);
     this.resetNetwork = new BehaviorSubject(false);
     this.testResult = new BehaviorSubject(null);

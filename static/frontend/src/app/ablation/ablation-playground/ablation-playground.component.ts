@@ -36,6 +36,8 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
   tooltipConfig; tooltipTexts;
   classifyResult;
 
+  detachedNodes;
+
   destroyed = new Subject<void>();
 
   constructor(
@@ -50,8 +52,12 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       color: '#373737',
       nodeOpacity: .5,
       nodeStroke: 0,
-      duration: 500
+      duration: 500,
+      ablatedColor: 'rgb(238, 160, 51)',
+      focusStroke: 1,
+      focusColor: 'whitesmoke'
     };
+    this.detachedNodes = [];
 
     this.dataService.visualize
       .pipe(
@@ -84,6 +90,9 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .subscribe(val => {
         this.classifyResult = val;
         this.drawTopology();
+
+        console.clear();
+        console.log(this.classifyResult);
       });
 
 
@@ -92,7 +101,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
     // this.inputFilterWeights = {};
-    // this.detachedNodes = [];
 
   }
 
@@ -237,27 +245,38 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       }
 
       d3.select(this)
-        .attr('stroke', 'whitesmoke')
-        .attr('stroke-width', .5);
+        .attr('stroke', self.defaultSettings.focusColor)
+        .attr('stroke-width', self.defaultSettings.focusStroke);
     });
 
     rects.on('mouseout', function (d) {
+      self.conMenuSelected = Object.assign({}, d);
+
       d3.selectAll('.filters-comparison').remove();
 
-      d3.select(this)
-        .attr('stroke', self.defaultSettings.color)
-        .attr('stroke-width', self.defaultSettings.nodeStroke);
+      const isAblated = (self.findAblated() === -1) ? false : true;
+      self.drawAblated(isAblated, this);
     });
 
-    // rects.on('click', function (d) {
-    //   d3.event.stopPropagation();
-    //   self.conMenuSelected = Object.assign({}, d);
-    //   self.conMenuSelected.layer -= 1;
+    rects.on('click', function (d) {
+      d3.event.stopPropagation();
+      self.conMenuSelected = Object.assign({}, d);
 
-    //   if (self.conMenuSelected.layer >= 0) {
-    //     console.log('PERFORM ABLATION');
-    //   }
-    // });
+      if (self.conMenuSelected.layer >= 0) {
+        const ablated = self.findAblated();
+        let isAblated = false;
+
+        if (ablated === -1) {
+          self.detachedNodes.push(self.conMenuSelected);
+          isAblated = true;
+        } else {
+          self.detachedNodes.splice(ablated, 1);
+        }
+
+        self.drawAblated(isAblated, this);
+        self.dataService.detachedNodes.next(self.detachedNodes);
+      }
+    });
 
 
     let circles = this.vizContainer.selectAll('circle')
@@ -290,27 +309,38 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       }
 
       d3.select(this)
-        .attr('stroke', 'whitesmoke')
-        .attr('stroke-width', .5);
+        .attr('stroke', self.defaultSettings.focusColor)
+        .attr('stroke-width', self.defaultSettings.focusStroke);
     });
 
     circles.on('mouseout', function (d) {
+      self.conMenuSelected = Object.assign({}, d);
+
       if (!d.isOutput) { d3.selectAll('.weights-comparison').remove(); }
 
-      d3.select(this)
-        .attr('stroke', self.defaultSettings.color)
-        .attr('stroke-width', self.defaultSettings.nodeStroke);
+      const isAblated = (self.findAblated() === -1) ? false : true;
+      self.drawAblated(isAblated, this);
     });
 
-    // circles.on('click', function (d) {
-    //   d3.event.stopPropagation();
-    //   self.conMenuSelected = Object.assign({}, d);
+    circles.on('click', function (d) {
+      d3.event.stopPropagation();
+      self.conMenuSelected = Object.assign({}, d);
 
-    //   if (!d.isOutput) {
-    //     console.log('PERFORM ABLATION');
-    //     // self.modifyNodes();
-    //   }
-    // });
+      if (!d.isOutput) {
+        const ablated = self.findAblated();
+        let isAblated = false;
+
+        if (ablated === -1) {
+          self.detachedNodes.push(self.conMenuSelected);
+          isAblated = true;
+        } else {
+          self.detachedNodes.splice(ablated, 1);
+        }
+
+        self.drawAblated(isAblated, this);
+        self.dataService.detachedNodes.next(self.detachedNodes);
+      }
+    });
   }
 
   setupShowFilters() {
@@ -955,6 +985,33 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     // console.log('Outgoing Weights after training:', outgoingWeightsAfter);
   }
 
+  findAblated() {
+    let ablated = -1;
+
+    if (this.detachedNodes.length > 0) {
+      for (let i = 0; i < this.detachedNodes.length; i++) {
+        if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
+          ablated = i;
+          break;
+        }
+      }
+    }
+
+    return ablated;
+  }
+
+  drawAblated(isAblated, currNode) {
+    if (isAblated) {
+      d3.select(currNode)
+        .attr('stroke', this.defaultSettings.ablatedColor)
+        .attr('stroke-width', this.defaultSettings.focusStroke);
+    } else {
+      d3.select(currNode)
+        .attr('stroke', this.defaultSettings.color)
+        .attr('stroke-width', this.defaultSettings.nodeStroke);
+    }
+  }
+
   resetViz() {
     this.svgWidth = this.container.nativeElement.offsetWidth;
     this.svgHeight = Math.max(this.container.nativeElement.offsetHeight - 60, 0);
@@ -981,6 +1038,91 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     this.svg.call(this.zoom);
 
     this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
+
+    this.drawLegend();
+  }
+
+  drawLegend() {
+    const self = this;
+    const legendConfig = {
+      outerFrame: {
+        width: 125,
+        height: 70,
+        margin: 15,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      item: {
+        margin: 10
+      },
+      data: ['ablated', 'not ablated']
+    };
+
+    const legend = this.vizContainer.append('g')
+      .attr('class', 'legend');
+
+    legend.append('rect')
+      .attr('x', legendConfig.outerFrame.margin)
+      .attr('y', legendConfig.outerFrame.margin)
+      .attr('width', legendConfig.outerFrame.width)
+      .attr('height', legendConfig.outerFrame.height)
+      .attr('rx', legendConfig.outerFrame.cornerRad)
+      .attr('ry', legendConfig.outerFrame.cornerRad)
+      .style('fill', legendConfig.outerFrame.fill);
+
+    legend.selectAll('.legend-circles')
+      .data(legendConfig.data)
+      .enter()
+      .append('circle')
+      .attr('class', 'legend-circles')
+      .attr('cx', function () {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+
+        return rectXValue +
+          legendConfig.item.margin +
+          self.defaultSettings.nodeRadius;
+      })
+      .attr('cy', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+
+        return rectYValue +
+          (i + 1) * legendConfig.item.margin +
+          (i * 2 + 1) * self.defaultSettings.nodeRadius;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', function (d, i) {
+        if (d === 'ablated') {
+          return self.defaultSettings.ablatedColor;
+        } else {
+          return self.defaultSettings.color;
+        }
+      })
+      .attr('stroke-width', this.defaultSettings.focusStroke);
+
+    legend.selectAll('text')
+      .data(legendConfig.data)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+
+        return rectXValue +
+          2 * legendConfig.item.margin +
+          2 * self.defaultSettings.nodeRadius +
+          3;
+      })
+      .attr('y', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+
+        return rectYValue +
+          (i + 1) * legendConfig.item.margin +
+          (i * 2 + 1) * self.defaultSettings.nodeRadius +
+          5;
+      })
+      .attr('fill', 'whitesmoke');
   }
 
   ngOnDestroy() {
@@ -1021,7 +1163,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
   // inputFilterWeights;
 
-  // detachedNodes;
+
 
 
 
@@ -1262,43 +1404,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
 
 
-
-
-  // modifyNodes() {
-  //   if (this.detachedNodes.length === 0) {
-  //     this.detachedNodes.push(this.conMenuSelected);
-  //   } else {
-  //     for (let i = 0; i < this.detachedNodes.length; i++) {
-  //       if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
-  //         this.detachedNodes.splice(i, 1);
-  //         break;
-  //       } else if (i === this.detachedNodes.length - 1) {
-  //         this.detachedNodes.push(this.conMenuSelected);
-  //         break;
-  //       }
-  //     }
-  //   }
-
-  //   this.setupWeights();
-  //   this.bindWeights(false);
-  // }
-
-
-
-
-
-
-  // showMe() {
-  //   console.clear();
-  //   console.log('source topology:', this.inputTopology);
-  //   console.log('source weights:', this.inputWeights);
-  //   console.log('source filter weights:', this.inputFilterWeights);
-
-  //   console.log('untrained weights', this.untrainedWeights);
-
-  //   console.log('filtered topology:', this.topology);
-  //   console.log('filtered weights (trained):', this.weights);
-  // }
 
 
 }
