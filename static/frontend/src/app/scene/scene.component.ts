@@ -1,6 +1,4 @@
-import {
-  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, ChangeDetectorRef, OnDestroy, ViewEncapsulation
-} from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatTabChangeEvent } from '@angular/material';
 
@@ -17,16 +15,6 @@ import * as simpleheat from 'simpleheat/simpleheat.js';
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/controls/OrbitControls';
-
-// import { BrainComponent } from './brain/brain.component';
-import { update } from '@tensorflow/tfjs-layers/dist/variables';
-import { Playground } from '../models/playground.model';
-import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
-import { HeatmapConfig } from '../models/heatmap-config.model';
-import { isPlatformBrowser } from '@angular/common';
-import * as tf from '@tensorflow/tfjs';
-// import { MqttService, IMqttMessage } from 'ngx-mqtt';
-
 
 @Component({
   selector: 'app-scene',
@@ -353,7 +341,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  public ngOnDestroy() {
+  ngOnDestroy() {
     this.destroyed.next();
   }
 }
