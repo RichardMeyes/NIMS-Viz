@@ -16,6 +16,7 @@ import { PlaygroundService } from 'src/app/playground.service';
 export class PlaygroundVizComponent implements OnInit, OnDestroy {
   @ViewChild('container') container;
 
+  toolbarHeight;
   svg; svgWidth; svgHeight;
   zoom; currTransform;
   vizContainer;
@@ -32,7 +33,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   topology; edges;
 
 
-  toolbarHeight;
   weights;
   minMaxDiffs; activities;
   selectedFilter;
@@ -78,7 +78,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       )
       .subscribe(val => {
         this.inputWeights = val;
-        // this.drawWeights(true);
+        this.drawWeights(true);
         console.log(this.inputTopology);
         console.log(this.inputWeights);
       });
@@ -87,12 +87,12 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
 
 
-    this.dataService.selectedFilter
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        this.selectedFilter = val;
-        this.highlightSelectedFilter();
-      });
+    // this.dataService.selectedFilter
+    //   .pipe(takeUntil(this.destroyed))
+    //   .subscribe(val => {
+    //     this.selectedFilter = val;
+    //     this.highlightSelectedFilter();
+    //   });
   }
 
   drawTopology() {
@@ -242,12 +242,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
   }
 
-
-
-
-
-
-
   drawWeights(runAnimation) {
     this.activities = [];
 
@@ -259,23 +253,20 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
   setupWeights() {
     const filteredData = [];
-    const diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
     const currEpoch = Object.keys(this.inputWeights)[0];
+    let diffsPerEpoch;
 
     Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
-      if (layer !== 'input') {
+      if (!layer.startsWith('c') && layer !== 'h0') {
+        if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
+
         this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
           destination.forEach((source, sourceIndex) => {
-            if (sourceIndex === 0) {
-              diffsPerEpoch.minDiff = source;
-              diffsPerEpoch.maxDiff = source;
-            } else {
-              if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
-              if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
-            }
+            if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
+            if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
 
             filteredData.push({
-              layer: this.inputTopology['conv_layers'].length + (layerIndex - 1),
+              layer: layerIndex,
               source: sourceIndex,
               target: destinationIndex,
               value: source,
@@ -395,14 +386,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     let activity = 0;
     let recordActivities = false;
 
-    const range = Math.abs(this.minMaxDiffs.maxDiff - this.minMaxDiffs.minDiff);
-    const valuePercentage = el.value / range;
+    const range = Math.abs(this.minMaxDiffs.max - this.minMaxDiffs.min);
+    const valuePercentage = (el.value - this.minMaxDiffs.min) / range;
 
-    if (valuePercentage > .5) {
+    if (valuePercentage > .9) {
       color = '#EF5350';
       activity = valuePercentage;
       recordActivities = true;
-    } else if (valuePercentage > .35) {
+    } else if (valuePercentage > .85) {
       color = '#EF9A9A';
       activity = valuePercentage;
       recordActivities = true;
@@ -427,9 +418,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     let opacity = 1;
 
     for (let i = 0; i < this.activities.length; i++) {
-      if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
-        (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
-        color = '#FF7373';
+      if ((this.activities[i].layer === el.layer && this.activities[i].source === el.unit) ||
+        (this.activities[i].layer === el.layer - 1 && this.activities[i].target === el.unit)) {
+        if (this.activities[i].activity > .9) {
+          color = '#EF5350';
+        } else if (this.activities[i].activity > .85) {
+          color = '#EF9A9A';
+        }
+
         allActivities.push(this.activities[i].activity);
       }
     }
@@ -442,11 +438,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       'color': color,
       'opacity': opacity
     };
-  }
-
-  generateOpacity(d, mode: string) {
-    let opacity = 1;
-    return opacity;
   }
 
   resetViz() {
@@ -477,123 +468,123 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
   }
 
-  highlightSelectedFilter() {
-    let selectedConvLayer; let selectedUnit; let selectedWeight;
-    let highlightedTopology; let highlightedWeight;
+  // highlightSelectedFilter() {
+  //   let selectedConvLayer; let selectedUnit; let selectedWeight;
+  //   let highlightedTopology; let highlightedWeight;
 
-    if (this.selectedFilter) {
-      [selectedConvLayer, selectedUnit, selectedWeight] = [...this.selectedFilter.split('-')];
+  //   if (this.selectedFilter) {
+  //     [selectedConvLayer, selectedUnit, selectedWeight] = [...this.selectedFilter.split('-')];
 
-      for (let i = 0; i < this.topology.length; i++) {
-        if (this.topology[i].isConv &&
-          this.topology[i].layer === +selectedConvLayer.substring(1) &&
-          this.topology[i].unit === +selectedUnit) {
-          highlightedTopology = this.topology[i];
-          break;
-        }
-      }
+  //     for (let i = 0; i < this.topology.length; i++) {
+  //       if (this.topology[i].isConv &&
+  //         this.topology[i].layer === +selectedConvLayer.substring(1) &&
+  //         this.topology[i].unit === +selectedUnit) {
+  //         highlightedTopology = this.topology[i];
+  //         break;
+  //       }
+  //     }
 
-      if (selectedWeight) {
-        const layer = +selectedConvLayer.substring(1) - 1;
-        if (layer >= 0) {
-          for (let i = 0; i < this.edges.length; i++) {
-            if (this.edges[i].layer === layer &&
-              this.edges[i].source === +selectedWeight &&
-              this.edges[i].target === +selectedUnit) {
-              highlightedWeight = this.edges[i];
-              break;
-            }
-          }
-        }
-      }
+  //     if (selectedWeight) {
+  //       const layer = +selectedConvLayer.substring(1) - 1;
+  //       if (layer >= 0) {
+  //         for (let i = 0; i < this.edges.length; i++) {
+  //           if (this.edges[i].layer === layer &&
+  //             this.edges[i].source === +selectedWeight &&
+  //             this.edges[i].target === +selectedUnit) {
+  //             highlightedWeight = this.edges[i];
+  //             break;
+  //           }
+  //         }
+  //       }
+  //     }
 
-      this.selectedFilter = [this.selectedFilter];
+  //     this.selectedFilter = [this.selectedFilter];
 
-      console.clear();
-      console.log(selectedConvLayer, selectedUnit, selectedWeight);
-      console.log(highlightedTopology);
-      console.log(this.topology);
-      console.log(this.edges);
-    }
+  //     console.clear();
+  //     console.log(selectedConvLayer, selectedUnit, selectedWeight);
+  //     console.log(highlightedTopology);
+  //     console.log(this.topology);
+  //     console.log(this.edges);
+  //   }
 
-    if (this.vizContainer) {
-      if (this.selectedFilter) {
-        this.selectedFilter = [this.selectedFilter];
-      } else {
-        this.selectedFilter = [];
-      }
-      const rects = this.vizContainer.selectAll('.highlightedRect')
-        .data(this.selectedFilter, d => d);
+  //   if (this.vizContainer) {
+  //     if (this.selectedFilter) {
+  //       this.selectedFilter = [this.selectedFilter];
+  //     } else {
+  //       this.selectedFilter = [];
+  //     }
+  //     const rects = this.vizContainer.selectAll('.highlightedRect')
+  //       .data(this.selectedFilter, d => d);
 
-      rects.exit()
-        .remove();
+  //     rects.exit()
+  //       .remove();
 
-      if (highlightedTopology) {
-        rects.enter()
-          .append('rect')
-          .attr('class', 'highlightedRect')
-          .attr('x', () => {
-            const x: number = this.leftMargin +
-              (this.layerSpacing * highlightedTopology.layer) +
-              (this.layerSpacing / 2) -
-              (0.5 * this.defaultSettings.rectSide);
-            return x;
-          })
-          .attr('y', () => {
-            const y: number = this.topMargin +
-              (highlightedTopology.unitSpacing * highlightedTopology.unit) +
-              (highlightedTopology.unitSpacing / 2) -
-              (0.5 * this.defaultSettings.rectSide);
-            return y;
-          })
-          .attr('width', this.defaultSettings.rectSide)
-          .attr('height', this.defaultSettings.rectSide)
-          .attr('fill', 'whitesmoke')
-          .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-          .attr('stroke', this.defaultSettings.color)
-          .attr('stroke-width', this.defaultSettings.nodeStroke);
-      }
+  //     if (highlightedTopology) {
+  //       rects.enter()
+  //         .append('rect')
+  //         .attr('class', 'highlightedRect')
+  //         .attr('x', () => {
+  //           const x: number = this.leftMargin +
+  //             (this.layerSpacing * highlightedTopology.layer) +
+  //             (this.layerSpacing / 2) -
+  //             (0.5 * this.defaultSettings.rectSide);
+  //           return x;
+  //         })
+  //         .attr('y', () => {
+  //           const y: number = this.topMargin +
+  //             (highlightedTopology.unitSpacing * highlightedTopology.unit) +
+  //             (highlightedTopology.unitSpacing / 2) -
+  //             (0.5 * this.defaultSettings.rectSide);
+  //           return y;
+  //         })
+  //         .attr('width', this.defaultSettings.rectSide)
+  //         .attr('height', this.defaultSettings.rectSide)
+  //         .attr('fill', 'whitesmoke')
+  //         .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+  //         .attr('stroke', this.defaultSettings.color)
+  //         .attr('stroke-width', this.defaultSettings.nodeStroke);
+  //     }
 
 
-      if (selectedWeight) {
-        selectedWeight = [selectedWeight];
-      } else {
-        selectedWeight = [];
-      }
-      const line = this.vizContainer.selectAll('.highlightedEdges')
-        .data(selectedWeight, d => d);
+  //     if (selectedWeight) {
+  //       selectedWeight = [selectedWeight];
+  //     } else {
+  //       selectedWeight = [];
+  //     }
+  //     const line = this.vizContainer.selectAll('.highlightedEdges')
+  //       .data(selectedWeight, d => d);
 
-      line.exit()
-        .remove();
+  //     line.exit()
+  //       .remove();
 
-      if (highlightedWeight) {
-        line.enter()
-          .append('line')
-          .attr('class', 'highlightedEdges')
-          .attr('x1', (d) => {
-            const x1: number = this.leftMargin + (this.layerSpacing * highlightedWeight.layer) + (this.layerSpacing / 2);
-            return x1;
-          })
-          .attr('y1', (d) => {
-            const y1: number = this.topMargin +
-              (highlightedWeight.unitSpacing * highlightedWeight.source) +
-              (highlightedWeight.unitSpacing / 2);
-            return y1;
-          })
-          .attr('x2', (d) => {
-            const x2: number = this.leftMargin + (this.layerSpacing * (highlightedWeight.layer + 1)) + (this.layerSpacing / 2);
-            return x2;
-          })
-          .attr('y2', (d) => {
-            const y2: number = this.topMargin +
-              (highlightedWeight.targetUnitSpacing * highlightedWeight.target) +
-              (highlightedWeight.targetUnitSpacing / 2);
-            return y2;
-          })
-          .attr('stroke', 'whitesmoke');
-      }
-    }
-  }
+  //     if (highlightedWeight) {
+  //       line.enter()
+  //         .append('line')
+  //         .attr('class', 'highlightedEdges')
+  //         .attr('x1', (d) => {
+  //           const x1: number = this.leftMargin + (this.layerSpacing * highlightedWeight.layer) + (this.layerSpacing / 2);
+  //           return x1;
+  //         })
+  //         .attr('y1', (d) => {
+  //           const y1: number = this.topMargin +
+  //             (highlightedWeight.unitSpacing * highlightedWeight.source) +
+  //             (highlightedWeight.unitSpacing / 2);
+  //           return y1;
+  //         })
+  //         .attr('x2', (d) => {
+  //           const x2: number = this.leftMargin + (this.layerSpacing * (highlightedWeight.layer + 1)) + (this.layerSpacing / 2);
+  //           return x2;
+  //         })
+  //         .attr('y2', (d) => {
+  //           const y2: number = this.topMargin +
+  //             (highlightedWeight.targetUnitSpacing * highlightedWeight.target) +
+  //             (highlightedWeight.targetUnitSpacing / 2);
+  //           return y2;
+  //         })
+  //         .attr('stroke', 'whitesmoke');
+  //     }
+  //   }
+  // }
 
   ngOnDestroy() {
     this.destroyed.next();
