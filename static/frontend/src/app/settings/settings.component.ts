@@ -289,7 +289,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
     let epochToVisualize = nextEpochConfig.epochRange[1] - 1;
-    let topologyTemp;
 
     if (this.router.url.includes('archive')) {
       this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
@@ -303,32 +302,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
       this.createHeatmap(0, true);
       epochToVisualize = 0;
-
-      this.playgroundService.getTopology(this.selectedFile)
-        .pipe(
-          take(1),
-          concatMap(topology => {
-            topologyTemp = topology;
-            return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
-          })
-        )
-        .subscribe(val => {
-          const currEpoch = `epoch_0`;
-          const filterWeights = {};
-
-          Object.keys(val).forEach(key => {
-            if (key.startsWith('c')) {
-              filterWeights[key] = val[key];
-              delete val[key];
-            }
-          });
-
-          this.dataService.vizTopology.next(topologyTemp);
-          if (val) {
-            this.dataService.vizWeights.next({ [currEpoch]: val });
-            this.dataService.filterWeights.next(filterWeights);
-          }
-        });
     }
   }
 

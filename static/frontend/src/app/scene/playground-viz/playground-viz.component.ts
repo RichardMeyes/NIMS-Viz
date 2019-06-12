@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild, HostListener, OnDestroy } from '@angular/core';
 
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, filter, concatMap } from 'rxjs/operators';
 
 import * as d3 from 'd3';
 
 import { DataService } from 'src/app/services/data.service';
+import { PlaygroundService } from 'src/app/playground.service';
 
 @Component({
   selector: 'app-playground-viz',
@@ -13,58 +14,40 @@ import { DataService } from 'src/app/services/data.service';
   styleUrls: ['./playground-viz.component.scss']
 })
 export class PlaygroundVizComponent implements OnInit, OnDestroy {
-  toolbarHeight;
-  minWidthHeight;
+  @ViewChild('container') container;
 
-  zoom; currTransform;
   svg; svgWidth; svgHeight;
+  zoom; currTransform;
   vizContainer;
 
-  conMenuItems; conMenuConfig;
-  conMenuSelected;
-  showWeightsConfig; showWeightsTexts;
-
-  topology; edges; weights;
+  minWidthHeight;
   topMargin; leftMargin;
-  layerSpacing;
-  minMaxDiffs; activities;
 
-  selectedFilter;
+  selectedFile;
+
+  inputTopology; inputWeights;
 
   defaultSettings;
+  layerSpacing;
+  topology; edges;
 
-  @ViewChild('container') container;
-  inputTopology;
-  inputWeights;
+
+  toolbarHeight;
+  weights;
+  minMaxDiffs; activities;
+  selectedFilter;
 
   destroyed = new Subject<void>();
 
   @HostListener('window:resize', ['$event'])
-  onResize(event) { this.draw(false); }
+  onResize() { this.drawWeights(false); }
 
   constructor(
-    private dataService: DataService
+    private dataService: DataService,
+    private playgroundService: PlaygroundService
   ) { }
 
   ngOnInit() {
-    this.dataService.toolbarHeight
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.toolbarHeight = val; });
-
-    this.dataService.vizTopology
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        this.inputTopology = val;
-        this.draw(true);
-      });
-
-    this.dataService.vizWeights
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        this.inputWeights = val;
-        this.draw(true);
-      });
-
     this.defaultSettings = {
       rectSide: 20,
       nodeRadius: 10,
@@ -74,6 +57,36 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       duration: 500
     };
 
+    this.dataService.toolbarHeight
+      .pipe(takeUntil(this.destroyed))
+      .subscribe(val => { this.toolbarHeight = val; });
+
+    this.dataService.visualize
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true),
+        concatMap(() => {
+          this.selectedFile = this.dataService.selectedFile.getValue();
+          return this.playgroundService.getTopology(this.selectedFile);
+        }),
+        concatMap(topology => {
+          this.inputTopology = topology;
+          this.drawTopology();
+
+          return this.playgroundService.getWeights(this.selectedFile);
+        }),
+      )
+      .subscribe(val => {
+        this.inputWeights = val;
+        // this.drawWeights(true);
+        console.log(this.inputTopology);
+        console.log(this.inputWeights);
+      });
+
+
+
+
+
     this.dataService.selectedFilter
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
@@ -82,29 +95,24 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       });
   }
 
-  draw(runAnimation) {
-    if (this.defaultSettings) {
-      this.activities = [];
-      this.resetViz();
+  drawTopology() {
+    this.resetViz();
 
-      if (this.inputTopology) {
-        this.setupTopology();
-        this.bindTopology();
-      }
-
-      if (this.inputTopology && this.inputWeights) {
-        this.setupWeights();
-        this.bindWeights(runAnimation);
-      }
+    if (this.inputTopology) {
+      this.setupTopology();
+      this.bindTopology();
     }
   }
 
   setupTopology() {
-    const convLayers: number[] = this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel);
-    const layers: number[] = this.inputTopology['layers'].map(layer => +layer);
-    layers.push(10);
+    let convLayers: number[] = [1];
+    let layers: number[] = [];
     const filteredTopology = [];
     const filteredEdges = [];
+
+    convLayers = convLayers.concat(this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel));
+    layers = layers.concat(this.inputTopology['layers'].map(layer => +layer));
+    layers.push(10);
 
 
     convLayers.forEach((convLayer, convLayerIndex) => {
@@ -167,6 +175,88 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.edges = filteredEdges;
   }
 
+  bindTopology() {
+    const self = this;
+
+
+    const line = this.vizContainer.selectAll('.edges')
+      .data(this.edges);
+
+    line.enter()
+      .append('line')
+      .attr('class', 'edges')
+      .attr('x1', function (d) {
+        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return x1;
+      })
+      .attr('y1', function (d) {
+        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        return y1;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        return y2;
+      });
+
+
+    let rects = this.vizContainer.selectAll('rect')
+      .data(this.topology.filter(nodes => nodes.isConv));
+
+    rects = rects.enter()
+      .append('rect')
+      .attr('class', 'rect')
+      .attr('x', function (d) {
+        const x: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
+        return x;
+      })
+      .attr('y', function (d) {
+        const y: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
+        return y;
+      })
+      .attr('width', this.defaultSettings.rectSide)
+      .attr('height', this.defaultSettings.rectSide)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
+
+
+    const circles = this.vizContainer.selectAll('circle')
+      .data(this.topology.filter(nodes => !nodes.isConv));
+
+    circles.enter()
+      .append('circle')
+      .attr('class', 'circle')
+      .attr('cx', function (d) {
+        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        return cx;
+      })
+      .attr('cy', function (d) {
+        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        return cy;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
+  }
+
+
+
+
+
+
+
+  drawWeights(runAnimation) {
+    this.activities = [];
+
+    if (this.inputWeights) {
+      this.setupWeights();
+      this.bindWeights(runAnimation);
+    }
+  }
+
   setupWeights() {
     const filteredData = [];
     const diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
@@ -208,80 +298,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     });
 
     this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
-  }
-
-  bindTopology() {
-    d3.selectAll('.edges').remove();
-    d3.selectAll('circle').remove();
-    const self = this;
-
-
-    const line = this.vizContainer.selectAll('.edges')
-      .data(this.edges);
-
-    line.enter()
-      .append('line')
-      .attr('class', 'edges')
-      .attr('x1', function (d) {
-        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return x1;
-      })
-      .attr('y1', function (d) {
-        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
-        return y1;
-      })
-      .attr('x2', function (d) {
-        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
-        return x2;
-      })
-      .attr('y2', function (d) {
-        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
-        return y2;
-      })
-      .attr('stroke', this.defaultSettings.color);
-
-
-    let rects = this.vizContainer.selectAll('rect')
-      .data(this.topology.filter(nodes => nodes.isConv));
-
-    rects = rects.enter()
-      .append('rect')
-      .attr('class', 'rect')
-      .attr('x', function (d) {
-        const x: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
-        return x;
-      })
-      .attr('y', function (d) {
-        const y: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
-        return y;
-      })
-      .attr('width', this.defaultSettings.rectSide)
-      .attr('height', this.defaultSettings.rectSide)
-      .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
-
-
-    const circles = this.vizContainer.selectAll('circle')
-      .data(this.topology.filter(nodes => !nodes.isConv));
-
-    circles.enter()
-      .append('circle')
-      .attr('class', 'circle')
-      .attr('cx', function (d) {
-        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return cx;
-      })
-      .attr('cy', function (d) {
-        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
-        return cy;
-      })
-      .attr('r', this.defaultSettings.nodeRadius)
-      .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
   }
 
   bindWeights(runAnimation) {
@@ -442,7 +458,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
 
-
     if (this.svg) { this.svg.remove(); }
     this.svg = d3.select(this.container.nativeElement)
       .append('svg')
@@ -455,7 +470,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .scaleExtent([0.1, 10])
       .on('zoom', () => {
         self.vizContainer.attr('transform', d3.event.transform);
-        d3.select('.context-menu').remove();
       })
       .on('end', () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
