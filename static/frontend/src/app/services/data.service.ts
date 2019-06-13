@@ -8,6 +8,8 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
   providedIn: 'root'
 })
 export class DataService {
+  topology: BehaviorSubject<any>;
+  playgroundData: BehaviorSubject<Playground>;
   selectedFile: BehaviorSubject<string>;
   detachedNodes: BehaviorSubject<any>;
   epochSliderConfig: BehaviorSubject<any>;
@@ -15,6 +17,7 @@ export class DataService {
   classifyResult: Subject<any>;
   ablationTestResult: Subject<any>;
 
+  trainNetwork: Subject<boolean>;
   visualize: Subject<boolean>;
   testNetwork: Subject<boolean>;
   resetNetwork: Subject<boolean>;
@@ -35,7 +38,6 @@ export class DataService {
   readonly heatmapNodeConfig;
   createHeatmap: BehaviorSubject<any>;
 
-  playgroundData: BehaviorSubject<Playground>;
   optionData: BehaviorSubject<Option>;
 
   vizTopology: BehaviorSubject<any>;
@@ -54,6 +56,8 @@ export class DataService {
 
 
   constructor() {
+    this.topology = new BehaviorSubject(undefined);
+    this.playgroundData = new BehaviorSubject(new Playground());
     this.selectedFile = new BehaviorSubject(undefined);
     this.detachedNodes = new BehaviorSubject([]);
     this.epochSliderConfig = new BehaviorSubject(undefined);
@@ -61,6 +65,7 @@ export class DataService {
     this.classifyResult = new Subject();
     this.ablationTestResult = new Subject();
 
+    this.trainNetwork = new Subject();
     this.visualize = new Subject();
     this.testNetwork = new Subject();
     this.resetNetwork = new Subject();
@@ -95,7 +100,6 @@ export class DataService {
     };
     this.createHeatmap = new BehaviorSubject(null);
 
-    this.playgroundData = new BehaviorSubject(new Playground());
     this.optionData = new BehaviorSubject(new Option(null, new HeatmapConfig(), false));
 
     this.vizTopology = new BehaviorSubject(null);

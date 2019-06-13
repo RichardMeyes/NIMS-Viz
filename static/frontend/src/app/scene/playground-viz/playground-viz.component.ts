@@ -62,6 +62,16 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.toolbarHeight = val; });
 
+    this.dataService.trainNetwork
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        this.inputTopology = this.dataService.topology.getValue();
+        this.drawTopology();
+      });
+
     this.dataService.visualize
       .pipe(
         takeUntil(this.destroyed),

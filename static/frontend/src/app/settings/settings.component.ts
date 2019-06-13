@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { MatTabChangeEvent } from '@angular/material';
 
-import { takeUntil, take, concatMap } from 'rxjs/operators';
+import { takeUntil, take } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { NetworkService } from '../network.service';
@@ -164,31 +164,30 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   trainNetwork() {
-    const captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
+    const capturedForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
     const objToSend = {
-      batch_size_train: +captureForm.batchSizeTrain,
-      batch_size_test: +captureForm.batchSizeTest,
-      num_epochs: +captureForm.epoch,
-      learning_rate: +captureForm.learning_rate,
-      conv_layers: captureForm.convLayers.slice(0),
-      layers: captureForm.fcLayers.map(layer => layer.unitCount)
+      batch_size_train: +capturedForm.batchSizeTrain,
+      batch_size_test: +capturedForm.batchSizeTest,
+      num_epochs: +capturedForm.epoch,
+      learning_rate: +capturedForm.learning_rate,
+      conv_layers: capturedForm.convLayers.slice(0),
+      layers: capturedForm.fcLayers.map(layer => layer.unitCount)
     };
 
 
-    this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
-    this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
-    this.playgroundData.epoch = +captureForm.epoch;
+    this.playgroundData.batchSizeTrain = +capturedForm.batchSizeTrain;
+    this.playgroundData.batchSizeTest = +capturedForm.batchSizeTest;
+    this.playgroundData.epoch = +capturedForm.epoch;
     this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
-      learningRate => learningRate.value === captureForm.learning_rate
+      learningRate => learningRate.value === capturedForm.learning_rate
     );
 
     this.playgroundData.firstChannel = this.firstChannel;
     this.playgroundData.lastChannel = this.lastChannel;
     this.playgroundData.commonChannels = this.commonChannels;
 
-    this.playgroundData.convLayers = captureForm.convLayers.slice(0);
-    this.playgroundData.fcLayers = captureForm.fcLayers.map(layer => layer.unitCount);
-    this.dataService.playgroundData.next(this.playgroundData);
+    this.playgroundData.convLayers = capturedForm.convLayers.slice(0);
+    this.playgroundData.fcLayers = capturedForm.fcLayers.map(layer => layer.unitCount);
 
     objToSend.conv_layers.forEach((convLayer, convLayerIndex) => {
       if (convLayerIndex === 0) {
@@ -205,13 +204,18 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
 
-    this.dataService.vizTopology.next(objToSend);
-    this.dataService.vizWeights.next(null);
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
+
+
+    this.dataService.playgroundData.next(this.playgroundData);
+    this.dataService.topology.next(objToSend);
+    this.dataService.trainNetwork.next(true);
+
 
 
     // console.clear();
     // console.log(objToSend);
+    // console.log(this.playgroundData);
     // console.log(this.firstChannel);
     // console.log(this.commonChannels);
     // console.log(this.lastChannel);
