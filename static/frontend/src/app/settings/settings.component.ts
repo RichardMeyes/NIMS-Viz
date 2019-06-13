@@ -6,7 +6,6 @@ import { MatTabChangeEvent } from '@angular/material';
 import { takeUntil, take, concatMap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
-import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
 import { DataService } from '../services/data.service';
 
@@ -41,7 +40,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public router: Router,
     private fb: FormBuilder,
-    private playgroundService: PlaygroundService,
     private networkService: NetworkService,
     private dataService: DataService
   ) { }
@@ -271,8 +269,12 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   visualize() {
     this.dataService.selectedFile.next(this.selectedFile);
-    this.dataService.visualize.next(true);
 
+    const nextEpochConfig = new EpochConfig();
+    nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
+    this.dataService.epochSliderConfig.next(nextEpochConfig);
+
+    this.dataService.visualize.next(true);
 
 
 
@@ -286,8 +288,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.untrainedWeights.next(null);
     this.dataService.filterWeights.next(null);
 
-    const nextEpochConfig = new EpochConfig();
-    nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
     let epochToVisualize = nextEpochConfig.epochRange[1] - 1;
 
     if (this.router.url.includes('archive')) {

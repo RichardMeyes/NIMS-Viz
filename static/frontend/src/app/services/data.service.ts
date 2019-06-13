@@ -10,6 +10,7 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
 export class DataService {
   selectedFile: BehaviorSubject<string>;
   detachedNodes: BehaviorSubject<any>;
+  epochSliderConfig: BehaviorSubject<any>;
 
   classifyResult: Subject<any>;
   ablationTestResult: Subject<any>;
@@ -17,6 +18,7 @@ export class DataService {
   visualize: Subject<boolean>;
   testNetwork: Subject<boolean>;
   resetNetwork: Subject<boolean>;
+  epochSliderChange: Subject<boolean>;
 
 
 
@@ -54,6 +56,7 @@ export class DataService {
   constructor() {
     this.selectedFile = new BehaviorSubject(undefined);
     this.detachedNodes = new BehaviorSubject([]);
+    this.epochSliderConfig = new BehaviorSubject(undefined);
 
     this.classifyResult = new Subject();
     this.ablationTestResult = new Subject();
@@ -61,6 +64,7 @@ export class DataService {
     this.visualize = new Subject();
     this.testNetwork = new Subject();
     this.resetNetwork = new Subject();
+    this.epochSliderChange = new Subject();
 
 
 

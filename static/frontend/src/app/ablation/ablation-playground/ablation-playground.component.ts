@@ -78,7 +78,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           this.drawTopology();
 
           return this.playgroundService.getWeights(this.selectedFile);
-        }),
+        })
       )
       .subscribe(val => {
         const allKeys = Object.keys(val).sort();

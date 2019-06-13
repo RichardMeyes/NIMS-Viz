@@ -47,8 +47,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   drawFully;
 
   selectedFile;
-  isPlaying: boolean;
-  animationIntervals;
 
   destroyed = new Subject<void>();
 
@@ -62,8 +60,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.epochCounter = 0;
     this.resetCounter = false;
-    this.isPlaying = false;
-    this.animationIntervals = [];
 
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
@@ -316,29 +312,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
         if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
       });
-  }
-
-  toggleAnimation() {
-    this.isPlaying = !this.isPlaying;
-
-    if (this.isPlaying) {
-      const runAnimation = () => {
-        if (this.epochSliderConfig.epochValue < this.epochSliderConfig.epochRange[1]) {
-          this.epochSliderConfig.epochValue++;
-        } else {
-          this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[0];
-        }
-        this.createHeatmap();
-      };
-      runAnimation();
-
-      this.animationIntervals.push(setInterval(runAnimation, 3.5 * 500 * (this.vizTopology.fcLayers.length + 1) + 150));
-    } else {
-      this.animationIntervals.forEach(animationInterval => {
-        clearInterval(animationInterval);
-      });
-      this.animationIntervals = [];
-    }
   }
 
   ngOnDestroy() {

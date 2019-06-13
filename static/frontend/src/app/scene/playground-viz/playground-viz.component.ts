@@ -25,6 +25,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   topMargin; leftMargin;
 
   selectedFile;
+  epochSliderConfig;
 
   inputTopology; inputWeights;
 
@@ -67,6 +68,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         filter(val => val === true),
         concatMap(() => {
           this.selectedFile = this.dataService.selectedFile.getValue();
+          this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+
           return this.playgroundService.getTopology(this.selectedFile);
         }),
         concatMap(topology => {
@@ -79,10 +82,17 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .subscribe(val => {
         this.inputWeights = val;
         this.drawWeights(true);
-        console.log(this.inputTopology);
-        console.log(this.inputWeights);
       });
 
+    this.dataService.epochSliderChange
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+        this.drawWeights(true);
+      });
 
 
 
@@ -253,7 +263,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
   setupWeights() {
     const filteredData = [];
-    const currEpoch = Object.keys(this.inputWeights)[0];
+    const currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
     let diffsPerEpoch;
 
     Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
@@ -327,8 +337,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         .delay(function (d) {
           // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
           // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-          const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length);
-          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length - 1);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
           return nodesDelay + weightsDelay;
         });
     }
@@ -369,8 +379,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         .delay(function (d) {
           // const nodesDelay = self.defaultSettings.duration * d.layer;
           // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-          const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
-          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
           return nodesDelay + weightsDelay;
         });
     }
