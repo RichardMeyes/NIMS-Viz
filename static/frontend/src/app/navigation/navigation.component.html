@@ -1,0 +1,22 @@
+<div class='navigation-bar'>
+    <h1 routerLink=''>NIMS-VIZ</h1>
+    <ul class="nav-elements"  *ngIf="router.url !== '/'">
+        <li class="frame" routerLink='/brain-view' routerLinkActive="active-frame">
+            <i class="fas fa-brain"></i>
+        </li>
+        <li class="frame" routerLink='/layer-view' routerLinkActive="active-frame">
+            <i class="fas fa-project-diagram"></i>
+        </li>
+        <li class="frame" routerLink='/ablation-view' routerLinkActive="active-frame">
+            <i class="fas fa-cut"></i>
+        </li>
+        <li class="frame">
+            <i class="fas fa-dumbbell"></i>
+        </li>
+    </ul>
+    <div class="menu">
+        <div class="frame">
+            <i class="fas fa-bars"></i>
+        </div>
+    </div>
+</div>
