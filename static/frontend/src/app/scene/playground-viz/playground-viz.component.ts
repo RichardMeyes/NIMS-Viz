@@ -7,6 +7,7 @@ import * as d3 from 'd3';
 
 import { DataService } from 'src/app/services/data.service';
 import { PlaygroundService } from 'src/app/playground.service';
+import { NetworkService } from 'src/app/network.service';
 
 @Component({
   selector: 'app-playground-viz',
@@ -45,7 +46,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
   constructor(
     private dataService: DataService,
-    private playgroundService: PlaygroundService
+    private playgroundService: PlaygroundService,
+    private networkService: NetworkService
   ) { }
 
   ngOnInit() {
@@ -70,6 +72,12 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.inputTopology = this.dataService.topology.getValue();
         this.drawTopology();
+      });
+
+    this.networkService.onMessage()
+      .pipe(takeUntil(this.destroyed))
+      .subscribe((message: JSON) => {
+        console.log(message);
       });
 
     this.dataService.visualize

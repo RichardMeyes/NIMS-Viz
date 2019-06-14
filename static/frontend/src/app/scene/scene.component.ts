@@ -74,7 +74,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         // this.epochSliderConfig.epochValue = this.epochCounter;
         const resultWeights = message['resultWeights'];
         if (this.resetCounter) { this.epochCounter = 0; }
-        this.epochCounter++;
+        this.epochCounter++; console.log('called');
 
         const isDone = message['done'];
         if (isDone) {
