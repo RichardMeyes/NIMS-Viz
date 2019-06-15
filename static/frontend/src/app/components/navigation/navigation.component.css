@@ -1,0 +1,89 @@
+.navigation-bar {
+    position: relative;
+    height: 55px;
+    width: 100%;
+    background-color: rgb(27, 27, 27);
+    display: flex;
+    justify-content: flex-end;
+}
+
+h1 {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    padding: 0;
+    margin: 0;
+    font-size: 2em;
+    color: rgba(255, 255, 255, 0.603);
+    cursor: pointer;
+    -ms-user-select: None; 
+    -moz-user-select: None; 
+    -webkit-user-select: None; 
+}
+
+.menu-elements {
+    right: 0;
+    margin: 0;
+    padding: 0;
+    margin-right: 2%;
+    display: flex;
+    justify-content: center;
+    list-style: none;
+
+    border-left: 2px solid rgba(255, 255, 255, 0.10);
+}
+
+.view-elements {
+    right: 0; 
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    list-style: none;
+
+    border-left: 2px solid rgba(255, 255, 255, 0.10);
+}
+
+.net-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 8%;
+    border-left: 2px solid rgba(255, 255, 255, 0.10);
+}
+.net-selector div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 15vw;
+    height: 60%;
+    border-radius: 20px 0px 0px 20px;
+    background-color: rgba(255, 255, 255, 0.603);
+
+    font-size: 18px;
+    font-weight: bolder;
+    color: rgb(27, 27, 27);
+}
+.net-selector-dropdown {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.net-selector-dropdown div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 45px;
+    height: 60%;
+    border-left: 2px solid rgb(27, 27, 27, 0.2);
+    border-radius: 0px 20px 20px 0px;
+    background-color: rgba(255, 255, 255, 0.603);
+    font-size: 1.7em;
+    color: rgb(27, 27, 27);
+
+    cursor: pointer;
+    -ms-user-select: None; 
+    -moz-user-select: None; 
+    -webkit-user-select: None; 
+}

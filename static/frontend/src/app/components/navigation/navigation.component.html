@@ -1,6 +1,6 @@
 <div class='navigation-bar'>
     <h1 routerLink=''>NIMS-VIZ</h1>
-    <ul class="nav-elements"  *ngIf="router.url !== '/'">
+    <ul class="view-elements"  *ngIf="router.url !== '/'">
         <li class="frame" routerLink='/brain-view' routerLinkActive="active-frame">
             <i class="fas fa-brain"></i>
         </li>
@@ -10,13 +10,22 @@
         <li class="frame" routerLink='/ablation-view' routerLinkActive="active-frame">
             <i class="fas fa-cut"></i>
         </li>
-        <li class="frame">
+    </ul>
+    <ul class="menu-elements">
+        <li title="Train Network" class="frame">
             <i class="fas fa-dumbbell"></i>
         </li>
+        <li title="Save Network" class="frame">
+            <i class="fas fa-save"></i>
+        </li>
+        <li title="Load Network" class="frame">
+            <i class="fas fa-upload"></i>
+        </li>
+        <li class="net-selector">
+            <div>No Network Selected</div>
+        </li>
+        <li class="net-selector-dropdown">
+            <div><i class="fas fa-caret-down"></i></div>
+        </li>
     </ul>
-    <div class="menu">
-        <div class="frame">
-            <i class="fas fa-bars"></i>
-        </div>
-    </div>
 </div>
