@@ -106,7 +106,6 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataService.optionData
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
-        this.epochSliderConfig = val.epochSliderConfig;
         this.heatmapNormalConfig = val.heatmapNormalConfig;
         this.drawFully = val.drawFully;
       });

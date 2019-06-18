@@ -10,6 +10,7 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
 export class DataService {
   topology: BehaviorSubject<any>;
   playgroundData: BehaviorSubject<Playground>;
+  optionData: BehaviorSubject<Option>;
   selectedFile: BehaviorSubject<string>;
   detachedNodes: BehaviorSubject<any>;
   epochSliderConfig: BehaviorSubject<any>;
@@ -38,11 +39,9 @@ export class DataService {
   readonly heatmapNodeConfig;
   createHeatmap: BehaviorSubject<any>;
 
-  optionData: BehaviorSubject<Option>;
 
   vizTopology: BehaviorSubject<any>;
   vizWeights: BehaviorSubject<any>;
-  untrainedWeights: BehaviorSubject<any>;
 
   filterWeights: BehaviorSubject<any>;
   selectedFilter: BehaviorSubject<any>;
@@ -58,6 +57,7 @@ export class DataService {
   constructor() {
     this.topology = new BehaviorSubject(undefined);
     this.playgroundData = new BehaviorSubject(new Playground());
+    this.optionData = new BehaviorSubject(new Option(new HeatmapConfig(), false));
     this.selectedFile = new BehaviorSubject(undefined);
     this.detachedNodes = new BehaviorSubject([]);
     this.epochSliderConfig = new BehaviorSubject(undefined);
@@ -100,11 +100,9 @@ export class DataService {
     };
     this.createHeatmap = new BehaviorSubject(null);
 
-    this.optionData = new BehaviorSubject(new Option(null, new HeatmapConfig(), false));
 
     this.vizTopology = new BehaviorSubject(null);
     this.vizWeights = new BehaviorSubject(null);
-    this.untrainedWeights = new BehaviorSubject(null);
 
     this.filterWeights = new BehaviorSubject(null);
     this.selectedFilter = new BehaviorSubject(null);

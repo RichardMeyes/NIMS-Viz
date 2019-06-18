@@ -54,6 +54,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.snav.close();
 
     this.dataService.playgroundData.next(new Playground());
+    this.dataService.optionData.next(new Option(new HeatmapConfig(), false));
 
 
 
@@ -66,11 +67,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.dataService.activeSceneTab.next(0); 
 
     this.dataService.selectedFile.next(null);
-    this.dataService.optionData.next(new Option(null, new HeatmapConfig(), false));
 
     this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
-    this.dataService.untrainedWeights.next(null);
     this.dataService.filterWeights.next(null);
   }
 

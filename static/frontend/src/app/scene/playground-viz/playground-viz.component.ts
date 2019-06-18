@@ -42,7 +42,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
   destroyed = new Subject<void>();
 
   @HostListener('window:resize', ['$event'])
-  onResize() { this.drawWeights(false); }
+  onResize() {
+    this.drawTopology();
+    this.drawWeights(false);
+  }
 
   constructor(
     private dataService: DataService,

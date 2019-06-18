@@ -40,7 +40,7 @@ class Heatmap(metaclass=Singleton):
             if(key.find('h') != -1):
                 keyArray.append(key)
         keyArray = sorted(keyArray)
-        keyArray = ['input']+keyArray+['output']
+        keyArray = keyArray+['output']
         if(createNewNodeCoordinates):
             self.layerObjs = self.createNetworkStruct(weightsObj,keyArray)
 

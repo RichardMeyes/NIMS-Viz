@@ -55,9 +55,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activeSettingsTab = 0;
 
     const currOption = this.dataService.optionData.getValue();
-    this.epochSliderConfig = currOption.epochSliderConfig;
     this.heatmapNormalConfig = currOption.heatmapNormalConfig;
     this.drawFully = currOption.drawFully;
+
+    this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
 
     this.dataService.activeSceneTab
       .pipe(takeUntil(this.destroyed))
@@ -278,6 +279,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
     this.dataService.epochSliderConfig.next(nextEpochConfig);
 
+    this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
+    this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+    this.dataService.optionData.next({
+      heatmapNormalConfig: this.heatmapNormalConfig,
+      drawFully: this.drawFully
+    });
+    this.createHeatmap(0, true);
+
     this.dataService.visualize.next(true);
 
 
@@ -289,33 +298,15 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.dataService.vizTopology.next(null);
     this.dataService.vizWeights.next(null);
-    this.dataService.untrainedWeights.next(null);
     this.dataService.filterWeights.next(null);
-
-    let epochToVisualize = nextEpochConfig.epochRange[1] - 1;
-
-    if (this.router.url.includes('archive')) {
-      this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
-      this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
-
-      this.dataService.optionData.next({
-        epochSliderConfig: nextEpochConfig,
-        heatmapNormalConfig: this.heatmapNormalConfig,
-        drawFully: this.drawFully
-      });
-
-      this.createHeatmap(0, true);
-      epochToVisualize = 0;
-    }
   }
 
   resetOptions() {
-    this.dataService.optionData.next(new Option(this.epochSliderConfig, new HeatmapConfig(), false));
+    this.dataService.optionData.next(new Option(new HeatmapConfig(), false));
   }
 
   applyOptions() {
     this.dataService.optionData.next({
-      epochSliderConfig: this.epochSliderConfig,
       heatmapNormalConfig: this.heatmapNormalConfig,
       drawFully: this.drawFully
     });
@@ -357,6 +348,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           data: data,
           heatmapNormalConfig: this.heatmapNormalConfig
         };
+        console.clear();
+        console.log(param);
         this.dataService.createHeatmap.next(param);
       });
   }
