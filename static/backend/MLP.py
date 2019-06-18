@@ -51,7 +51,11 @@ class Net(nn.Module):
         self.layers = layers
         self.num_epochs = num_epochs
         
-        self.h0 = nn.Linear(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear, self.layers[0])
+        if len(self.conv_layers):
+            self.h0 = nn.Linear(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear, self.layers[0])
+        else:
+            self.h0 = nn.Linear(28 * 28, self.layers[0])
+
         for i_layer in range(len(layers)-1):
             self.__setattr__("h{0}".format(i_layer+1),
                              nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
