@@ -82,7 +82,10 @@ class Net(nn.Module):
     def save_topology(self):
         self.topology_dict["conv_layers"] = self.conv_layers
         self.topology_dict["layers"] = self.layers
-        self.topology_dict["h0Shape0"] = self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear
+        if len(self.conv_layers):
+            self.topology_dict["h0Shape0"] = self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear
+        else:
+            self.topology_dict["h0Shape0"] = 28 * 28
 
         with open("static/data/topologies/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
             json.dump(self.topology_dict, f)
