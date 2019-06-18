@@ -77,7 +77,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
-        console.log('playviz', message);
+        this.inputWeights = message['resultWeights'];
+        this.drawWeights(true);
       });
 
     this.dataService.visualize
@@ -281,8 +282,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
 
   setupWeights() {
     const filteredData = [];
-    const currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
+    let currEpoch;
     let diffsPerEpoch;
+
+    if (this.epochSliderConfig) {
+      currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
+    } else {
+      currEpoch = Object.keys(this.inputWeights)[0];
+    }
 
     Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
       if (!layer.startsWith('c') && layer !== 'h0') {

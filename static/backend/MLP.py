@@ -127,64 +127,64 @@ class Net(nn.Module):
         for epoch in range(self.num_epochs):
             for batch_idx, (data, target) in enumerate(trainloader):
                 data, target = Variable(data), Variable(target)
-            #     if device == "cuda:0":
-            #         data, target = data.to(device), target.to(device)
-            #     # resize data from (batch_size, 1, 28, 28) to (batch_size, 28*28)
-            #     data = data.view(-1, 28 * 28)
-            #     optimizer.zero_grad()
-        #         net_out = self(data)
-        #         loss = criterion(net_out, target)
-        #         loss.backward()
-        #         optimizer.step()
-        #         if batch_idx % log_interval == 0:
-        #             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data),
-        #                                                                            len(trainloader.dataset),
-        #                                                                            100. * batch_idx / len(
-        #                                                                                trainloader),
-        #                                                                            loss.data.item()))
+                if device == "cuda:0":
+                    data, target = data.to(device), target.to(device)
+                # resize data from (batch_size, 1, 28, 28) to (batch_size, 28*28)
+                data = data.view(-1, 28 * 28)
+                optimizer.zero_grad()
+                net_out = self(data)
+                loss = criterion(net_out, target)
+                loss.backward()
+                optimizer.step()
+                if batch_idx % log_interval == 0:
+                    print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data),
+                                                                                   len(trainloader.dataset),
+                                                                                   100. * batch_idx / len(
+                                                                                       trainloader),
+                                                                                   loss.data.item()))
 
-        #     # store weights after each epoch
-        #     temp_epoch_dict = dict()
-        #     weights = self.h0.weight.data.numpy().tolist()
-        #     self.weights_dict["epoch_{0}".format(epoch)] = {"h0": weights}
-        #     temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            # store weights after each epoch
+            temp_epoch_dict = dict()
+            weights = self.h0.weight.data.numpy().tolist()
+            self.weights_dict["epoch_{0}".format(epoch)] = {"h0": weights}
+            temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
 
-        #     for i_layer in range(len(self.conv_layers)):
-        #         layer = self.__getattr__("c{0}".format(i_layer))
-        #         weights = layer.weight.data.numpy().tolist()
-        #         self.weights_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
-        #         temp_epoch_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
+            for i_layer in range(len(self.conv_layers)):
+                layer = self.__getattr__("c{0}".format(i_layer))
+                weights = layer.weight.data.numpy().tolist()
+                self.weights_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
+                temp_epoch_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
 
-        #     for i_layer in range(len(self.layers)-1):
-        #         layer = self.__getattr__("h{0}".format(i_layer+1))
-        #         weights = layer.weight.data.numpy().tolist()
-        #         self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
-        #         temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+            for i_layer in range(len(self.layers)-1):
+                layer = self.__getattr__("h{0}".format(i_layer+1))
+                weights = layer.weight.data.numpy().tolist()
+                self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+                temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
 
-        #     weights = self.output.weight.data.numpy().tolist()
-        #     self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
-        #     temp_epoch_dict["epoch_{0}".format(epoch)].update({"output": weights})
-        #     # return partial done epochs via socketIO (each epoch gets added to the dict)
-        #     # create heatmap
-        #     if(epoch > 0):
-        #         newNodeStruct = False
+            weights = self.output.weight.data.numpy().tolist()
+            self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            temp_epoch_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            # return partial done epochs via socketIO (each epoch gets added to the dict)
+            # create heatmap
+            if(epoch > 0):
+                newNodeStruct = False
 
-        #     weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(temp_epoch_dict["epoch_{0}".format(epoch)], newNodeStruct)
-        #     if(epoch == self.num_epochs - 1):
-        #         isDone = True
-        #         emit('json', {'done': isDone, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
-        #     else:
-        #         emit('json', {'done': isDone, 'resultWeights' : temp_epoch_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
-            emit('json', {'msg': "epoch_{0}".format(epoch)})
+            weightMinMax, heatmapEpochData = self.calcHeatmapFromFile(temp_epoch_dict["epoch_{0}".format(epoch)], newNodeStruct)
+            # if(epoch == self.num_epochs - 1):
+            #     isDone = True
+            #     emit('json', {'done': isDone, 'resultWeights' : self.weights_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+            # else:
+            #     emit('json', {'done': isDone, 'resultWeights' : temp_epoch_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
+            emit('json', {'done': isDone, 'resultWeights' : temp_epoch_dict, 'resultHeatmapData': heatmapEpochData, 'resultWeightMinMax': weightMinMax})
             eventlet.sleep(1)
             print('emitted data')
 
-        # #save weights
-        # with open("static/data/weights/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
-        #     json.dump(self.weights_dict, f)
+        #save weights
+        with open("static/data/weights/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
+            json.dump(self.weights_dict, f)
 
-        # # save trained net
-        # torch.save(self.state_dict(), 'static/data/models/MLP_{convLayers}_{layers}_trained.pt'.format(**self.filename))
+        # save trained net
+        torch.save(self.state_dict(), 'static/data/models/MLP_{convLayers}_{layers}_trained.pt'.format(**self.filename))
 
     def test_net(self, criterion, testloader, device):
         # test the net
