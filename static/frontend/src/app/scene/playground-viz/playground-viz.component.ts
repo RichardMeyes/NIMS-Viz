@@ -77,7 +77,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
-        console.log(message);
+        console.log('playviz', message);
       });
 
     this.dataService.visualize

@@ -64,32 +64,32 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
-        const heatmapNormalConfig = this.dataService.optionData.getValue().heatmapNormalConfig;
-        const resultHeatmapData = message['resultHeatmapData'];
-        const resultWeightMinMax = message['resultWeightMinMax'];
-        heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
-        heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
-        this.applyingDataToHeatmaps(resultHeatmapData, heatmapNormalConfig);
+        // const heatmapNormalConfig = this.dataService.optionData.getValue().heatmapNormalConfig;
+        // const resultHeatmapData = message['resultHeatmapData'];
+        // const resultWeightMinMax = message['resultWeightMinMax'];
+        // heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
+        // heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
+        // this.applyingDataToHeatmaps(resultHeatmapData, heatmapNormalConfig);
 
-        // this.epochSliderConfig.epochValue = this.epochCounter;
-        const resultWeights = message['resultWeights'];
-        if (this.resetCounter) { this.epochCounter = 0; }
-        this.epochCounter++; console.log('called');
+        // // this.epochSliderConfig.epochValue = this.epochCounter;
+        // const resultWeights = message['resultWeights'];
+        // if (this.resetCounter) { this.epochCounter = 0; }
+        // this.epochCounter++; console.log('called');
 
-        const isDone = message['done'];
-        if (isDone) {
-          const lastEpoch = Object.keys(resultWeights)[Object.keys(resultWeights).length - 1];
+        // const isDone = message['done'];
+        // if (isDone) {
+        //   const lastEpoch = Object.keys(resultWeights)[Object.keys(resultWeights).length - 1];
 
-          this.dataService.vizWeights.next({ lastEpoch: resultWeights[lastEpoch] });
-          this.dataService.lastTraining.next(resultHeatmapData);
+        //   this.dataService.vizWeights.next({ lastEpoch: resultWeights[lastEpoch] });
+        //   this.dataService.lastTraining.next(resultHeatmapData);
 
-          this.resetCounter = true;
-        } else {
-          this.dataService.vizWeights.next(resultWeights);
-          this.dataService.lastTraining.next(null);
+        //   this.resetCounter = true;
+        // } else {
+        //   this.dataService.vizWeights.next(resultWeights);
+        //   this.dataService.lastTraining.next(null);
 
-          this.resetCounter = false;
-        }
+        //   this.resetCounter = false;
+        // }
       });
 
 
