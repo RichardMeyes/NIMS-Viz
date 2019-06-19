@@ -52,35 +52,45 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.activeSettingsTab = 0;
-
-    const currOption = this.dataService.optionData.getValue();
-    this.heatmapNormalConfig = currOption.heatmapNormalConfig;
-    this.drawFully = currOption.drawFully;
+    this.activeSceneTab = this.dataService.activeSceneTab.getValue();
 
 
-    this.dataService.activeSceneTab
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.activeSceneTab = val; });
-
-    this.dataService.resetOption
-      .pipe(
-        takeUntil(this.destroyed),
-        filter(val => val === true)
-      )
-      .subscribe(() => {
-        const currOption = this.dataService.optionData.getValue();
-        this.heatmapNormalConfig = currOption.heatmapNormalConfig;
-        this.drawFully = currOption.drawFully;
-      });
 
     if (this.router.url.includes('builder')) {
-      this.dataService.playgroundData
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          this.playgroundData = val;
+      this.playgroundData = this.dataService.playgroundData.getValue();
+      this.createForm();
+
+      this.dataService.resetPlaygroundForm
+        .pipe(
+          takeUntil(this.destroyed),
+          filter(val => val === true)
+        )
+        .subscribe(() => {
+          this.playgroundData = this.dataService.playgroundData.getValue();
           this.createForm();
         });
-    } else if (this.router.url.includes('archive') || this.router.url.includes('ablation')) {
+    }
+
+
+    if (this.router.url.includes('builder') || this.router.url.includes('archive')) {
+      const currOption = this.dataService.optionData.getValue();
+      this.heatmapNormalConfig = currOption.heatmapNormalConfig;
+      this.drawFully = currOption.drawFully;
+
+      this.dataService.resetOption
+        .pipe(
+          takeUntil(this.destroyed),
+          filter(val => val === true)
+        )
+        .subscribe(() => {
+          const defaultOption = this.dataService.optionData.getValue();
+          this.heatmapNormalConfig = defaultOption.heatmapNormalConfig;
+          this.drawFully = defaultOption.drawFully;
+        });
+    }
+
+
+    if (this.router.url.includes('archive') || this.router.url.includes('ablation')) {
       this.scanForFiles();
     }
   }
@@ -229,8 +239,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     // console.log(this.lastChannel);
   }
 
-  reset() {
+  resetForm() {
     this.dataService.playgroundData.next(new Playground());
+    this.dataService.resetPlaygroundForm.next(true);
   }
 
   scanForFiles(isNewlyCreated?: boolean) {

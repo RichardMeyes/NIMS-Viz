@@ -20,6 +20,7 @@ export class DataService {
   ablationTestResult: Subject<any>;
 
   trainNetwork: Subject<boolean>;
+  resetPlaygroundForm: Subject<boolean>;
   applyOption: Subject<boolean>;
   resetOption: Subject<boolean>;
   visualize: Subject<boolean>;
@@ -64,6 +65,7 @@ export class DataService {
     this.ablationTestResult = new Subject();
 
     this.trainNetwork = new Subject();
+    this.resetPlaygroundForm = new Subject();
     this.applyOption = new Subject();
     this.resetOption = new Subject();
     this.visualize = new Subject();
