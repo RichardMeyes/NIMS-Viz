@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { MatTabChangeEvent } from '@angular/material';
 
-import { takeUntil, take } from 'rxjs/operators';
+import { takeUntil, take, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { NetworkService } from '../network.service';
@@ -19,7 +19,7 @@ import { Option } from '../models/option.model';
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SettingsComponent implements OnInit, OnDestroy {
   activeSceneTab: number;
   activeSettingsTab: number;
 
@@ -31,7 +31,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   files; selectedFile;
 
-  epochSliderConfig;
   heatmapNormalConfig;
   drawFully;
 
@@ -58,11 +57,21 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.heatmapNormalConfig = currOption.heatmapNormalConfig;
     this.drawFully = currOption.drawFully;
 
-    this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
 
     this.dataService.activeSceneTab
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.activeSceneTab = val; });
+
+    this.dataService.resetOption
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        const currOption = this.dataService.optionData.getValue();
+        this.heatmapNormalConfig = currOption.heatmapNormalConfig;
+        this.drawFully = currOption.drawFully;
+      });
 
     if (this.router.url.includes('builder')) {
       this.dataService.playgroundData
@@ -75,8 +84,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.scanForFiles();
     }
   }
-
-  ngAfterViewInit() { }
 
   createForm() {
     this.playgroundForm = this.fb.group({
@@ -285,24 +292,14 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       heatmapNormalConfig: this.heatmapNormalConfig,
       drawFully: this.drawFully
     });
-    this.createHeatmap(0, true);
 
     this.dataService.visualize.next(true);
-
-
-
-
-
-
-
-
-    this.dataService.vizTopology.next(null);
-    this.dataService.vizWeights.next(null);
-    this.dataService.filterWeights.next(null);
+    // this.dataService.filterWeights.next(null);
   }
 
   resetOptions() {
     this.dataService.optionData.next(new Option(new HeatmapConfig(), false));
+    this.dataService.resetOption.next(true);
   }
 
   applyOptions() {
@@ -310,48 +307,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
       heatmapNormalConfig: this.heatmapNormalConfig,
       drawFully: this.drawFully
     });
-
-    if (this.router.url.includes('builder')) {
-      if (this.dataService.lastTraining.getValue()) {
-        const param = {
-          data: this.dataService.lastTraining.getValue(),
-          heatmapNormalConfig: this.heatmapNormalConfig
-        };
-        setTimeout(() => {
-          this.dataService.createHeatmap.next(param);
-        }, 200);
-      }
-    } else if (this.router.url.includes('archive')) {
-      if (this.epochSliderConfig) {
-        this.createHeatmap(this.epochSliderConfig.epochValue - 1, false);
-      }
-    }
+    this.dataService.applyOption.next(true);
   }
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
     this.activeSettingsTab = tabChangeEvent.index;
-  }
-
-  createHeatmap(epoch, newFile) {
-    this.networkService.createHeatmapFromFile(
-      this.selectedFile,
-      epoch,
-      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-      this.drawFully,
-      newFile,
-      this.heatmapNormalConfig.density,
-      undefined
-    )
-      .pipe(take(1))
-      .subscribe(data => {
-        const param = {
-          data: data,
-          heatmapNormalConfig: this.heatmapNormalConfig
-        };
-        console.clear();
-        console.log(param);
-        this.dataService.createHeatmap.next(param);
-      });
   }
 
   ngOnDestroy() {

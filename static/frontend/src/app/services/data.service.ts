@@ -8,6 +8,7 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
   providedIn: 'root'
 })
 export class DataService {
+  activeSceneTab: BehaviorSubject<number>;
   topology: BehaviorSubject<any>;
   playgroundData: BehaviorSubject<Playground>;
   optionData: BehaviorSubject<Option>;
@@ -19,6 +20,8 @@ export class DataService {
   ablationTestResult: Subject<any>;
 
   trainNetwork: Subject<boolean>;
+  applyOption: Subject<boolean>;
+  resetOption: Subject<boolean>;
   visualize: Subject<boolean>;
   testNetwork: Subject<boolean>;
   resetNetwork: Subject<boolean>;
@@ -37,11 +40,8 @@ export class DataService {
   readonly bottomMargin: number;
 
   readonly heatmapNodeConfig;
-  createHeatmap: BehaviorSubject<any>;
 
 
-  vizTopology: BehaviorSubject<any>;
-  vizWeights: BehaviorSubject<any>;
 
   filterWeights: BehaviorSubject<any>;
   selectedFilter: BehaviorSubject<any>;
@@ -49,12 +49,10 @@ export class DataService {
 
 
 
-  activeSceneTab: BehaviorSubject<number>;
-
-  lastTraining: BehaviorSubject<any>;
 
 
   constructor() {
+    this.activeSceneTab = new BehaviorSubject(0);
     this.topology = new BehaviorSubject(undefined);
     this.playgroundData = new BehaviorSubject(new Playground());
     this.optionData = new BehaviorSubject(new Option(new HeatmapConfig(), false));
@@ -66,6 +64,8 @@ export class DataService {
     this.ablationTestResult = new Subject();
 
     this.trainNetwork = new Subject();
+    this.applyOption = new Subject();
+    this.resetOption = new Subject();
     this.visualize = new Subject();
     this.testNetwork = new Subject();
     this.resetNetwork = new Subject();
@@ -98,19 +98,13 @@ export class DataService {
         return tempobj;
       }
     };
-    this.createHeatmap = new BehaviorSubject(null);
 
 
-    this.vizTopology = new BehaviorSubject(null);
-    this.vizWeights = new BehaviorSubject(null);
 
     this.filterWeights = new BehaviorSubject(null);
     this.selectedFilter = new BehaviorSubject(null);
 
 
-    this.activeSceneTab = new BehaviorSubject(0);
-
-    this.lastTraining = new BehaviorSubject(null);
 
   }
 }

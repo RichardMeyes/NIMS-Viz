@@ -53,24 +53,13 @@ export class AppComponent implements OnInit, OnDestroy {
   mainNavClicked() {
     this.snav.close();
 
+    this.dataService.activeSceneTab.next(0);
+
     this.dataService.playgroundData.next(new Playground());
     this.dataService.optionData.next(new Option(new HeatmapConfig(), false));
-
-
-
-
-
-
-
-
-
-    this.dataService.activeSceneTab.next(0); 
-
     this.dataService.selectedFile.next(null);
 
-    this.dataService.vizTopology.next(null);
-    this.dataService.vizWeights.next(null);
-    this.dataService.filterWeights.next(null);
+    // this.dataService.filterWeights.next(null);
   }
 
   ngOnDestroy(): void {
