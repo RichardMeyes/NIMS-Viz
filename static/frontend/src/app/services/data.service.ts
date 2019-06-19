@@ -8,83 +8,72 @@ import { HeatmapConfig } from '../models/heatmap-config.model';
   providedIn: 'root'
 })
 export class DataService {
-  activeSceneTab: BehaviorSubject<number>;
-  topology: BehaviorSubject<any>;
-  playgroundData: BehaviorSubject<Playground>;
-  optionData: BehaviorSubject<Option>;
-  selectedFile: BehaviorSubject<string>;
-  detachedNodes: BehaviorSubject<any>;
-  epochSliderConfig: BehaviorSubject<any>;
+  toolbarHeight: BehaviorSubject<number>;
 
-  classifyResult: Subject<any>;
+  activeSceneTab: number;
+
+  playgroundData: Playground;
+  optionData: Option;
+  selectedFile: string;
+
+  topology;
+  epochSliderConfig;
+  detachedNodes;
+
   ablationTestResult: Subject<any>;
+  classifyResult: Subject<any>;
 
   trainNetwork: Subject<boolean>;
   resetPlaygroundForm: Subject<boolean>;
   applyOption: Subject<boolean>;
   resetOption: Subject<boolean>;
   visualize: Subject<boolean>;
+  epochSliderChange: Subject<boolean>;
   testNetwork: Subject<boolean>;
   resetNetwork: Subject<boolean>;
-  epochSliderChange: Subject<boolean>;
 
 
 
 
 
-
-
-
-
-  toolbarHeight: BehaviorSubject<number>;
   readonly tabsHeight: number;
   readonly bottomMargin: number;
-
   readonly heatmapNodeConfig;
-
-
 
   filterWeights: BehaviorSubject<any>;
   selectedFilter: BehaviorSubject<any>;
 
-
-
-
-
-
   constructor() {
-    this.activeSceneTab = new BehaviorSubject(0);
-    this.topology = new BehaviorSubject(undefined);
-    this.playgroundData = new BehaviorSubject(new Playground());
-    this.optionData = new BehaviorSubject(new Option(new HeatmapConfig(), false));
-    this.selectedFile = new BehaviorSubject(undefined);
-    this.detachedNodes = new BehaviorSubject([]);
-    this.epochSliderConfig = new BehaviorSubject(undefined);
+    this.toolbarHeight = new BehaviorSubject(56);
 
-    this.classifyResult = new Subject();
+    this.activeSceneTab = 0;
+
+    this.playgroundData = new Playground();
+    this.optionData = new Option(new HeatmapConfig(), false);
+    this.selectedFile = undefined;
+
+    this.topology = undefined;
+    this.epochSliderConfig = undefined;
+    this.detachedNodes = [];
+
     this.ablationTestResult = new Subject();
+    this.classifyResult = new Subject();
 
     this.trainNetwork = new Subject();
     this.resetPlaygroundForm = new Subject();
     this.applyOption = new Subject();
     this.resetOption = new Subject();
     this.visualize = new Subject();
+    this.epochSliderChange = new Subject();
     this.testNetwork = new Subject();
     this.resetNetwork = new Subject();
-    this.epochSliderChange = new Subject();
 
 
 
 
 
-
-
-
-
-    this.toolbarHeight = new BehaviorSubject(56);
     this.tabsHeight = 49;
     this.bottomMargin = 72;
-
     this.heatmapNodeConfig = {
       radius: 4,
       blur: 0,
@@ -101,12 +90,7 @@ export class DataService {
       }
     };
 
-
-
     this.filterWeights = new BehaviorSubject(null);
     this.selectedFilter = new BehaviorSubject(null);
-
-
-
   }
 }

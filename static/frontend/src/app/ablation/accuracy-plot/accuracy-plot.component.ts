@@ -39,7 +39,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
+          this.selectedFile = this.dataService.selectedFile;
           return this.playgroundService.getTopology(this.selectedFile);
         })
       )
@@ -57,7 +57,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         const layers = [];
         const units = [];
 
-        this.dataService.detachedNodes.getValue().forEach(element => {
+        this.dataService.detachedNodes.forEach(element => {
           layers.push(element.layer - 1);
           units.push(element.unit);
         });

@@ -43,7 +43,7 @@ export class TSNEPlotComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
-          if (this.dataService.detachedNodes.getValue().length === 0) {
+          if (this.dataService.detachedNodes.length === 0) {
             this.isInit = true;
           } else {
             this.isInit = false;

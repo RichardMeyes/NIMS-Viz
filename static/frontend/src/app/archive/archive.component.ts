@@ -36,8 +36,8 @@ export class ArchiveComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
-          this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
 
           return this.playgroundService.getTopology(this.selectedFile);
         })
@@ -71,7 +71,7 @@ export class ArchiveComponent implements OnInit, OnDestroy {
   }
 
   epochSliderChange() {
-    this.dataService.epochSliderConfig.next(this.epochSliderConfig);
+    this.dataService.epochSliderConfig = this.epochSliderConfig;
     this.dataService.epochSliderChange.next(true);
   }
 

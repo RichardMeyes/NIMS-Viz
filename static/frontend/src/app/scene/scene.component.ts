@@ -58,7 +58,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
-        const heatmapNormalConfig = this.dataService.optionData.getValue().heatmapNormalConfig;
+        const heatmapNormalConfig = this.dataService.optionData.heatmapNormalConfig;
 
         const resultHeatmapData = message['resultHeatmapData'];
         const resultWeightMinMax = message['resultWeightMinMax'];
@@ -76,10 +76,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
-          this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
 
-          const optionData = this.dataService.optionData.getValue();
+          const optionData = this.dataService.optionData;
           this.heatmapNormalConfig = optionData.heatmapNormalConfig;
           this.drawFully = optionData.drawFully;
 
@@ -104,9 +104,9 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
+          this.selectedFile = this.dataService.selectedFile;
 
-          const optionData = this.dataService.optionData.getValue();
+          const optionData = this.dataService.optionData;
           this.heatmapNormalConfig = optionData.heatmapNormalConfig;
           this.drawFully = optionData.drawFully;
 
@@ -130,10 +130,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
-          this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
 
-          const optionData = this.dataService.optionData.getValue();
+          const optionData = this.dataService.optionData;
           this.heatmapNormalConfig = optionData.heatmapNormalConfig;
           this.drawFully = optionData.drawFully;
 
@@ -319,7 +319,7 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
-    this.dataService.activeSceneTab.next(tabChangeEvent.index);
+    this.dataService.activeSceneTab = tabChangeEvent.index;
   }
 
   ngOnDestroy() {

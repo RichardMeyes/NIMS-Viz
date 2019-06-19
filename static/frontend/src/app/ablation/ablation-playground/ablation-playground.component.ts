@@ -64,7 +64,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
+          this.selectedFile = this.dataService.selectedFile;
           const untrainedFile = this.selectedFile.replace('.json', '_untrained.json');
 
           return this.playgroundService.getUntrainedWeights(untrainedFile);
@@ -99,7 +99,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroyed))
       .subscribe(() => {
         this.detachedNodes = [];
-        this.dataService.detachedNodes.next(this.detachedNodes);
+        this.dataService.detachedNodes = this.detachedNodes;
 
         d3.selectAll('.ablated')
           .classed('ablated', false);
@@ -282,7 +282,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           self.detachedNodes.splice(ablated, 1);
         }
 
-        self.dataService.detachedNodes.next(self.detachedNodes);
+        self.dataService.detachedNodes = self.detachedNodes;
         d3.select(this)
           .classed('ablated', !d3.select(this).classed('ablated'));
       }
@@ -348,7 +348,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           self.detachedNodes.splice(ablated, 1);
         }
 
-        self.dataService.detachedNodes.next(self.detachedNodes);
+        self.dataService.detachedNodes = self.detachedNodes;
         d3.select(this)
           .classed('ablated', !d3.select(this).classed('ablated'));
       }

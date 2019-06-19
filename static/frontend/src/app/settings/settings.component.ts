@@ -52,12 +52,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.activeSettingsTab = 0;
-    this.activeSceneTab = this.dataService.activeSceneTab.getValue();
+    this.activeSceneTab = this.dataService.activeSceneTab;
 
 
 
     if (this.router.url.includes('builder')) {
-      this.playgroundData = this.dataService.playgroundData.getValue();
+      this.playgroundData = this.dataService.playgroundData;
       this.createForm();
 
       this.dataService.resetPlaygroundForm
@@ -66,14 +66,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
           filter(val => val === true)
         )
         .subscribe(() => {
-          this.playgroundData = this.dataService.playgroundData.getValue();
+          this.playgroundData = this.dataService.playgroundData;
           this.createForm();
         });
     }
 
 
     if (this.router.url.includes('builder') || this.router.url.includes('archive')) {
-      const currOption = this.dataService.optionData.getValue();
+      const currOption = this.dataService.optionData;
       this.heatmapNormalConfig = currOption.heatmapNormalConfig;
       this.drawFully = currOption.drawFully;
 
@@ -83,7 +83,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           filter(val => val === true)
         )
         .subscribe(() => {
-          const defaultOption = this.dataService.optionData.getValue();
+          const defaultOption = this.dataService.optionData;
           this.heatmapNormalConfig = defaultOption.heatmapNormalConfig;
           this.drawFully = defaultOption.drawFully;
         });
@@ -225,8 +225,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
 
 
-    this.dataService.playgroundData.next(this.playgroundData);
-    this.dataService.topology.next(objToSend);
+    this.dataService.playgroundData = this.playgroundData;
+    this.dataService.topology = objToSend;
     this.dataService.trainNetwork.next(true);
 
 
@@ -240,7 +240,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   resetForm() {
-    this.dataService.playgroundData.next(new Playground());
+    this.dataService.playgroundData = new Playground();
     this.dataService.resetPlaygroundForm.next(true);
   }
 
@@ -275,7 +275,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
           } else {
             this.files = newFileList;
 
-            const selectedFile = this.dataService.selectedFile.getValue();
+            const selectedFile = this.dataService.selectedFile;
             if (selectedFile) {
               this.selectedFileClick(selectedFile);
             } else {
@@ -291,33 +291,36 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   visualize() {
-    this.dataService.selectedFile.next(this.selectedFile);
+    this.dataService.selectedFile = this.selectedFile;
 
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
-    this.dataService.epochSliderConfig.next(nextEpochConfig);
+    this.dataService.epochSliderConfig = nextEpochConfig;
 
-    this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
-    this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
-    this.dataService.optionData.next({
-      heatmapNormalConfig: this.heatmapNormalConfig,
-      drawFully: this.drawFully
-    });
+    if (this.router.url.includes('archive')) {
+      this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
+      this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
+      this.dataService.optionData = {
+        heatmapNormalConfig: this.heatmapNormalConfig,
+        drawFully: this.drawFully
+      };
+    }
+
 
     this.dataService.visualize.next(true);
     // this.dataService.filterWeights.next(null);
   }
 
   resetOptions() {
-    this.dataService.optionData.next(new Option(new HeatmapConfig(), false));
+    this.dataService.optionData = new Option(new HeatmapConfig(), false);
     this.dataService.resetOption.next(true);
   }
 
   applyOptions() {
-    this.dataService.optionData.next({
+    this.dataService.optionData = {
       heatmapNormalConfig: this.heatmapNormalConfig,
       drawFully: this.drawFully
-    });
+    };
     this.dataService.applyOption.next(true);
   }
 

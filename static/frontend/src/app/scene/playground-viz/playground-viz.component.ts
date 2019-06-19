@@ -73,7 +73,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         filter(val => val === true)
       )
       .subscribe(() => {
-        this.inputTopology = this.dataService.topology.getValue();
+        this.inputTopology = this.dataService.topology;
         this.drawTopology();
       });
 
@@ -89,8 +89,8 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyed),
         filter(val => val === true),
         concatMap(() => {
-          this.selectedFile = this.dataService.selectedFile.getValue();
-          this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
 
           return this.playgroundService.getTopology(this.selectedFile);
         }),
@@ -112,7 +112,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         filter(val => val === true)
       )
       .subscribe(() => {
-        this.epochSliderConfig = this.dataService.epochSliderConfig.getValue();
+        this.epochSliderConfig = this.dataService.epochSliderConfig;
         this.drawWeights(true);
       });
 
