@@ -3,7 +3,6 @@ from flask_socketio import SocketIO, emit, send
 import eventlet
 from flask_cors import CORS, cross_origin
 from werkzeug.routing import BaseConverter
-from werkzeug.utils import secure_filename
 
 import os
 import json
@@ -19,7 +18,6 @@ FRONTEND_DIR = "static/frontend/dist"
 ASSETS_DIR = "static/frontend/dist/assets"
 SOURCE_DIR = "static/frontend/dist/assets/ann/h5/"
 DESTINATION_DIR = "static/frontend/dist/assets/ann/json"
-DIGIT_DIR = "static/data/digit"
 # set up Flask webservices
 app = Flask(__name__, static_folder=FRONTEND_DIR)
 CORS(app)
@@ -27,7 +25,6 @@ CORS(app)
 app.config['SECRET_KEY'] = 'braindead'
 app.config['SOURCE_DIR'] = SOURCE_DIR
 app.config['DESTINATION_DIR'] = DESTINATION_DIR
-app.config['DIGIT_DIR'] = DIGIT_DIR
 # keep socketio alive for x minutes (60s*x)
 socketio = SocketIO(app, ping_timeout=(60*60))
 
@@ -135,29 +132,6 @@ def getTopology():
     return json.dumps(data)
 
 
-@app.route("/getAllWeights", methods=["POST", "OPTIONS"])
-@cross_origin()
-def getAllWeights():
-    params = request.get_json(force=True)
-
-    with open(params['selectedFile']) as f:
-        data = json.load(f)
-    returnEpoch = 'epoch_' + str(params['currEpoch'])
-    
-    return json.dumps(data[returnEpoch])
-
-
-@app.route("/getUntrainedWeights", methods=["POST", "OPTIONS"])
-@cross_origin()
-def getUntrainedWeights():
-    params = request.get_json(force=True)
-
-    with open(params['selectedFile']) as f:
-        data = json.load(f)
-    
-    return json.dumps(data)
-
-
 @app.route("/getWeights", methods=["POST", "OPTIONS"])
 @cross_origin()
 def getWeights():
@@ -165,8 +139,9 @@ def getWeights():
 
     with open(params['selectedFile']) as f:
         data = json.load(f)
-
-    return json.dumps(data)
+    returnEpoch = 'epoch_' + str(params['currEpoch'])
+    
+    return json.dumps(data[returnEpoch])
 
 
 @app.route("/setup/filesearch", methods=["GET", "OPTIONS"])
@@ -251,38 +226,6 @@ def default_error_handler(e):
 @app.errorhandler(404)
 def page_not_found(e):
     return angular()
-
-
-@app.route("/saveDigit", methods=["POST", "OPTIONS"])
-@cross_origin()
-def saveDigit():
-    digit = request.files['digit']
-
-    if digit:
-        if not(os.path.exists(app.config['DIGIT_DIR'])):
-            os.mkdir(app.config['DIGIT_DIR'])
-
-        filename = secure_filename(digit.filename)
-        digit.save(os.path.join(app.config['DIGIT_DIR'], filename))
-
-    return json.dumps({})
-
-@app.route("/testDigit", methods=["POST", "OPTIONS"])
-@cross_origin()
-def testDigit():
-    params = request.get_json()
-    topology = params['topology']
-    filename = params['filename']
-    layers = params['layers']
-    units = params['units']
-
-    net_out, nodes_dict = MLP.test_digit(topology, filename, layers, units)
-    result = {
-        "net_out": net_out,
-        "nodes_dict": nodes_dict
-    }
-    
-    return json.dumps(result)
 
 
 if __name__ == "__main__":

@@ -1,14 +1,15 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { BuilderComponent } from './builder/builder.component';
-import { ArchiveComponent } from './archive/archive.component';
-import { AblationComponent } from './ablation/ablation.component';
+import { LandingPageComponent } from './components/landing-page/landing-page.component';
+import { BrainViewComponent } from './components/brain-view/brain-view.component';
+import { AblationViewComponent } from './components/ablation-view/ablation-view.component';
+import { LayerViewComponent } from './components/layer-view/layer-view.component';
 
 const routes: Routes = [
-  { path: 'builder', component: BuilderComponent },
-  { path: 'archive', component: ArchiveComponent },
-  { path: 'ablation', component: AblationComponent },
-  { path: '', redirectTo: 'builder', pathMatch: 'full' }
+  {path: '', component: LandingPageComponent},
+  {path: 'brain-view', component: BrainViewComponent},
+  {path: 'ablation-view', component: AblationViewComponent},
+  {path: 'layer-view', component: LayerViewComponent}
 ];
 
 @NgModule({
@@ -16,3 +17,10 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
+
+export const routingComponents = 
+  [LandingPageComponent, 
+    BrainViewComponent,
+    AblationViewComponent,
+    LayerViewComponent
+  ];

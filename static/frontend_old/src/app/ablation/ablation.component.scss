@@ -1,0 +1,25 @@
+.loading {
+    position: fixed;
+    width: 100vw;
+    height: calc(100vh - 64px);
+    z-index: 10;
+}
+
+.test-network {
+    position: absolute;
+    bottom: 5.5rem;
+    width: 50vw;
+    z-index: 10;
+}
+
+.right-chart {
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    width: 50vw;
+    height: calc(100vh - 64px);
+}
+
+.visible { visibility: visible; }
+.hidden { visibility: hidden; }

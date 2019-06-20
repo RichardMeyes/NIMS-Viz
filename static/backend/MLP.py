@@ -15,23 +15,15 @@ from flask_socketio import emit, send
 import eventlet
 import static.backend.utility as utility
 import static.backend.HEATMAP as HEATMAP
-import cv2
 
 
 class Net(nn.Module):
-    def __init__(self, num_epochs, conv_layers, layers):
+    def __init__(self, num_epochs, conv_layers, layers, h0Shape=1):
         # create Net
         super(Net, self).__init__()
-
         self.topology_dict = dict()
-
-        self.nodes_dict = dict()
         self.weights_dict = dict()
-
         self.filename = dict()
-
-        self.widthLinear = 28
-        self.heightLinear = 28
 
 
         # Conv Layers
@@ -40,37 +32,29 @@ class Net(nn.Module):
             self.__setattr__("c{0}".format(i_layer),
                              nn.Conv2d(self.conv_layers[i_layer]["inChannel"], self.conv_layers[i_layer]["outChannel"], kernel_size=self.conv_layers[i_layer]["kernelSize"], stride=self.conv_layers[i_layer]["stride"], padding=self.conv_layers[i_layer]["padding"]))
 
-            self.widthLinear = np.floor(((self.widthLinear - self.conv_layers[i_layer]["kernelSize"] + (2 * self.conv_layers[i_layer]["padding"])) / self.conv_layers[i_layer]["stride"]) + 1)
-            self.widthLinear = np.floor(((self.widthLinear - 2) / 2) + 1)
-
-            self.heightLinear = np.floor(((self.heightLinear - self.conv_layers[i_layer]["kernelSize"] + (2 * self.conv_layers[i_layer]["padding"])) / self.conv_layers[i_layer]["stride"]) + 1)
-            self.heightLinear = np.floor(((self.heightLinear - 2) / 2) + 1)
-
 
         # FC Layers
         self.layers = layers
         self.num_epochs = num_epochs
         
-        self.h0 = nn.Linear(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear, self.layers[0])
+        self.h0 = nn.Linear(h0Shape, self.layers[0])
         for i_layer in range(len(layers)-1):
             self.__setattr__("h{0}".format(i_layer+1),
                              nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
         self.output = nn.Linear(self.layers[-1], 10)
 
     def forward(self, x):
-        self.nodess_dict = {}
-
         if len(self.conv_layers):
             x = x.view(-1, 1, 28, 28)
             for i_layer in range(len(self.conv_layers)):
                 x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
-                self.nodes_dict.update({"c{0}".format(i_layer): x.data.numpy().tolist()})
                 x = F.max_pool2d(x, kernel_size=2, stride=2)
             x = x.view(x.shape[0], -1)
 
+        self.h0 = nn.Linear(x.shape[1], self.layers[0])
+        self.topology_dict["h0Shape"] = x.shape[1]
         for i_layer in range(len(self.layers)):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
-            self.nodes_dict.update({"h{0}".format(i_layer+1): x.data.numpy().tolist()})
 
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         return x
@@ -78,7 +62,6 @@ class Net(nn.Module):
     def save_topology(self):
         self.topology_dict["conv_layers"] = self.conv_layers
         self.topology_dict["layers"] = self.layers
-        self.topology_dict["h0Shape0"] = self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear
 
         with open("static/data/topologies/MLP_{convLayers}_{layers}.json".format(**self.filename), "w") as f:
             json.dump(self.topology_dict, f)
@@ -91,29 +74,21 @@ class Net(nn.Module):
         for conv_layer in self.conv_layers:
             self.filename["convLayers"].append(conv_layer["outChannel"])
 
+        epoch = 0
 
         weights = self.h0.weight.data.numpy().tolist()
-        self.weights_dict = {"h0": weights}
-
-        for i_layer in range(len(self.conv_layers)):
-                layer = self.__getattr__("c{0}".format(i_layer))
-                weights = layer.weight.data.numpy().tolist()
-                self.weights_dict.update({"c{0}".format(i_layer): weights})
-
+        self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
         for i_layer in range(len(self.layers)-1):
             layer = self.__getattr__("h{0}".format(i_layer+1))
             weights = layer.weight.data.numpy().tolist()
-            self.weights_dict.update({"h{0}".format(i_layer+1): weights})
-
+            self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
         weights = self.output.weight.data.numpy().tolist()
-        self.weights_dict.update({"output": weights})
+        self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
         
         with open("static/data/weights/MLP_{convLayers}_{layers}_untrained.json".format(**self.filename), "w") as f:
             json.dump(self.weights_dict, f)
 
     def train_net(self, device, trainloader, criterion, optimizer):
-        self.weights_dict = dict()
-
         log_interval = 10
         newNodeStruct = True
         isDone = False
@@ -139,7 +114,7 @@ class Net(nn.Module):
             # store weights after each epoch
             temp_epoch_dict = dict()
             weights = self.h0.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)] = {"h0": weights}
+            self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
             temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
 
             for i_layer in range(len(self.conv_layers)):
@@ -212,11 +187,7 @@ class Net(nn.Module):
             num = (testloader.dataset.test_labels.numpy() == i_label).sum()
             acc_class[i_label] = correct_class[i_label] / num
         return acc, correct_labels, acc_class, class_labels
-
-    def test_net_digit(self, digit):
-        net_out = self(digit)
-        return net_out.tolist()
-
+    
     def calcHeatmapFromFile(self, epochWeights, newNodeStruct):
         drawFully = False
         weightMinMax = [0,0]
@@ -258,7 +229,7 @@ def mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layer
 def mlp_ablation(topology, filename, ko_layers, ko_units):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"])
+    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"], h0Shape=topology["h0Shape"])
     # net.to(device)
     net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
     net.eval()
@@ -268,64 +239,17 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
+    ko_layers = map(lambda x: x - len(topology["conv_layers"]), ko_layers)
     
     for i_layer, i_unit in zip(ko_layers, ko_units):
-        if i_layer < len(topology["conv_layers"]):
-            print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
-
-            n_inputs = net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit].shape
-            net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-            net.__getattr__("c{0}".format(i_layer)).bias.data[i_unit] = 0
-        else:
-            i_layer = i_layer - len(topology["conv_layers"])
-            print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
-
-            n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape0"]
-            net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-            net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
-
-
+        print("knockout layer {0}, unit {1}".format(i_layer, i_unit))
+        n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape"]
+        net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
+        net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
     acc, correct_labels, acc_class, class_labels = net.test_net(criterion, testloader, device)
 
     return acc, correct_labels, acc_class, class_labels
 
-
-def test_digit(topology, filename, ko_layers, ko_units):
-    digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
-    digit = cv2.resize(digit, (28, 28))
-
-    digit = digit / 255.0
-    digit[digit == 0] = -1
-    digit = torch.from_numpy(digit).float()
-    digit = digit.view(-1, 28 * 28)
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"])
-    net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
-    net.eval()
-    criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
-
-
-    for i_layer, i_unit in zip(ko_layers, ko_units):
-        if i_layer < len(topology["conv_layers"]):
-            print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
-
-            n_inputs = net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit].shape
-            net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-            net.__getattr__("c{0}".format(i_layer)).bias.data[i_unit] = 0
-        else:
-            i_layer = i_layer - len(topology["conv_layers"])
-            print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
-
-            n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape0"]
-            net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-            net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
-
-
-    net_out = net.test_net_digit(digit)
-
-    return net_out, net.nodes_dict
 
 # def mlpContinue():
 #     net.train_net(device, trainloader, criterion, optimizer)
