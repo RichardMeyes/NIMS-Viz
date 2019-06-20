@@ -19,7 +19,7 @@ def getEpochAndWeightLimitsFromFile(filePath):
 
 def getWeightsFromEpoch(epoch, startMinMax):
     for key in epoch:
-        if(key.find('h') != -1):
+        if(not key.startswith("c") and key != "h0"):
             # print('key sind auch die input output values? die duerfen nicht in min/max einberechnet werden oder?')
             # print(key)
             # min and max used twice because of nested values

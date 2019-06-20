@@ -147,7 +147,7 @@ class Net(nn.Module):
             temp_epoch_dict = dict()
             weights = self.h0.weight.data.numpy().tolist()
             self.weights_dict["epoch_{0}".format(epoch)] = {"h0": weights}
-            temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            temp_epoch_dict["epoch_{0}".format(epoch)] = {"h0": weights}
 
             for i_layer in range(len(self.conv_layers)):
                 layer = self.__getattr__("c{0}".format(i_layer))
@@ -228,7 +228,7 @@ class Net(nn.Module):
     def calcHeatmapFromFile(self, epochWeights, newNodeStruct):
         drawFully = False
         weightMinMax = [0,0]
-        weightMinMax = utility.getWeightsFromEpoch(epochWeights,weightMinMax)
+        weightMinMax = utility.getWeightsFromEpoch(epochWeights, weightMinMax)
         print('weightMinMax in mlp: ', weightMinMax)
         density = 5
         heatmapObj = HEATMAP.Heatmap()
