@@ -1,10 +1,14 @@
 import { NgModule } from '@angular/core';
 
-import { MatSelectModule } from '@angular/material/select';
+import {MatMenuModule} from '@angular/material/menu';
 
 @NgModule({
-    imports: [MatSelectModule],
-    exports: [MatSelectModule],
+    imports: [
+        MatMenuModule
+    ],
+    exports: [
+        MatMenuModule
+    ],
     declarations: []
 })
 export class MaterialModule {}

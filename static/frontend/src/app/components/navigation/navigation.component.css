@@ -63,6 +63,10 @@ h1 {
     font-size: 18px;
     font-weight: bolder;
     color: rgb(27, 27, 27);
+
+    -ms-user-select: None; 
+    -moz-user-select: None; 
+    -webkit-user-select: None; 
 }
 .net-selector-dropdown {
     display: flex;

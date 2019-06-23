@@ -1,3 +1,5 @@
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+
 *:focus {outline:none !important}
 
 * { font-family: Calibri; }
@@ -29,3 +31,12 @@
 }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.mat-menu-item {
+    font-family: Calibri;
+    font-size: 18px;
+    font-weight: bolder;
+}
+.mat-menu-item:hover {
+    background-color: rgb(221, 175, 23, 0.25)!important;
+}
