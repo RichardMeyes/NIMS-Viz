@@ -15,4 +15,7 @@
         <div>Ablation Mode</div>
     </div>
     <!-- <i class="pic fas fa-dumbbell"></i> -->
+    <div [ngClass]="testCom === 'OK' ? 'status' : 'status-fail'">
+        Backend Status: {{testCom}}
+    </div>
 </div>

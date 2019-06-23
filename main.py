@@ -38,9 +38,12 @@ class RegexConverter(BaseConverter):
 app.url_map.converters['regex'] = RegexConverter
 
 
-@app.route("/")
-def angular():
-    return send_from_directory(FRONTEND_DIR, "index.html")
+@app.route("/", methods=["GET"])
+@cross_origin()
+def test():
+    return json.dumps("OK")
+# def angular():
+#     return send_from_directory(FRONTEND_DIR, "index.html")
 
 
 @app.route("/<regex('(\w*\.)*(css|js)'):path>")

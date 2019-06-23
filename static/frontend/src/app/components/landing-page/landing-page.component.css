@@ -42,3 +42,19 @@
     font-size: 35px;
     font-weight: bolder;
 }
+
+.status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 15px;
+    color: green;
+}
+
+.status-fail {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 15px;
+    color: rgb(255, 70, 70);
+}

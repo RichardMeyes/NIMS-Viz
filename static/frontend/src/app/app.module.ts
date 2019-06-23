@@ -5,6 +5,12 @@ import { AppRoutingModule, routingComponents } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { NavigationComponent } from './components/navigation/navigation.component';
 
+import { MaterialModule } from './modules/material.module'
+
+import { HttpClientModule } from '@angular/common/http';
+import { BackendCommunicationService } from './backendCommunication/backend-communication.service';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -14,8 +20,11 @@ import { NavigationComponent } from './components/navigation/navigation.componen
   imports: [
     BrowserModule,
     AppRoutingModule,
+    HttpClientModule,
+    BrowserAnimationsModule,
+    MaterialModule
   ],
-  providers: [],
+  providers: [BackendCommunicationService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
