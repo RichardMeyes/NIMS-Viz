@@ -57,10 +57,12 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.defaultSettings = {
       rectSide: 20,
       nodeRadius: 10,
-      color: '#373737',
+      // color: '#373737',
+      color: 'royalblue', //BALIKIN JADI COLOR YG ATAS
       nodeOpacity: .5,
       nodeStroke: 0,
-      duration: 500
+      duration: 500,
+      unitGutter: 5
     };
 
     this.dataService.toolbarHeight
@@ -142,22 +144,47 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     const filteredTopology = [];
     const filteredEdges = [];
 
+    let unitsPerColumn;
+    const unitSpacing = { otherColumns: 0, lastColumn: 0 };
+
     convLayers = convLayers.concat(this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel));
     layers = layers.concat(this.inputTopology['layers'].map(layer => +layer));
     layers.push(10);
 
 
+    unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.rectSide + this.defaultSettings.unitGutter));
+    unitSpacing.otherColumns = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
     convLayers.forEach((convLayer, convLayerIndex) => {
       let nextLayer = layers[0];
       if (convLayerIndex < convLayers.length - 1) {
         nextLayer = convLayers[convLayerIndex + 1];
       }
 
+      const totalColumns = { layer: 1, nextLayer: 1 };
+      const column = { layer: -1, nextLayer: -1 };
+      if (convLayer > unitsPerColumn) { totalColumns.layer = Math.ceil(convLayer / unitsPerColumn); }
+      if (nextLayer > unitsPerColumn) { totalColumns.nextLayer = Math.ceil(nextLayer / unitsPerColumn); }
+
+      if (totalColumns.layer % 2 === 1) {
+        column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+      } else {
+        column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+      }
+
+      unitSpacing.lastColumn = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
+      if (convLayer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (convLayer % unitsPerColumn); }
+
       for (let i = 0; i < convLayer; i++) {
+        let currUnitSpacing = unitSpacing.otherColumns;
+        if (i % unitsPerColumn === 0) { column.layer++; }
+        if (Math.floor(i / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+
         filteredTopology.push({
           layer: convLayerIndex,
           unit: i,
-          unitSpacing: (this.minWidthHeight / convLayer),
+          column: column.layer,
+          unitSpacing: currUnitSpacing,
+          unitsPerColumn: unitsPerColumn,
           isOutput: false,
           isConv: true
         });
@@ -174,25 +201,57 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       }
     });
 
+    unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
+    unitSpacing.otherColumns = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
     layers.forEach((layer, layerIndex) => {
       const nextLayer = layers[layerIndex + 1];
       const isOutput = (layerIndex < layers.length - 1) ? false : true;
 
+      const totalColumns = { layer: 1, nextLayer: 1 };
+      const column = { layer: -1, nextLayer: -1 };
+      if (layer > unitsPerColumn) { totalColumns.layer = Math.ceil(layer / unitsPerColumn); }
+      if (nextLayer > unitsPerColumn) { totalColumns.nextLayer = Math.ceil(nextLayer / unitsPerColumn); }
+
+      if (totalColumns.layer % 2 === 1) {
+        column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+      } else {
+        column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+      }
+
+      unitSpacing.lastColumn = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+      if (layer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (layer % unitsPerColumn); }
+
       for (let i = 0; i < layer; i++) {
+        let currUnitSpacing = unitSpacing.otherColumns;
+        if (i % unitsPerColumn === 0) { column.layer++; }
+        if (Math.floor(i / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+
         filteredTopology.push({
           layer: convLayers.length + layerIndex,
           unit: i,
-          unitSpacing: (this.minWidthHeight / layer),
+          column: column.layer,
+          unitSpacing: currUnitSpacing,
+          unitsPerColumn: unitsPerColumn,
           isOutput: isOutput,
           isConv: false
         });
 
         if (!isOutput) {
+          if (totalColumns.nextLayer % 2 === 1) {
+            column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+          } else {
+            column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+          }
+
           for (let j = 0; j < nextLayer; j++) {
+            if (j % unitsPerColumn === 0) { column.nextLayer++; }
+
             filteredEdges.push({
               layer: convLayers.length + layerIndex,
               source: i,
               target: j,
+              column: column.layer,
+              targetColumn: column.nextLayer,
               unitSpacing: (this.minWidthHeight / layer),
               targetUnitSpacing: (this.minWidthHeight / nextLayer)
             });
@@ -205,6 +264,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.layerSpacing = this.minWidthHeight / (convLayers.length + layers.length);
     this.topology = filteredTopology;
     this.edges = filteredEdges;
+
+    console.clear();
+    console.log(this.topology);
+    console.log(this.edges);
   }
 
   bindTopology() {
@@ -242,11 +305,18 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .append('rect')
       .attr('class', 'rect')
       .attr('x', function (d) {
-        const x: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
+        const x: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.rectSide + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2 -
+          0.5 * self.defaultSettings.rectSide;
         return x;
       })
       .attr('y', function (d) {
-        const y: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
+        const y: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2 -
+          0.5 * self.defaultSettings.rectSide;
         return y;
       })
       .attr('width', this.defaultSettings.rectSide)
@@ -262,11 +332,16 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
-        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const cx: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
         return cx;
       })
       .attr('cy', function (d) {
-        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        const cy: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2;
         return cy;
       })
       .attr('r', this.defaultSettings.nodeRadius)
@@ -388,11 +463,16 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
-        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const cx: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
         return cx;
       })
       .attr('cy', function (d) {
-        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        const cy: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2;
         return cy;
       })
       .attr('r', this.defaultSettings.nodeRadius)
