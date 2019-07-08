@@ -133,6 +133,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
     let unitsPerColumn;
     const unitSpacing = { otherColumns: 0, lastColumn: 0 };
+    const targetUnitSpacing = { otherColumns: 0, lastColumn: 0 };
 
     convLayers = convLayers.concat(this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel));
     layers = layers.concat(this.inputTopology['layers'].map(layer => +layer));
@@ -141,6 +142,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
     unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.rectSide + this.defaultSettings.unitGutter));
     unitSpacing.otherColumns = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
+    targetUnitSpacing.otherColumns = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
     convLayers.forEach((convLayer, convLayerIndex) => {
       let nextLayer = layers[0];
       if (convLayerIndex < convLayers.length - 1) {
@@ -160,6 +162,9 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
       unitSpacing.lastColumn = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
       if (convLayer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (convLayer % unitsPerColumn); }
+      console.log(this.minWidthHeight);
+      console.log(convLayer, unitsPerColumn, unitSpacing);
+      console.log(convLayer % unitsPerColumn);
 
       for (let i = 0; i < convLayer; i++) {
         let currUnitSpacing = unitSpacing.otherColumns;
@@ -176,13 +181,29 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
           isConv: true
         });
 
+        if (totalColumns.nextLayer % 2 === 1) {
+          column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+        } else {
+          column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+        }
+
+        targetUnitSpacing.lastColumn = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
+        if (nextLayer % unitsPerColumn !== 0) { targetUnitSpacing.lastColumn = this.minWidthHeight / (nextLayer % unitsPerColumn); }
+
         for (let j = 0; j < nextLayer; j++) {
+          let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+          if (j % unitsPerColumn === 0) { column.nextLayer++; }
+          if (Math.floor(j / unitsPerColumn) + 1 === totalColumns.nextLayer) { targetCurrUnitSpacing = targetUnitSpacing.lastColumn; }
+
           filteredEdges.push({
             layer: convLayerIndex,
             source: i,
             target: j,
-            unitSpacing: (this.minWidthHeight / convLayer),
-            targetUnitSpacing: (this.minWidthHeight / nextLayer)
+            column: column.layer,
+            targetColumn: column.nextLayer,
+            unitSpacing: currUnitSpacing,
+            targetUnitSpacing: targetCurrUnitSpacing,
+            unitsPerColumn: unitsPerColumn
           });
         }
       }
@@ -190,6 +211,7 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
 
     unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
     unitSpacing.otherColumns = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+    targetUnitSpacing.otherColumns = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
     layers.forEach((layer, layerIndex) => {
       const nextLayer = layers[layerIndex + 1];
       const isOutput = (layerIndex < layers.length - 1) ? false : true;
@@ -230,8 +252,13 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
             column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
           }
 
+          targetUnitSpacing.lastColumn = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+          if (nextLayer % unitsPerColumn !== 0) { targetUnitSpacing.lastColumn = this.minWidthHeight / (nextLayer % unitsPerColumn); }
+
           for (let j = 0; j < nextLayer; j++) {
+            let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
             if (j % unitsPerColumn === 0) { column.nextLayer++; }
+            if (Math.floor(j / unitsPerColumn) + 1 === totalColumns.nextLayer) { targetCurrUnitSpacing = targetUnitSpacing.lastColumn; }
 
             filteredEdges.push({
               layer: convLayers.length + layerIndex,
@@ -239,8 +266,9 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
               target: j,
               column: column.layer,
               targetColumn: column.nextLayer,
-              unitSpacing: (this.minWidthHeight / layer),
-              targetUnitSpacing: (this.minWidthHeight / nextLayer)
+              unitSpacing: currUnitSpacing,
+              targetUnitSpacing: targetCurrUnitSpacing,
+              unitsPerColumn: unitsPerColumn
             });
           }
         }
@@ -251,10 +279,6 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
     this.layerSpacing = this.minWidthHeight / (convLayers.length + layers.length);
     this.topology = filteredTopology;
     this.edges = filteredEdges;
-
-    console.clear();
-    console.log(this.topology);
-    console.log(this.edges);
   }
 
   bindTopology() {
@@ -268,19 +292,29 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
       .append('line')
       .attr('class', 'edges')
       .attr('x1', function (d) {
-        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const x1: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
         return x1;
       })
       .attr('y1', function (d) {
-        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        const y1: number = self.topMargin +
+          d.unitSpacing * (d.source % d.unitsPerColumn) +
+          d.unitSpacing / 2;
         return y1;
       })
       .attr('x2', function (d) {
-        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        const x2: number = self.leftMargin +
+          self.layerSpacing * (d.layer + 1) +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.targetColumn +
+          self.layerSpacing / 2;
         return x2;
       })
       .attr('y2', function (d) {
-        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        const y2: number = self.topMargin +
+          d.targetUnitSpacing * (d.target % d.unitsPerColumn) +
+          d.targetUnitSpacing / 2;
         return y2;
       });
 
@@ -309,6 +343,9 @@ export class AblationPlaygroundComponent implements OnInit, OnDestroy {
         return x;
       })
       .attr('y', function (d) {
+        if (d.layer === 2) {
+          console.log(d.unit, d.unitSpacing);
+        }
         const y: number = self.topMargin +
           d.unitSpacing * (d.unit % d.unitsPerColumn) +
           d.unitSpacing / 2 -
