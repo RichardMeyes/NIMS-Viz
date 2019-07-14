@@ -57,8 +57,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.defaultSettings = {
       rectSide: 20,
       nodeRadius: 10,
-      // color: '#373737',
-      color: 'royalblue', //BALIKIN JADI COLOR YG ATAS
+      color: '#4C516D',
       nodeOpacity: .5,
       nodeStroke: 0,
       duration: 500,
