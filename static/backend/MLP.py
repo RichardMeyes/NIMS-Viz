@@ -52,7 +52,7 @@ class Net(nn.Module):
         self.num_epochs = num_epochs
         
         if len(self.conv_layers):
-            self.h0 = nn.Linear(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear, self.layers[0])
+            self.h0 = nn.Linear(int(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear), int(self.layers[0]))
         else:
             self.h0 = nn.Linear(28 * 28, self.layers[0])
 

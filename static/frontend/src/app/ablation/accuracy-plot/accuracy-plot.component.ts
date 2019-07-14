@@ -71,8 +71,13 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
   }
 
   accTest(isInit, layers, units) {
-    const filename = this.selectedFile.split('\\')[1]
-      .split('.')[0];
+    let filename;
+    if (this.selectedFile.includes('\\')) {
+      filename = this.selectedFile.split('\\')[1].split('.')[0];
+    } else {
+      filename = this.selectedFile.split('/');
+      filename = filename[filename.length - 1].split('.')[0];
+    }
 
     this.networkService.ablationTest(this.topology, filename, layers, units)
       .pipe(take(1))

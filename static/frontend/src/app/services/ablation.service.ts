@@ -19,9 +19,17 @@ export class AblationService {
   }
 
   testDigit(topology, selectedFile, layers, units) {
+    let filename;
+    if (selectedFile.includes('\\')) {
+      filename = selectedFile.split('\\')[1].split('.')[0];
+    } else {
+      filename = selectedFile.split('/');
+      filename = filename[filename.length - 1].split('.')[0];
+    }
+
     const body = {
       topology: topology,
-      filename: selectedFile.split('\\')[1].split('.')[0],
+      filename: filename,
       layers: layers,
       units: units
     };
