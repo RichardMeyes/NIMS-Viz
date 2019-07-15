@@ -1,14 +1,13 @@
-image: node:latest
 stages:
   - build
 
-before_script:
-  - cd static/frontend
-  - npm install -f node-sass
-  - npm install
-
 app-build:
+  image: node:latest
   stage: build
+  before_script:
+    - cd static/frontend
+    - npm install -f node-sass
+    - npm install
   artifacts:
     paths:
       - static/frontend/dist/
