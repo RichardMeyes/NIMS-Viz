@@ -28,5 +28,6 @@ docker-build:
   script:
     - docker info
     - docker build -t vincentiusrenaldiima/nims-viz .
-    - echo "$REGISTRY_USER" | docker login --username "$REGISTRY_USER" --password-stdin
+    - echo "$REGISTRY_USER"
+    - docker login --username "$REGISTRY_USER" --password-stdin
     - docker push vincentiusrenaldiima/nims-viz
