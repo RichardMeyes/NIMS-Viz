@@ -1,6 +1,6 @@
 stages:
   - app-build
-  - docker-build
+  - docker-build-push
 
 app-build:
   image: node:latest
@@ -14,9 +14,9 @@ app-build:
     - npm install
     - npm run build
 
-docker-build:
+docker-build-push:
   image: docker:stable
-  stage: docker-build
+  stage: docker-build-push
   dependencies: 
     - app-build
   script:
