@@ -17,8 +17,6 @@ app-build:
 docker-build:
   image: docker:stable
   stage: docker-build
-  variables:
-    DOCKER_DRIVER: overlay
   dependencies: 
     - app-build
   script:
