@@ -13,3 +13,10 @@ app-build:
       - static/frontend/dist/
   script:
     - npm run build
+
+docker-build:
+  image: docker:stable
+  stage: build
+  script:
+  - docker info
+  - docker build -t myimage .
