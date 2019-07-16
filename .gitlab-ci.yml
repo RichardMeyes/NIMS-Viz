@@ -1,6 +1,6 @@
 stages:
   - app-build
-  - docker-build-push
+  - docker-build
 
 app-build:
   image: node:latest
@@ -14,15 +14,15 @@ app-build:
     - npm install
     - npm run build
 
-docker-build-push:
+docker-build:
   image: docker:stable
-  stage: docker-build-push
+  stage: docker-build
   variables:
     DOCKER_DRIVER: overlay
   dependencies: 
     - app-build
   script:
   - docker info
-  - docker build -t myimage .
+  - docker build -t vincentiusrenaldiima/nims-viz .
   - echo "$REGISTRY_USER" | docker login --username "$REGISTRY_USER" --password-stdin
   - docker push vincentiusrenaldiima/nims-viz
