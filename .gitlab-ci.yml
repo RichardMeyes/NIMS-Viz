@@ -27,7 +27,7 @@ docker-build:
     - app-build
   script:
     - docker info
-    - docker build -t vincentiusrenaldiima/nims-viz .
-    - echo "$REGISTRY_USER"
-    - docker login --username "$REGISTRY_USER" --password-stdin
-    - docker push vincentiusrenaldiima/nims-viz
+    - docker build -t "$CI_REGISTRY_IMAGE" .
+    - echo "$CI_REGISTRY_USER"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push "$CI_REGISTRY_IMAGE"
