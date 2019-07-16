@@ -1,6 +1,7 @@
 stages:
   - app-build
   - docker-build
+  - docker-push
 
 app-build:
   image: node:latest
@@ -22,3 +23,11 @@ docker-build:
   script:
   - docker info
   - docker build -t myimage .
+
+docker-push:
+  stage: docker-push
+  only:
+  - master
+  script:
+  - docker login -u "$REGISTRY_USER" --password-stdin
+  - docker push vincentiusrenaldiima/nims-viz
