@@ -22,5 +22,5 @@ docker-build-push:
   script:
   - docker info
   - docker build -t myimage .
-  - docker login --username "$REGISTRY_USER" --password-stdin
+  - echo "$REGISTRY_USER" | docker login --username "$REGISTRY_USER" --password-stdin
   - docker push vincentiusrenaldiima/nims-viz
