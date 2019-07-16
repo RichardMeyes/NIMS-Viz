@@ -19,12 +19,14 @@ app-build:
 docker-build:
   tags:
     - docker-privileged
-  image: docker:stable
+  image: docker:latest
+  services:
+    - docker:dind
   stage: docker-build
   dependencies: 
     - app-build
   script:
-  - docker info
-  - docker build -t vincentiusrenaldiima/nims-viz .
-  - echo "$REGISTRY_USER" | docker login --username "$REGISTRY_USER" --password-stdin
-  - docker push vincentiusrenaldiima/nims-viz
+    - docker info
+    - docker build -t vincentiusrenaldiima/nims-viz .
+    - echo "$REGISTRY_USER" | docker login --username "$REGISTRY_USER" --password-stdin
+    - docker push vincentiusrenaldiima/nims-viz
