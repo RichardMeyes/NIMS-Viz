@@ -15,7 +15,7 @@ app-build:
     - npm run build
 
 docker-build:
-  image: docker:stable
+  image: docker:stable-dind
   stage: docker-build
   dependencies: 
     - app-build
