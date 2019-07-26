@@ -152,9 +152,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     layers.push(10);
 
 
-    unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.rectSide + this.defaultSettings.unitGutter));
-    unitSpacing.otherColumns = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
-    targetUnitSpacing.otherColumns = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
+    unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.rectSide + this.defaultSettings.unitGutter));
+    unitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
+    targetUnitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
     convLayers.forEach((convLayer, convLayerIndex) => {
       let nextLayer = layers[0];
       if (convLayerIndex < convLayers.length - 1) {
@@ -172,7 +173,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
       }
 
-      unitSpacing.lastColumn = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
+      unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
       if (convLayer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (convLayer % unitsPerColumn); }
 
       for (let i = 0; i < convLayer; i++) {
@@ -197,7 +198,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
           column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
         }
 
-        targetUnitSpacing.lastColumn = this.defaultSettings.rectSide + this.defaultSettings.unitGutter;
+        targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
         if (nextLayer % unitsPerColumn !== 0) { targetUnitSpacing.lastColumn = this.minWidthHeight / (nextLayer % unitsPerColumn); }
 
         for (let j = 0; j < nextLayer; j++) {
@@ -219,9 +220,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       }
     });
 
-    unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
-    unitSpacing.otherColumns = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
-    targetUnitSpacing.otherColumns = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+    unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
+    unitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
+    targetUnitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
     layers.forEach((layer, layerIndex) => {
       const nextLayer = layers[layerIndex + 1];
       const isOutput = (layerIndex < layers.length - 1) ? false : true;
@@ -237,7 +239,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
       }
 
-      unitSpacing.lastColumn = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+      unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
       if (layer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (layer % unitsPerColumn); }
 
       for (let i = 0; i < layer; i++) {
@@ -262,7 +264,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
             column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
           }
 
-          targetUnitSpacing.lastColumn = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+          targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
           if (nextLayer % unitsPerColumn !== 0) { targetUnitSpacing.lastColumn = this.minWidthHeight / (nextLayer % unitsPerColumn); }
 
           for (let j = 0; j < nextLayer; j++) {
@@ -400,9 +402,10 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       currEpoch = Object.keys(this.inputWeights)[0];
     }
 
-    const unitsPerColumn = Math.floor(this.minWidthHeight / (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
-    const unitSpacing = { otherColumns: this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter, lastColumn: 0 };
-    const targetUnitSpacing = { otherColumns: this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter, lastColumn: 0 };
+    const unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
+    const unitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
+    const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
 
     Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
       if (!layer.startsWith('c') && layer !== 'h0') {
@@ -423,7 +426,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
           column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
         }
 
-        targetUnitSpacing.lastColumn = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+        targetUnitSpacing.lastColumn =  this.minWidthHeight / unitsPerColumn;
         if (this.inputWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
           targetUnitSpacing.lastColumn = this.minWidthHeight / (this.inputWeights[currEpoch][layer].length % unitsPerColumn);
         }
@@ -441,7 +444,7 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
             column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
           }
 
-          unitSpacing.lastColumn = this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter;
+          unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
           if (destination.length % unitsPerColumn !== 0) {
             unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
           }
