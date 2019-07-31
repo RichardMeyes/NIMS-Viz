@@ -36,9 +36,9 @@
     <!-- ConvLayer Input Form -->
     <!-- every convlayer has 6 formas, there is a button to delete a layer-->
     <!-- on h3 click it toogles the visibility of the forms-->
-    <h3 class="settings-headline" (click)="_nnSettings.convLayers.length > 0? hideCNN=!hideCNN : ''">
+    <h3 *ngIf="_nnSettings.convLayers.length > 0" class="settings-headline" (click)="hideCNN=!hideCNN">
       Convolutiona Layer
-      <i *ngIf="_nnSettings.convLayers.length > 0" class="down-up-arrow" [ngClass]="hideCNN? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
+      <i class="down-up-arrow" [ngClass]="hideCNN? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
     </h3>
     <div *ngFor="let layer of _nnSettings.convLayers">
       <form *ngIf="!hideCNN" class="cnn-input-form">
@@ -99,9 +99,9 @@
     <!-- Fully Connected layer -->
     <!-- on h3 click it toogles the visibility of the forms -->
     <!-- contains 2 forms and a delete button -->
-    <h3 class="settings-headline" (click)="_nnSettings.denseLayers.length > 0? hideMLP=!hideMLP : ''">
+    <h3 *ngIf="_nnSettings.denseLayers.length > 0" class="settings-headline" (click)="hideMLP=!hideMLP">
       Dense Layer
-      <i *ngIf="_nnSettings.denseLayers.length > 0" class="down-up-arrow" [ngClass]="hideMLP? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
+      <i class="down-up-arrow" [ngClass]="hideMLP? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
     </h3>
     <div *ngFor="let layer of _nnSettings.denseLayers">
       <form *ngIf="!hideMLP" class="cnn-input-form">
@@ -136,7 +136,10 @@
       </form>
     </div>
     <div class="create-button">
-      <button mat-raised-button (click)="createNetwork()"> <b style="font-size: 20px">Create Network</b> </button>
+      <button mat-raised-button (click)="createNetwork()" 
+      [disabled]="_nnSettings.convLayers.length === 0 && _nnSettings.denseLayers.length === 0"> 
+        <b style="font-size: 20px">Create Network</b> 
+      </button>
     </div>
   </div>
 </div>
