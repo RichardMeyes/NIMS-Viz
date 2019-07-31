@@ -1,4 +1,7 @@
 <div class='main-window'>
-  <app-navigation></app-navigation>
-  <router-outlet></router-outlet>
+  <app-navigation (emitAddNetwork)="toggleCreateModel($event)"></app-navigation>
+  <div class="main-window-components">
+    <router-outlet></router-outlet>
+    <app-network-creator *ngIf="createModel"></app-network-creator>
+  </div>
 </div>

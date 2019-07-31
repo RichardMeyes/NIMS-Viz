@@ -1,0 +1,142 @@
+<div class="main">
+  <div class="content">
+    <h2 style="display: inline">Create Network</h2>
+    <!-- 2 buttons to create layers-->
+    <div>
+      <button mat-raised-button (click)="addCNN()">CNN <i class="fas fa-plus"></i></button>
+      <button mat-raised-button (click)="addMLP()">MLP <i class="fas fa-plus"></i></button>
+    </div>
+    <!-- input layer -->
+    <!-- has 3 forms for x, y, z axis, z axis is also the channel number -->
+    <!-- on h3 click it toogles the visibility of the forms-->
+    <h3 class="settings-headline" (click)="hideInput=!hideInput">
+      Input Size 
+      <i class="down-up-arrow" [ngClass]="hideInput? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
+    </h3>
+    <form *ngIf="!hideInput" class="cnn-input-form">
+      <mat-form-field class="channel-inputs">
+        <input name="xAxis" type="number" matInput min="0"
+        placeholder="x axis" 
+        [(ngModel)]="_nnSettings.inputSize.x" 
+        value={{_nnSettings.inputSize.x}}>
+      </mat-form-field>
+      <mat-form-field class="channel-inputs">
+        <input name="yAxis" type="number" matInput min="0"
+        placeholder="y axis" 
+        [(ngModel)]="_nnSettings.inputSize.y" 
+        value={{_nnSettings.inputSize.y}}>
+      </mat-form-field>
+      <mat-form-field class="channel-inputs">
+        <input name="zAxis" type="number" matInput min="0"
+        placeholder="z axis (Out Channel)" 
+        [(ngModel)]="_nnSettings.inputSize.z.value" 
+        value={{_nnSettings.inputSize.z.value}}>
+      </mat-form-field>
+    </form>
+    <!-- ConvLayer Input Form -->
+    <!-- every convlayer has 6 formas, there is a button to delete a layer-->
+    <!-- on h3 click it toogles the visibility of the forms-->
+    <h3 class="settings-headline" (click)="_nnSettings.convLayers.length > 0? hideCNN=!hideCNN : ''">
+      Convolutiona Layer
+      <i *ngIf="_nnSettings.convLayers.length > 0" class="down-up-arrow" [ngClass]="hideCNN? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
+    </h3>
+    <div *ngFor="let layer of _nnSettings.convLayers">
+      <form *ngIf="!hideCNN" class="cnn-input-form">
+        <mat-form-field class="channel-inputs">
+          <input name="inChannel" type="number" matInput min="0"
+          placeholder="Input" 
+          [(ngModel)]="layer.inChannel.value" 
+          value={{layer.inChannel.value}}>
+        </mat-form-field>
+        <mat-form-field class="channel-inputs">
+          <input name="outChannel" type="number" matInput min="0"
+          placeholder="Output" 
+          [(ngModel)]="layer.outChannel.value" 
+          value={{layer.outChannel.value}}>
+        </mat-form-field>
+        <mat-form-field class="channel-inputs">
+          <input name="kernel" type="number" matInput min="0"
+          placeholder="Kernel" 
+          [(ngModel)]="layer.kernelSize" 
+          value={{layer.kernelSize}}>
+        </mat-form-field>
+        <mat-form-field class="channel-inputs">
+          <input name="stride" type="number" matInput min="0"
+          placeholder="Stride" 
+          [(ngModel)]="layer.stride" 
+          value={{layer.stride}}>
+        </mat-form-field>
+        <mat-form-field class="channel-inputs">
+          <input name="padding" type="number" matInput min="0"
+          placeholder="Padding" 
+          [(ngModel)]="layer.padding" 
+          value={{layer.padding}}>
+        </mat-form-field>
+        <!-- selector options hard coded to improve use ngFor and a list of possibilities -->
+        <mat-form-field class="input-selector">
+          <mat-label>Activation</mat-label>
+          <mat-select [(value)]="layer.activation">
+            <mat-option value="none">None</mat-option>
+            <mat-option value="relu">Relu</mat-option>
+            <mat-option value="rrelu">RRELU</mat-option>
+            <mat-option value="hardtanh">Hardtanh</mat-option>
+            <mat-option value="sigmoid">Sigmoid</mat-option>
+            <mat-option value="tanh">TanH</mat-option>
+            <mat-option value="elu">ELU</mat-option>
+            <mat-option value="celu">cELU</mat-option>
+            <mat-option value="selu">sELU</mat-option>
+            <mat-option value="glu">GLU</mat-option>
+            <mat-option value="leakyRelu">leakyRelu</mat-option>
+            <mat-option value="logSigmoid">logSigmoid</mat-option>
+            <mat-option value="softplus">softplus</mat-option>
+            <mat-option value="softmax">softmax</mat-option>
+            <mat-option value="logSoftmax">logSoftmax</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-mini-fab (click)="deleteCNN(layer)"><i class="fas fa-trash-alt"></i></button>
+      </form>
+    </div>
+    <!-- Fully Connected layer -->
+    <!-- on h3 click it toogles the visibility of the forms -->
+    <!-- contains 2 forms and a delete button -->
+    <h3 class="settings-headline" (click)="_nnSettings.denseLayers.length > 0? hideMLP=!hideMLP : ''">
+      Dense Layer
+      <i *ngIf="_nnSettings.denseLayers.length > 0" class="down-up-arrow" [ngClass]="hideMLP? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
+    </h3>
+    <div *ngFor="let layer of _nnSettings.denseLayers">
+      <form *ngIf="!hideMLP" class="cnn-input-form">
+        <mat-form-field class="channel-inputs">
+          <input name="inChannel" type="number" matInput min="0"
+          placeholder="Input" 
+          [(ngModel)]="layer.size" 
+          value={{layer.size}}>
+        </mat-form-field>
+        <!-- selector options hard coded to improve use ngFor and a list of possibilities -->
+        <mat-form-field class="input-selector">
+          <mat-label>Activation</mat-label>
+          <mat-select [(value)]="layer.activation">
+            <mat-option value="none">None</mat-option>
+            <mat-option value="relu">Relu</mat-option>
+            <mat-option value="rrelu">RRELU</mat-option>
+            <mat-option value="hardtanh">Hardtanh</mat-option>
+            <mat-option value="sigmoid">Sigmoid</mat-option>
+            <mat-option value="tanh">TanH</mat-option>
+            <mat-option value="elu">ELU</mat-option>
+            <mat-option value="celu">cELU</mat-option>
+            <mat-option value="selu">sELU</mat-option>
+            <mat-option value="glu">GLU</mat-option>
+            <mat-option value="leakyRelu">leakyRelu</mat-option>
+            <mat-option value="logSigmoid">logSigmoid</mat-option>
+            <mat-option value="softplus">softplus</mat-option>
+            <mat-option value="softmax">softmax</mat-option>
+            <mat-option value="logSoftmax">logSoftmax</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-mini-fab (click)="deleteMLP(layer)"><i class="fas fa-trash-alt"></i></button>
+      </form>
+    </div>
+    <div class="create-button">
+      <button mat-raised-button (click)="createNetwork()"> <b style="font-size: 20px">Create Network</b> </button>
+    </div>
+  </div>
+</div>

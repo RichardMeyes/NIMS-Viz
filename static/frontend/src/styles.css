@@ -40,3 +40,28 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .mat-menu-item:hover {
     background-color: rgb(221, 175, 23, 0.25)!important;
 }
+
+
+.mat-form-field.mat-focused .mat-form-field-label {
+    color: rgb(253, 198, 16)!important;
+}
+.mat-form-field.mat-focused .mat-form-field-ripple {
+    background-color: rgb(253, 198, 16);
+}
+.mat-form-field.mat-focused .mat-select-arrow {
+    color: rgb(253, 198, 16)!important;
+}
+
+/* .mat-form-field.mat-focused .mat-form-field-ripple {
+    color: rgb(221, 175, 23);
+}
+.mat-form-field.mat-focused .mat-form-field-required-marker {
+    color: rgb(221, 175, 23); */
+/* } */
+
+/* hiddes the spin buttons in  number input form fields */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}

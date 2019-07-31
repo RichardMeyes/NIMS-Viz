@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 import { AppRoutingModule, routingComponents } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -10,19 +11,22 @@ import { MaterialModule } from './modules/material.module'
 import { HttpClientModule } from '@angular/common/http';
 import { BackendCommunicationService } from './backendCommunication/backend-communication.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NetworkCreatorComponent } from './components/network-creator/network-creator.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     NavigationComponent,
-    routingComponents
+    routingComponents,
+    NetworkCreatorComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MaterialModule
+    MaterialModule,
+    FormsModule
   ],
   providers: [BackendCommunicationService],
   bootstrap: [AppComponent]
