@@ -1,22 +1,23 @@
 <div class='navigation-bar'>
     <h1 routerLink=''>NIMS-VIZ</h1>
-    <ul class="view-elements"  *ngIf="router.url !== '/'">
+    <ul class="view-elements" *ngIf="router.url !== '/'">
         <li class="frame" routerLink='/brain-view' routerLinkActive="active-frame">
             <i class="fas fa-brain"></i>
         </li>
         <li class="frame" routerLink='/layer-view' routerLinkActive="active-frame">
             <i class="fas fa-project-diagram"></i>
         </li>
-        <li class="frame" routerLink='/ablation-view' routerLinkActive="active-frame">
-            <i class="fas fa-cut"></i>
-        </li>
     </ul>
     <ul class="menu-elements">
-        <li title="Add Network" class="frame" (click)="toogleAddNetwork()" [ngClass]="{'active-frame': _showAddNetwork}">
+        <li title="Add Network" class="frame" (click)="toogleAddNetwork()"
+            [ngClass]="{'active-frame': _showAddNetwork}">
             <i class="fas fa-plus"></i>
         </li>
         <li title="Train Network" class="frame">
             <i class="fas fa-dumbbell"></i>
+        </li>
+        <li title="Ablate Network"class="frame">
+            <i class="fas fa-cut"></i>
         </li>
         <li title="Save Network" class="frame">
             <i class="fas fa-save"></i>
@@ -29,32 +30,24 @@
         </li>
         <li class="net-selector-dropdown">
             <div mat-button [matMenuTriggerFor]="menu">
-                <i class="fas fa-caret-down"></i>  
+                <i class="fas fa-caret-down"></i>
             </div>
             <mat-menu #menu="matMenu">
-                <button 
-                style="border-bottom: 1px solid rgba(0, 0, 0, 0.25);"
-                (click)="this.selectNetwork('No Network Selected')"
-                mat-menu-item> 
-                    deselect 
+                <button style="border-bottom: 1px solid rgba(0, 0, 0, 0.25);"
+                    (click)="this.selectNetwork('No Network Selected')" mat-menu-item>
+                    deselect
                 </button>
 
-                <button 
-                *ngFor="let v of values" 
-                (click)="this.selectNetwork(v)"
-                mat-menu-item
-                [matMenuTriggerFor]="cnn">
+                <button *ngFor="let v of values" (click)="this.selectNetwork(v)" mat-menu-item
+                    [matMenuTriggerFor]="cnn">
                     {{v}}
                 </button>
-            
+
             </mat-menu>
             <mat-menu #cnn="matMenu">
-                    <button 
-                    *ngFor="let v of values" 
-                    (click)="this.selectNetwork(v)"
-                    mat-menu-item>
-                        {{v}}
-                    </button>
+                <button *ngFor="let v of values" (click)="this.selectNetwork(v)" mat-menu-item>
+                    {{v}}
+                </button>
             </mat-menu>
         </li>
     </ul>
