@@ -45,6 +45,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   addCNN() {
     this._nnSettings.addConvLayer();
+    this.updateLayerView();
   }
 
   /**
@@ -54,6 +55,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   deleteCNN(layer: ConvLayer) {
     const id = this._nnSettings.convLayers.findIndex(l => layer === l);
     this._nnSettings.deleteConvLayer(id);
+    this.updateLayerView();
   }
 
   /**
@@ -61,6 +63,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   addMLP() {
     this._nnSettings.addDenseLayer(new DenseLayer());
+    this.updateLayerView();
   }
 
   /**
@@ -70,6 +73,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   deleteMLP(layer: DenseLayer) {
     const id = this._nnSettings.denseLayers.findIndex(l => layer === l);
     this._nnSettings.deleteDenseLayer(id);
+    this.updateLayerView();
   }
 
   /**
