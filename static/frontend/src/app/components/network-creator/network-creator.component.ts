@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { NeuralNetworkSettings, ConvLayer, DenseLayer} from '../../models/create-nn.model';
+import { NeuralNetworkSettings, ConvLayer, DenseLayer } from '../../models/create-nn.model';
 import { BackendCommunicationService } from '../../backendCommunication/backend-communication.service';
+import { EventsService } from 'src/app/services/events.service';
 
 /**
  * Component for Network creation
@@ -23,12 +24,13 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   public hideCNN = false;
   public hideMLP = false;
 
-  constructor( 
+  constructor(
     private backend: BackendCommunicationService,
-    ) { 
+    private eventsService: EventsService
+  ) {
 
   }
-  
+
   ngOnInit() {
   }
 
@@ -53,7 +55,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
     const id = this._nnSettings.convLayers.findIndex(l => layer === l);
     this._nnSettings.deleteConvLayer(id);
   }
-  
+
   /**
    * adds a Fully-Connected Layer to the networksettings
    */
@@ -76,5 +78,13 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   createNetwork() {
     //this.backend.createNetwork();
+  }
+
+
+  /**
+   * Emits update-layer-view event
+   */
+  updateLayerView() {
+    this.eventsService.updateLayerView.next(this._nnSettings);
   }
 }
