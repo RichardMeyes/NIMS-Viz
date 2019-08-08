@@ -13,7 +13,7 @@ import { DataService } from '../services/data.service';
 })
 export class AblationComponent implements OnInit, OnDestroy {
   showSpinner: boolean;
-  showTestNetwork: boolean;
+  showDashboard: boolean;
 
   accFinished: boolean;
   tSNEFinished: boolean;
@@ -25,15 +25,15 @@ export class AblationComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.showTestNetwork = false;
     this.showSpinner = false;
+    this.showDashboard = false;
 
-    this.dataService.selectedFile
+    this.dataService.visualize
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => {
         if (val) {
-          this.showTestNetwork = false;
           this.showSpinner = true;
+          this.showDashboard = false;
         }
       });
   }
@@ -50,22 +50,14 @@ export class AblationComponent implements OnInit, OnDestroy {
   updateSpinner() {
     if (this.accFinished && this.tSNEFinished) {
       this.showSpinner = false;
-      this.showTestNetwork = true;
+      this.showDashboard = true;
 
       this.accFinished = false;
       this.tSNEFinished = false;
     }
   }
 
-  tabChanged(selectedTab) {
-    if (selectedTab === 1) {
-      this.dataService.selectedFilter.next(null);
-    } else {
-      // this.dataService.selectedFilter.next(`${this.selectedConvLayer}-${this.selectedUnit}`);
-    }
-  }
-
-  public ngOnDestroy() {
+  ngOnDestroy() {
     this.destroyed.next();
   }
 }

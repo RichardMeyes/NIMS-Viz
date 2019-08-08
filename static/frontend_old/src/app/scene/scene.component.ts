@@ -1,15 +1,12 @@
-import {
-  Component, OnInit, ViewChild, AfterViewInit, HostListener, Renderer2, Input, ChangeDetectorRef, OnDestroy, ViewEncapsulation
-} from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatTabChangeEvent } from '@angular/material';
 
 import { Subject } from 'rxjs';
-import { takeUntil, take, concatMap } from 'rxjs/operators';
+import { takeUntil, concatMap, filter } from 'rxjs/operators';
 
 import { DataService } from '../services/data.service';
 import { NetworkService } from '../network.service';
-import { PlaygroundService } from '../playground.service';
 
 import * as THREE from 'three';
 import * as simpleheat from 'simpleheat/simpleheat.js';
@@ -17,16 +14,6 @@ import * as simpleheat from 'simpleheat/simpleheat.js';
 import '../../customs/enable-three-examples.js';
 import 'three/examples/js/renderers/CSS3DRenderer.js';
 import 'three/examples/js/controls/OrbitControls';
-
-// import { BrainComponent } from './brain/brain.component';
-import { update } from '@tensorflow/tfjs-layers/dist/variables';
-import { Playground } from '../models/playground.model';
-import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
-import { HeatmapConfig } from '../models/heatmap-config.model';
-import { isPlatformBrowser } from '@angular/common';
-import * as tf from '@tensorflow/tfjs';
-// import { MqttService, IMqttMessage } from 'ngx-mqtt';
-
 
 @Component({
   selector: 'app-scene',
@@ -51,85 +38,133 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   heatmapCanvasNormalTexture; heatmapCanvasNodeTexture;
 
-  vizTopology: any;
-
-  epochCounter: number; resetCounter;
   epochSliderConfig;
   heatmapNormalConfig;
   drawFully;
 
   selectedFile;
-  isPlaying: boolean;
-  animationIntervals;
+
+  lastHeatmapData;
 
   destroyed = new Subject<void>();
 
   constructor(
     private dataService: DataService,
     private networkService: NetworkService,
-    private playgroundService: PlaygroundService,
     public router: Router
   ) { }
 
   ngOnInit() {
-    this.epochCounter = 0;
-    this.resetCounter = false;
-    this.isPlaying = false;
-    this.animationIntervals = [];
-
     this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
       .subscribe((message: JSON) => {
-        const heatmapNormalConfig = this.dataService.optionData.getValue().heatmapNormalConfig;
+        const heatmapNormalConfig = this.dataService.optionData.heatmapNormalConfig;
+
         const resultHeatmapData = message['resultHeatmapData'];
         const resultWeightMinMax = message['resultWeightMinMax'];
+
         heatmapNormalConfig.weightValueMin = resultWeightMinMax[0];
         heatmapNormalConfig.weightValueMax = resultWeightMinMax[1];
+
         this.applyingDataToHeatmaps(resultHeatmapData, heatmapNormalConfig);
 
-        // this.epochSliderConfig.epochValue = this.epochCounter;
-        const resultWeights = message['resultWeights'];
-        if (this.resetCounter) { this.epochCounter = 0; }
-        this.epochCounter++;
-
-        const isDone = message['done'];
-        if (isDone) {
-          const lastEpoch = Object.keys(resultWeights)[Object.keys(resultWeights).length - 1];
-
-          this.dataService.vizWeights.next({ lastEpoch: resultWeights[lastEpoch] });
-          this.dataService.lastTraining.next(resultHeatmapData);
-
-          this.resetCounter = true;
-        } else {
-          this.dataService.vizWeights.next(resultWeights);
-          this.dataService.lastTraining.next(null);
-
-          this.resetCounter = false;
-        }
+        this.lastHeatmapData = resultHeatmapData;
       });
 
+    this.dataService.applyOption
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true),
+        concatMap(() => {
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
 
-    this.dataService.vizTopology
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.vizTopology = val; });
+          const optionData = this.dataService.optionData;
+          this.heatmapNormalConfig = optionData.heatmapNormalConfig;
+          this.drawFully = optionData.drawFully;
 
-    this.dataService.createHeatmap
-      .pipe(takeUntil(this.destroyed))
+          return this.networkService.createHeatmapFromFile(
+            this.selectedFile,
+            this.epochSliderConfig.epochValue - 1,
+            [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+            this.drawFully,
+            false,
+            this.heatmapNormalConfig.density,
+            undefined
+          );
+        })
+      )
       .subscribe(val => {
-        if (val) { this.applyingDataToHeatmaps(val.data, val.heatmapNormalConfig); }
+        if (this.router.url.includes('builder')) { val = this.lastHeatmapData; }
+        this.applyingDataToHeatmaps(val, this.heatmapNormalConfig);
       });
 
-    this.dataService.optionData
-      .pipe(takeUntil(this.destroyed))
+    this.dataService.visualize
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true),
+        concatMap(() => {
+          this.selectedFile = this.dataService.selectedFile;
+
+          const optionData = this.dataService.optionData;
+          this.heatmapNormalConfig = optionData.heatmapNormalConfig;
+          this.drawFully = optionData.drawFully;
+
+          return this.networkService.createHeatmapFromFile(
+            this.selectedFile,
+            0,
+            [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+            this.drawFully,
+            true,
+            this.heatmapNormalConfig.density,
+            undefined
+          );
+        })
+      )
       .subscribe(val => {
-        this.epochSliderConfig = val.epochSliderConfig;
-        this.heatmapNormalConfig = val.heatmapNormalConfig;
-        this.drawFully = val.drawFully;
+        this.applyingDataToHeatmaps(val, this.heatmapNormalConfig);
       });
 
-    this.dataService.selectedFile
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.selectedFile = val; });
+    this.dataService.epochSliderChange
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true),
+        concatMap(() => {
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
+
+          const optionData = this.dataService.optionData;
+          this.heatmapNormalConfig = optionData.heatmapNormalConfig;
+          this.drawFully = optionData.drawFully;
+
+          return this.networkService.createHeatmapFromFile(
+            this.selectedFile,
+            this.epochSliderConfig.epochValue - 1,
+            [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
+            this.drawFully,
+            false,
+            this.heatmapNormalConfig.density,
+            undefined
+          );
+        })
+      )
+      .subscribe(val => {
+        this.applyingDataToHeatmaps(val, this.heatmapNormalConfig);
+      });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     this.heatmapNodeConfig = this.dataService.heatmapNodeConfig;
 
@@ -284,76 +319,10 @@ export class SceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
-    this.dataService.activeSceneTab.next(tabChangeEvent.index);
+    this.dataService.activeSceneTab = tabChangeEvent.index;
   }
 
-  createHeatmap() {
-    this.networkService.createHeatmapFromFile(
-      this.selectedFile,
-      (this.epochSliderConfig.epochValue - 1),
-      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-      this.drawFully,
-      false,
-      this.heatmapNormalConfig.density,
-      undefined
-    )
-      .pipe(take(1))
-      .subscribe(data => {
-        const param = {
-          data: data,
-          heatmapNormalConfig: this.heatmapNormalConfig
-        };
-        this.dataService.createHeatmap.next(param);
-      });
-
-
-    this.playgroundService.getTopology(this.selectedFile)
-      .pipe(
-        take(1),
-        concatMap(topology => {
-          this.dataService.vizTopology.next(topology);
-          return this.playgroundService.visualize(this.selectedFile, (this.epochSliderConfig.epochValue - 1));
-        })
-      )
-      .subscribe(val => {
-        const currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
-
-        console.log(Object.keys(val));
-        Object.keys(val).forEach(key => {
-          if (key.startsWith('c')) {
-            delete val[key];
-          }
-        });
-        console.log(Object.keys(val));
-
-        if (val) { this.dataService.vizWeights.next({ [currEpoch]: val }); }
-      });
-  }
-
-  toggleAnimation() {
-    this.isPlaying = !this.isPlaying;
-
-    if (this.isPlaying) {
-      const runAnimation = () => {
-        if (this.epochSliderConfig.epochValue < this.epochSliderConfig.epochRange[1]) {
-          this.epochSliderConfig.epochValue++;
-        } else {
-          this.epochSliderConfig.epochValue = this.epochSliderConfig.epochRange[0];
-        }
-        this.createHeatmap();
-      };
-      runAnimation();
-
-      this.animationIntervals.push(setInterval(runAnimation, 3.5 * 500 * (this.vizTopology.fcLayers.length + 1) + 150));
-    } else {
-      this.animationIntervals.forEach(animationInterval => {
-        clearInterval(animationInterval);
-      });
-      this.animationIntervals = [];
-    }
-  }
-
-  public ngOnDestroy() {
+  ngOnDestroy() {
     this.destroyed.next();
   }
 }

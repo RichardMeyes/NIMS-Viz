@@ -35,15 +35,12 @@ export class AppComponent implements OnInit, OnDestroy {
     this.breakpointObserver.observe('(max-width: 600px)').pipe(takeUntil(this.destroyed))
       .subscribe(result => {
         if (result.matches) {
-          this.dataService.toolbarHeight.next(56);
+          this.toolbarHeight = 56;
         } else {
-          this.dataService.toolbarHeight.next(64);
+          this.toolbarHeight = 64;
         }
+        this.dataService.toolbarHeight.next(this.toolbarHeight);
       });
-
-    this.dataService.toolbarHeight
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(toolbearHeight => { this.toolbarHeight = toolbearHeight; });
   }
 
   showSettings() {
@@ -53,20 +50,13 @@ export class AppComponent implements OnInit, OnDestroy {
   mainNavClicked() {
     this.snav.close();
 
-    this.dataService.activeSceneTab.next(0);
+    this.dataService.activeSceneTab = 0;
 
-    this.dataService.playgroundData.next(new Playground());
-    this.dataService.selectedFile.next(null);
-    this.dataService.optionData.next(new Option(null, new HeatmapConfig(), false));
+    this.dataService.playgroundData = new Playground();
+    this.dataService.optionData = new Option(new HeatmapConfig(), false);
+    this.dataService.selectedFile = undefined;
 
-    this.dataService.vizTopology.next(null);
-    this.dataService.vizWeights.next(null);
-    this.dataService.untrainedWeights.next(null);
-    this.dataService.filterWeights.next(null);
-
-    this.dataService.testNetwork.next(false);
-    this.dataService.resetNetwork.next(false);
-    this.dataService.testResult.next(null);
+    // this.dataService.filterWeights.next(null);
   }
 
   ngOnDestroy(): void {

@@ -227,7 +227,7 @@
 
 <mat-dialog-actions>
   <div *ngIf="activeSettingsTab == 0">
-    <button mat-button (click)="reset()" *ngIf="router.url.includes('builder')">Reset</button>
+    <button mat-button (click)="resetForm()" *ngIf="router.url.includes('builder')">Reset</button>
     <button mat-button (click)="trainNetwork()" [disabled]="!this.playgroundForm.valid"
       *ngIf="router.url.includes('builder')" mat-dialog-close>
       Train Network

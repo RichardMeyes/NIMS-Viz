@@ -1,12 +1,13 @@
 import { Component, OnInit, ViewChild, HostListener, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
 
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, filter, concatMap } from 'rxjs/operators';
 
 import * as d3 from 'd3';
 
 import { DataService } from 'src/app/services/data.service';
+import { PlaygroundService } from 'src/app/playground.service';
+import { NetworkService } from 'src/app/network.service';
 
 @Component({
   selector: 'app-playground-viz',
@@ -14,179 +15,272 @@ import { DataService } from 'src/app/services/data.service';
   styleUrls: ['./playground-viz.component.scss']
 })
 export class PlaygroundVizComponent implements OnInit, OnDestroy {
-  toolbarHeight;
-  minWidthHeight;
+  @ViewChild('container') container;
 
-  zoom; currTransform;
+  toolbarHeight;
   svg; svgWidth; svgHeight;
+  zoom; currTransform;
   vizContainer;
 
-  conMenuItems; conMenuConfig;
-  conMenuSelected;
-  showWeightsConfig; showWeightsTexts;
-
-  topology; edges; weights;
+  minWidthHeight;
   topMargin; leftMargin;
-  layerSpacing;
-  minMaxDiffs; activities;
 
-  detachedNodes;
-  selectedFilter;
+  selectedFile;
+  epochSliderConfig;
+
+  inputTopology; inputWeights;
 
   defaultSettings;
+  layerSpacing;
+  topology; edges;
 
-  @ViewChild('container') container;
-  inputTopology;
-  inputWeights;
-  untrainedWeights;
+
+  weights;
+  minMaxDiffs; activities;
+  selectedFilter;
 
   destroyed = new Subject<void>();
 
   @HostListener('window:resize', ['$event'])
-  onResize(event) { this.draw(false); }
+  onResize() {
+    this.drawTopology();
+    this.drawWeights(false);
+  }
 
   constructor(
     private dataService: DataService,
-    private router: Router
+    private playgroundService: PlaygroundService,
+    private networkService: NetworkService
   ) { }
 
   ngOnInit() {
+    this.defaultSettings = {
+      rectSide: 20,
+      nodeRadius: 10,
+      color: '#4C516D',
+      nodeOpacity: .5,
+      nodeStroke: 0,
+      duration: 500,
+      unitGutter: 5
+    };
+
     this.dataService.toolbarHeight
       .pipe(takeUntil(this.destroyed))
       .subscribe(val => { this.toolbarHeight = val; });
 
-    this.dataService.vizTopology
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        this.inputTopology = val;
-        this.draw(true);
+    this.dataService.trainNetwork
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        this.inputTopology = this.dataService.topology;
+        this.drawTopology();
       });
 
-    this.dataService.vizWeights
+    this.networkService.onMessage()
       .pipe(takeUntil(this.destroyed))
+      .subscribe((message: JSON) => {
+        this.inputWeights = message['resultWeights'];
+        this.drawWeights(true);
+      });
+
+    this.dataService.visualize
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true),
+        concatMap(() => {
+          this.selectedFile = this.dataService.selectedFile;
+          this.epochSliderConfig = this.dataService.epochSliderConfig;
+
+          return this.playgroundService.getTopology(this.selectedFile);
+        }),
+        concatMap(topology => {
+          this.inputTopology = topology;
+          this.drawTopology();
+
+          return this.playgroundService.getWeights(this.selectedFile);
+        }),
+      )
       .subscribe(val => {
         this.inputWeights = val;
-        this.draw(true);
+        this.drawWeights(true);
       });
 
-    this.detachedNodes = [];
-    if (this.router.url.includes('ablation')) {
-      this.dataService.selectedFile
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          if (val) { this.detachedNodes = []; }
-        });
-
-      this.dataService.untrainedWeights
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => { this.untrainedWeights = val; });
-    }
-
-    this.defaultSettings = {
-      rectSide: 20,
-      nodeRadius: 10,
-      color: '#373737',
-      nodeOpacity: .5,
-      nodeStroke: 0,
-      duration: 500
-    };
-
-    this.dataService.testNetwork
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (val) { this.dataService.detachedNodes.next(this.detachedNodes); }
+    this.dataService.epochSliderChange
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        this.epochSliderConfig = this.dataService.epochSliderConfig;
+        this.drawWeights(true);
       });
 
-    this.dataService.resetNetwork
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        if (val) {
-          this.detachedNodes = [];
-          this.draw(false);
-        }
-      });
 
-    this.dataService.selectedFilter
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => {
-        this.selectedFilter = val;
-        this.highlightSelectedFilter();
-      });
+
+
+    // this.dataService.selectedFilter
+    //   .pipe(takeUntil(this.destroyed))
+    //   .subscribe(val => {
+    //     this.selectedFilter = val;
+    //     this.highlightSelectedFilter();
+    //   });
   }
 
-  draw(runAnimation) {
-    if (this.defaultSettings) {
-      this.activities = [];
-      this.resetViz();
+  drawTopology() {
+    this.resetViz();
 
-      if (this.inputTopology) {
-        this.setupTopology();
-        this.bindTopology();
-      }
-
-      if (this.inputTopology && this.inputWeights) {
-        this.setupWeights();
-        this.bindWeights(runAnimation);
-      }
+    if (this.inputTopology) {
+      this.setupTopology();
+      this.bindTopology();
     }
   }
 
   setupTopology() {
-    const convLayers: number[] = this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel);
-    const layers: number[] = this.inputTopology['layers'].map(layer => +layer);
-    layers.push(10);
+    let convLayers: number[] = [1];
+    let layers: number[] = [];
     const filteredTopology = [];
     const filteredEdges = [];
 
+    let unitsPerColumn;
+    const unitSpacing = { otherColumns: 0, lastColumn: 0 };
+    const targetUnitSpacing = { otherColumns: 0, lastColumn: 0 };
 
+    convLayers = convLayers.concat(this.inputTopology['conv_layers'].map(conv_layer => +conv_layer.outChannel));
+    layers = layers.concat(this.inputTopology['layers'].map(layer => +layer));
+    layers.push(10);
+
+
+    unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.rectSide + this.defaultSettings.unitGutter));
+    unitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
+    targetUnitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
     convLayers.forEach((convLayer, convLayerIndex) => {
       let nextLayer = layers[0];
       if (convLayerIndex < convLayers.length - 1) {
         nextLayer = convLayers[convLayerIndex + 1];
       }
 
+      const totalColumns = { layer: 1, nextLayer: 1 };
+      const column = { layer: -1, nextLayer: -1 };
+      if (convLayer > unitsPerColumn) { totalColumns.layer = Math.ceil(convLayer / unitsPerColumn); }
+      if (nextLayer > unitsPerColumn) { totalColumns.nextLayer = Math.ceil(nextLayer / unitsPerColumn); }
+
+      if (totalColumns.layer % 2 === 1) {
+        column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+      } else {
+        column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+      }
+
+      unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+      if (convLayer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (convLayer % unitsPerColumn); }
+
       for (let i = 0; i < convLayer; i++) {
+        let currUnitSpacing = unitSpacing.otherColumns;
+        if (i % unitsPerColumn === 0) { column.layer++; }
+        if (Math.floor(i / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+
         filteredTopology.push({
           layer: convLayerIndex,
           unit: i,
-          unitSpacing: (this.minWidthHeight / convLayer),
+          column: column.layer,
+          unitSpacing: currUnitSpacing,
+          unitsPerColumn: unitsPerColumn,
           isOutput: false,
           isConv: true
         });
 
+
+        if (totalColumns.nextLayer % 2 === 1) {
+          column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+        } else {
+          column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+        }
+
+        targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+        if (nextLayer % unitsPerColumn !== 0) { targetUnitSpacing.lastColumn = this.minWidthHeight / (nextLayer % unitsPerColumn); }
+
         for (let j = 0; j < nextLayer; j++) {
+          let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+          if (j % unitsPerColumn === 0) { column.nextLayer++; }
+          if (Math.floor(j / unitsPerColumn) + 1 === totalColumns.nextLayer) { targetCurrUnitSpacing = targetUnitSpacing.lastColumn; }
+
           filteredEdges.push({
             layer: convLayerIndex,
             source: i,
             target: j,
-            unitSpacing: (this.minWidthHeight / convLayer),
-            targetUnitSpacing: (this.minWidthHeight / nextLayer)
+            column: column.layer,
+            targetColumn: column.nextLayer,
+            unitSpacing: currUnitSpacing,
+            targetUnitSpacing: targetCurrUnitSpacing,
+            unitsPerColumn: unitsPerColumn
           });
         }
       }
     });
 
+    unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
+    unitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
+    targetUnitSpacing.otherColumns = this.minWidthHeight / unitsPerColumn;
     layers.forEach((layer, layerIndex) => {
       const nextLayer = layers[layerIndex + 1];
       const isOutput = (layerIndex < layers.length - 1) ? false : true;
 
+      const totalColumns = { layer: 1, nextLayer: 1 };
+      const column = { layer: -1, nextLayer: -1 };
+      if (layer > unitsPerColumn) { totalColumns.layer = Math.ceil(layer / unitsPerColumn); }
+      if (nextLayer > unitsPerColumn) { totalColumns.nextLayer = Math.ceil(nextLayer / unitsPerColumn); }
+
+      if (totalColumns.layer % 2 === 1) {
+        column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+      } else {
+        column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+      }
+
+      unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+      if (layer % unitsPerColumn !== 0) { unitSpacing.lastColumn = this.minWidthHeight / (layer % unitsPerColumn); }
+
       for (let i = 0; i < layer; i++) {
+        let currUnitSpacing = unitSpacing.otherColumns;
+        if (i % unitsPerColumn === 0) { column.layer++; }
+        if (Math.floor(i / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+
         filteredTopology.push({
           layer: convLayers.length + layerIndex,
           unit: i,
-          unitSpacing: (this.minWidthHeight / layer),
+          column: column.layer,
+          unitSpacing: currUnitSpacing,
+          unitsPerColumn: unitsPerColumn,
           isOutput: isOutput,
           isConv: false
         });
 
         if (!isOutput) {
+          if (totalColumns.nextLayer % 2 === 1) {
+            column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+          } else {
+            column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+          }
+
+          targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+          if (nextLayer % unitsPerColumn !== 0) { targetUnitSpacing.lastColumn = this.minWidthHeight / (nextLayer % unitsPerColumn); }
+
           for (let j = 0; j < nextLayer; j++) {
+            let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+            if (j % unitsPerColumn === 0) { column.nextLayer++; }
+            if (Math.floor(j / unitsPerColumn) + 1 === totalColumns.nextLayer) { targetCurrUnitSpacing = targetUnitSpacing.lastColumn; }
+
             filteredEdges.push({
               layer: convLayers.length + layerIndex,
               source: i,
               target: j,
-              unitSpacing: (this.minWidthHeight / layer),
-              targetUnitSpacing: (this.minWidthHeight / nextLayer)
+              column: column.layer,
+              targetColumn: column.nextLayer,
+              unitSpacing: currUnitSpacing,
+              targetUnitSpacing: targetCurrUnitSpacing,
+              unitsPerColumn: unitsPerColumn
             });
           }
         }
@@ -199,30 +293,182 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     this.edges = filteredEdges;
   }
 
+  bindTopology() {
+    const self = this;
+
+
+    const line = this.vizContainer.selectAll('.edges')
+      .data(this.edges);
+
+    line.enter()
+      .append('line')
+      .attr('class', 'edges')
+      .attr('x1', function (d) {
+        const x1: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
+        return x1;
+      })
+      .attr('y1', function (d) {
+        const y1: number = self.topMargin +
+          d.unitSpacing * (d.source % d.unitsPerColumn) +
+          d.unitSpacing / 2;
+        return y1;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin +
+          self.layerSpacing * (d.layer + 1) +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.targetColumn +
+          self.layerSpacing / 2;
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin +
+          d.targetUnitSpacing * (d.target % d.unitsPerColumn) +
+          d.targetUnitSpacing / 2;
+        return y2;
+      });
+
+
+    let rects = this.vizContainer.selectAll('rect')
+      .data(this.topology.filter(nodes => nodes.isConv));
+
+    rects = rects.enter()
+      .append('rect')
+      .attr('class', 'rect')
+      .attr('x', function (d) {
+        const x: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.rectSide + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2 -
+          0.5 * self.defaultSettings.rectSide;
+        return x;
+      })
+      .attr('y', function (d) {
+        const y: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2 -
+          0.5 * self.defaultSettings.rectSide;
+        return y;
+      })
+      .attr('width', this.defaultSettings.rectSide)
+      .attr('height', this.defaultSettings.rectSide)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
+
+
+    const circles = this.vizContainer.selectAll('circle')
+      .data(this.topology.filter(nodes => !nodes.isConv));
+
+    circles.enter()
+      .append('circle')
+      .attr('class', 'circle')
+      .attr('cx', function (d) {
+        const cx: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
+        return cx;
+      })
+      .attr('cy', function (d) {
+        const cy: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2;
+        return cy;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity);
+  }
+
+  drawWeights(runAnimation) {
+    this.activities = [];
+
+    if (this.inputWeights) {
+      this.setupWeights();
+      this.bindWeights(runAnimation);
+    }
+  }
+
   setupWeights() {
     const filteredData = [];
-    const diffsPerEpoch = { minDiff: 0, maxDiff: 0 };
-    const currEpoch = Object.keys(this.inputWeights)[0];
+    let currEpoch;
+    let diffsPerEpoch;
+
+    if (this.epochSliderConfig) {
+      currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
+    } else {
+      currEpoch = Object.keys(this.inputWeights)[0];
+    }
+
+    const unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
+    const unitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
+    const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
 
     Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
-      if (layer !== 'input') {
+      if (!layer.startsWith('c') && layer !== 'h0') {
+        if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
+
+        const totalColumns = { layer: 1, nextLayer: 1 };
+        const column = { layer: -1, nextLayer: -1 };
+        if (this.inputWeights[currEpoch][layer][0].length > unitsPerColumn) {
+          totalColumns.layer = Math.ceil(this.inputWeights[currEpoch][layer][0].length / unitsPerColumn);
+        }
+        if (this.inputWeights[currEpoch][layer].length > unitsPerColumn) {
+          totalColumns.nextLayer = Math.ceil(this.inputWeights[currEpoch][layer].length / unitsPerColumn);
+        }
+
+        if (totalColumns.nextLayer % 2 === 1) {
+          column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+        } else {
+          column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+        }
+
+        targetUnitSpacing.lastColumn =  this.minWidthHeight / unitsPerColumn;
+        if (this.inputWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
+          targetUnitSpacing.lastColumn = this.minWidthHeight / (this.inputWeights[currEpoch][layer].length % unitsPerColumn);
+        }
+
         this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
+          let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+          if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
+          if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
+            targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
+          }
+
+          if (totalColumns.layer % 2 === 1) {
+            column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+          } else {
+            column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+          }
+
+          unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+          if (destination.length % unitsPerColumn !== 0) {
+            unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
+          }
+
           destination.forEach((source, sourceIndex) => {
-            if (sourceIndex === 0) {
-              diffsPerEpoch.minDiff = source;
-              diffsPerEpoch.maxDiff = source;
-            } else {
-              if (source < diffsPerEpoch.minDiff) { diffsPerEpoch.minDiff = source; }
-              if (source > diffsPerEpoch.maxDiff) { diffsPerEpoch.maxDiff = source; }
-            }
+            let currUnitSpacing = unitSpacing.otherColumns;
+            if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
+            if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+
+            if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
+            if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
 
             filteredData.push({
-              layer: this.inputTopology['conv_layers'].length + (layerIndex - 1),
+              layer: layerIndex,
               source: sourceIndex,
               target: destinationIndex,
-              value: source,
-              unitSpacing: (this.minWidthHeight / +destination.length),
-              targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length)
+              column: column.layer,
+              targetColumn: column.nextLayer,
+              // unitSpacing: (this.minWidthHeight / +destination.length),
+              // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
+              unitSpacing: currUnitSpacing,
+              targetUnitSpacing: targetCurrUnitSpacing,
+              unitsPerColumn: unitsPerColumn,
+              value: source
             });
           });
         });
@@ -240,79 +486,9 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     });
 
     this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
-  }
 
-  bindTopology() {
-    d3.selectAll('.edges').remove();
-    d3.selectAll('circle').remove();
-    const self = this;
-
-
-    const line = this.vizContainer.selectAll('.edges')
-      .data(this.edges);
-
-    line.enter()
-      .append('line')
-      .attr('class', 'edges')
-      .attr('x1', function (d) {
-        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return x1;
-      })
-      .attr('y1', function (d) {
-        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
-        return y1;
-      })
-      .attr('x2', function (d) {
-        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
-        return x2;
-      })
-      .attr('y2', function (d) {
-        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
-        return y2;
-      })
-      .attr('stroke', this.defaultSettings.color);
-
-
-    const rects = this.vizContainer.selectAll('rect')
-      .data(this.topology.filter(nodes => nodes.isConv));
-
-    rects.enter()
-      .append('rect')
-      .attr('class', 'rect')
-      .attr('x', function (d) {
-        const x: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
-        return x;
-      })
-      .attr('y', function (d) {
-        const y: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2) - (0.5 * self.defaultSettings.rectSide);
-        return y;
-      })
-      .attr('width', this.defaultSettings.rectSide)
-      .attr('height', this.defaultSettings.rectSide)
-      .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
-
-    const circles = this.vizContainer.selectAll('circle')
-      .data(this.topology.filter(nodes => !nodes.isConv));
-
-    circles.enter()
-      .append('circle')
-      .attr('class', 'circle')
-      .attr('cx', function (d) {
-        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
-        return cx;
-      })
-      .attr('cy', function (d) {
-        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
-        return cy;
-      })
-      .attr('r', this.defaultSettings.nodeRadius)
-      .attr('fill', this.defaultSettings.color)
-      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-      .attr('stroke', this.defaultSettings.color)
-      .attr('stroke-width', this.defaultSettings.nodeStroke);
+    console.clear();
+    console.log(this.weights);
   }
 
   bindWeights(runAnimation) {
@@ -328,19 +504,29 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .append('line')
       .attr('class', 'weights')
       .attr('x1', function (d) {
-        const x1: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const x1: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
         return x1;
       })
       .attr('y1', function (d) {
-        const y1: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        const y1: number = self.topMargin +
+          d.unitSpacing * (d.source % d.unitsPerColumn) +
+          d.unitSpacing / 2;
         return y1;
       })
       .attr('x2', function (d) {
-        const x2: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const x2: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
         return x2;
       })
       .attr('y2', function (d) {
-        const y2: number = self.topMargin + (d.unitSpacing * d.source) + (d.unitSpacing / 2);
+        const y2: number = self.topMargin +
+          d.unitSpacing * (d.source % d.unitsPerColumn) +
+          d.unitSpacing / 2;
         return y2;
       })
       .attr('stroke', function (d) { return d.stroke; });
@@ -351,18 +537,23 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
         .delay(function (d) {
           // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
           // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-          const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length);
-          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length - 1);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
           return nodesDelay + weightsDelay;
         });
     }
     enterWeights
       .attr('x2', function (d) {
-        const x2: number = self.leftMargin + (self.layerSpacing * (d.layer + 1)) + (self.layerSpacing / 2);
+        const x2: number = self.leftMargin +
+          self.layerSpacing * (d.layer + 1) +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.targetColumn +
+          self.layerSpacing / 2;
         return x2;
       })
       .attr('y2', function (d) {
-        const y2: number = self.topMargin + (d.targetUnitSpacing * d.target) + (d.targetUnitSpacing / 2);
+        const y2: number = self.topMargin +
+          d.targetUnitSpacing * (d.target % d.unitsPerColumn) +
+          d.targetUnitSpacing / 2;
         return y2;
       });
 
@@ -374,11 +565,16 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
-        const cx: number = self.leftMargin + (self.layerSpacing * d.layer) + (self.layerSpacing / 2);
+        const cx: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
         return cx;
       })
       .attr('cy', function (d) {
-        const cy: number = self.topMargin + (d.unitSpacing * d.unit) + (d.unitSpacing / 2);
+        const cy: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2;
         return cy;
       })
       .attr('r', this.defaultSettings.nodeRadius)
@@ -387,50 +583,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
-    if (this.router.url.includes('ablation')) {
-
-      enterCircles.on('mouseover', function (d) {
-        self.conMenuSelected = Object.assign({}, d);
-        self.conMenuSelected.layer -= self.inputTopology['conv_layers'].length;
-
-        if (!d.isOutput && !d.isConv) {
-          self.setupShowWeights();
-          self.showWeights(d3.mouse(this)[0], d3.mouse(this)[1]);
-        }
-      });
-
-      enterCircles.on('mouseout', function (d) {
-        if (!d.isOutput && !d.isConv) { d3.selectAll('.weights-comparison').remove(); }
-      });
-
-      enterCircles.on('click', function (d) {
-        d3.event.stopPropagation();
-        d3.select('.context-menu').remove();
-        self.conMenuSelected = d;
-
-        if (!d.isOutput && !d.isConv) { self.modifyNodes(); }
-      });
-
-      // enterCircles.on('contextmenu', function (d) {
-      //   d3.select('.context-menu').remove();
-      //   self.conMenuSelected = d;
-
-      //   if (!d.isOutput) {
-      //     self.setupConMenu();
-      //     self.bindConMenu(d3.mouse(this)[0], d3.mouse(this)[1]);
-      //   }
-      // });
-
-    }
-
     if (runAnimation) {
       enterCircles = enterCircles.transition()
         .duration(this.defaultSettings.duration)
         .delay(function (d) {
           // const nodesDelay = self.defaultSettings.duration * d.layer;
           // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-          const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
-          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length);
+          const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
+          const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
           return nodesDelay + weightsDelay;
         });
     }
@@ -446,14 +606,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     let activity = 0;
     let recordActivities = false;
 
-    const range = Math.abs(this.minMaxDiffs.maxDiff - this.minMaxDiffs.minDiff);
-    const valuePercentage = el.value / range;
+    const range = Math.abs(this.minMaxDiffs.max - this.minMaxDiffs.min);
+    const valuePercentage = (el.value - this.minMaxDiffs.min) / range;
 
-    if (valuePercentage > .5) {
+    if (valuePercentage > .9) {
       color = '#EF5350';
       activity = valuePercentage;
       recordActivities = true;
-    } else if (valuePercentage > .35) {
+    } else if (valuePercentage > .85) {
       color = '#EF9A9A';
       activity = valuePercentage;
       recordActivities = true;
@@ -468,14 +628,6 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       });
     }
 
-    for (let i = 0; i < this.detachedNodes.length; i++) {
-      if ((this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.source) ||
-        ((this.detachedNodes[i].layer - 1) === el.layer && this.detachedNodes[i].unit === el.target)) {
-        color = this.defaultSettings.color;
-        break;
-      }
-    }
-
     return color;
   }
 
@@ -486,9 +638,14 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
     let opacity = 1;
 
     for (let i = 0; i < this.activities.length; i++) {
-      if ((this.activities[i].layer == el.layer && this.activities[i].source == el.unit) ||
-        (this.activities[i].layer == el.layer - 1 && this.activities[i].target == el.unit)) {
-        color = '#FF7373';
+      if ((this.activities[i].layer === el.layer && this.activities[i].source === el.unit) ||
+        (this.activities[i].layer === el.layer - 1 && this.activities[i].target === el.unit)) {
+        if (this.activities[i].activity > .9) {
+          color = '#EF5350';
+        } else if (this.activities[i].activity > .85) {
+          color = '#EF9A9A';
+        }
+
         allActivities.push(this.activities[i].activity);
       }
     }
@@ -497,55 +654,19 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       opacity = allActivities.reduce((a, b) => a + b) / allActivities.length;
     }
 
-    for (let i = 0; i < this.detachedNodes.length; i++) {
-      if (this.detachedNodes[i].layer === el.layer && this.detachedNodes[i].unit === el.unit) {
-        color = this.defaultSettings.color;
-        break;
-      }
-    }
-
     return {
       'color': color,
       'opacity': opacity
     };
   }
 
-  generateOpacity(d, mode: string) {
-    let opacity = 1;
-
-    for (let i = 0; i < this.detachedNodes.length; i++) {
-      if (mode === 'weights') {
-        if ((this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.source) ||
-          ((this.detachedNodes[i].layer - 1) === d.layer && this.detachedNodes[i].unit === d.target)) {
-          opacity = 0.25;
-          break;
-        }
-      }
-
-      if (mode === 'topology') {
-        if (this.detachedNodes[i].layer === d.layer && this.detachedNodes[i].unit === d.unit) {
-          opacity = 0.25;
-          break;
-        }
-      }
-    }
-
-    return opacity;
-  }
-
   resetViz() {
     this.svgWidth = window.innerWidth;
     this.svgHeight = window.innerHeight - (this.toolbarHeight + this.dataService.tabsHeight + this.dataService.bottomMargin);
 
-    if (this.router.url.includes('ablation')) {
-      this.svgWidth = window.innerWidth / 2;
-      this.svgHeight = window.innerHeight - (this.toolbarHeight + this.dataService.bottomMargin);
-    }
-
     this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
     this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
     this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
-
 
 
     if (this.svg) { this.svg.remove(); }
@@ -560,529 +681,130 @@ export class PlaygroundVizComponent implements OnInit, OnDestroy {
       .scaleExtent([0.1, 10])
       .on('zoom', () => {
         self.vizContainer.attr('transform', d3.event.transform);
-        d3.select('.context-menu').remove();
       })
       .on('end', () => { this.currTransform = d3.event.transform; });
     this.svg.call(this.zoom);
 
     this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
-    if (this.router.url.includes('ablation')) {
-      this.svg.on('click', () => { d3.select('.context-menu').remove(); });
-    }
   }
 
-  setupConMenu() {
-    this.conMenuItems = ['view details', 'detach node'];
-    for (let i = 0; i < this.detachedNodes.length; i++) {
-      if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
-        this.conMenuItems.splice(-1);
-        this.conMenuItems.push('reattach node');
-        break;
-      }
-    }
-
-
-    this.conMenuConfig = {
-      width: [],
-      height: [],
-      margin: 0.15,
-      fill: '#2b2b2b',
-      hover: '#414141',
-      color: '#ffffff'
-    };
-
-    const self = this;
-    this.vizContainer.selectAll('.tmp')
-      .data(this.conMenuItems)
-      .enter()
-      .append('text')
-      .text(function (d) { return d; })
-      .attr('class', 'tmp')
-      .each(function () {
-        const bbox = this.getBBox();
-        self.conMenuConfig.width.push(bbox.width);
-        self.conMenuConfig.height.push(bbox.height);
-      });
-    d3.selectAll('.tmp').remove();
-
-    this.conMenuConfig.width = Math.max(...this.conMenuConfig.width);
-    this.conMenuConfig.height = Math.max(...this.conMenuConfig.height);
-  }
-
-  bindConMenu(mouseX, mouseY) {
-    const self = this;
-
-
-    const menuEntry = this.vizContainer.append('g')
-      .attr('class', 'context-menu')
-      .selectAll('.menu-entry')
-      .data(this.conMenuItems)
-      .enter()
-      .append('g')
-      .attr('class', 'menu-entry');
-
-    menuEntry
-      .on('mouseover', function () {
-        d3.select(this).select('rect').style('fill', self.conMenuConfig.hover);
-      })
-      .on('mouseout', function () {
-        d3.select(this).select('rect').style('fill', self.conMenuConfig.fill);
-      })
-      .on('click', function (menu, menuIndex) {
-        if (menuIndex === 0) {
-        } else if (menuIndex === 1) {
-          self.modifyNodes();
-        }
-      });
-
-
-    menuEntry.append('rect')
-      .attr('x', mouseX)
-      .attr('y', (d, i) => {
-        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        return mouseY + i * (this.conMenuConfig.height + margin);
-      })
-      .attr('width', () => {
-        const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 3;
-        return this.conMenuConfig.width + margin;
-      })
-      .attr('height', () => {
-        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        return this.conMenuConfig.height + margin;
-      })
-      .style('fill', this.conMenuConfig.fill);
-
-
-    menuEntry.append('text')
-      .text(function (d) { return d; })
-      .attr('x', () => {
-        const margin = this.conMenuConfig.width * this.conMenuConfig.margin * 1.5;
-        return mouseX + margin;
-      })
-      .attr('y', (d, i) => {
-        const margin = this.conMenuConfig.height * this.conMenuConfig.margin * 3;
-        return mouseY + (i * (self.conMenuConfig.height + margin));
-      })
-      .attr('dy', this.conMenuConfig.height)
-      .attr('fill', this.conMenuConfig.color);
-  }
-
-  setupShowWeights() {
-    const self = this;
-    this.showWeightsTexts = [
-      `Layer ${this.conMenuSelected.layer + 1} - Unit ${this.conMenuSelected.unit + 1}`,
-      `Incoming Weights`,
-      `Before`,
-      `After`,
-      `Outgoing Weights`,
-      `Before`,
-      `After`
-    ];
-
-    this.showWeightsConfig = {
-      outerFrame: {
-        width: 0,
-        height: 0,
-        margin: 5,
-        cornerRad: 7.5,
-        fill: '#2b2b2b'
-      },
-      titles: {
-        margin: 15,
-        color: '#ffffff',
-        dimension: []
-      },
-      weightsFrame: {
-        width: 84,
-        height: 84,
-        margin: 15,
-        fill: 'whitesmoke'
-      },
-      positiveColor: d3.interpolateLab('whitesmoke', 'indianred'),
-      negativeColor: d3.interpolateLab('whitesmoke', 'royalblue')
-    };
-
-    this.vizContainer.selectAll('.tmp')
-      .data(this.showWeightsTexts)
-      .enter()
-      .append('text')
-      .text(d => d)
-      .attr('class', 'tmp')
-      .each(function (d, i) {
-        const bbox = this.getBBox();
-        const dimension = {
-          width: bbox.width,
-          height: bbox.height
-        };
-
-        self.showWeightsConfig.titles.dimension[i] = dimension;
-      });
-    d3.selectAll('.tmp').remove();
-
-    this.showWeightsConfig.outerFrame.width = 2 * this.showWeightsConfig.weightsFrame.width +
-      2.75 * this.showWeightsConfig.weightsFrame.margin;
-    this.showWeightsConfig.outerFrame.height =
-      this.showWeightsConfig.titles.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
-      2 * this.showWeightsConfig.titles.margin +
-      2 * this.showWeightsConfig.weightsFrame.height;
-  }
-
-  showWeights(mouseX, mouseY) {
-    const self = this;
-
-    const incomingWeights = (this.conMenuSelected.layer === 0) ? 'input' : `h${this.conMenuSelected.layer}`;
-    const outgoingWeights = (this.conMenuSelected.layer === this.inputTopology['layers'].length - 1) ?
-      'output' : `h${this.conMenuSelected.layer + 1}`;
-
-    const outgoingWeightsBefore = [];
-    const outgoingWeightsAfter = [];
-    this.untrainedWeights[outgoingWeights].forEach(element => {
-      outgoingWeightsBefore.push(element[this.conMenuSelected.unit]);
-    });
-    this.inputWeights['epoch_0'][outgoingWeights].forEach(element => {
-      outgoingWeightsAfter.push(element[this.conMenuSelected.unit]);
-    });
-
-    this.showWeightsConfig.quadrantAdjustment = {
-      x: this.showWeightsConfig.outerFrame.margin,
-      y: this.showWeightsConfig.outerFrame.margin
-    };
-    if (mouseX > this.svgWidth / 2) {
-      this.showWeightsConfig.quadrantAdjustment.x *= -1;
-      this.showWeightsConfig.quadrantAdjustment.x += -1 * this.showWeightsConfig.outerFrame.width;
-    }
-    if (mouseY > this.svgHeight / 2) {
-      this.showWeightsConfig.quadrantAdjustment.y *= -1;
-      this.showWeightsConfig.quadrantAdjustment.y += -1 * this.showWeightsConfig.outerFrame.height;
-    }
-
-
-    const weightsComparison = this.vizContainer.append('g')
-      .attr('class', 'weights-comparison');
-
-    weightsComparison.append('rect')
-      .attr('x', mouseX + this.showWeightsConfig.quadrantAdjustment.x)
-      .attr('y', mouseY + this.showWeightsConfig.quadrantAdjustment.y)
-      .attr('width', this.showWeightsConfig.outerFrame.width)
-      .attr('height', this.showWeightsConfig.outerFrame.height)
-      .attr('rx', this.showWeightsConfig.outerFrame.cornerRad)
-      .attr('ry', this.showWeightsConfig.outerFrame.cornerRad)
-      .style('fill', this.showWeightsConfig.outerFrame.fill);
-
-
-    weightsComparison.selectAll('text')
-      .data(this.showWeightsTexts)
-      .enter()
-      .append('text')
-      .text(d => d)
-      .attr('x', (d, i) => {
-        let centerAligned = 0;
-        if (i === 0 || d === 'Before' || d === 'After') {
-          if (i === 0) {
-            centerAligned += this.showWeightsConfig.outerFrame.width / 2;
-          } else if (d === 'Before') {
-            centerAligned += this.showWeightsConfig.outerFrame.width / 4;
-          } else if (d === 'After') {
-            centerAligned += 3 * this.showWeightsConfig.outerFrame.width / 4;
-          }
-
-          centerAligned -= this.showWeightsConfig.titles.dimension[i].width / 2;
-          centerAligned -= this.showWeightsConfig.titles.margin;
-        }
-
-
-        return mouseX +
-          this.showWeightsConfig.quadrantAdjustment.x +
-          this.showWeightsConfig.titles.margin +
-          centerAligned;
-      })
-      .attr('y', (d, i) => {
-        let totalTitles = this.showWeightsConfig.titles.margin;
-        let totalContent = 0;
-
-        if (i > 0) {
-          totalTitles = 2 * this.showWeightsConfig.titles.margin;
-        }
-        for (let j = 0; j <= i; j++) {
-          totalTitles += this.showWeightsConfig.titles.dimension[j].height;
-        }
-        if (d === 'After') {
-          totalTitles -= this.showWeightsConfig.titles.dimension[i].height;
-        }
-
-        if (i > 3) {
-          totalTitles -= this.showWeightsConfig.titles.dimension[3].height;
-          totalContent += this.showWeightsConfig.weightsFrame.height;
-          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
-        }
-
-
-        return mouseY +
-          this.showWeightsConfig.quadrantAdjustment.y +
-          totalTitles +
-          totalContent;
-      })
-      .attr('fill', this.showWeightsConfig.titles.color);
-
-
-    this.showWeightsConfig.data = [];
-    this.showWeightsConfig.data.push([...this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]]);
-    this.showWeightsConfig.data.push([...this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]]);
-    this.showWeightsConfig.data.push([...outgoingWeightsBefore]);
-    this.showWeightsConfig.data.push([...outgoingWeightsAfter]);
-
-    this.showWeightsConfig.weights = [];
-    this.showWeightsConfig.data.forEach(data => {
-      this.showWeightsConfig.weights.push({
-        min: Math.min(...data),
-        max: Math.max(...data),
-        width: this.showWeightsConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
-        height: this.showWeightsConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
-        numElements: Math.ceil(Math.sqrt(data.length))
-      });
-    });
-
-    // d3 workaround - attr's index starts from 1 instead of 0
-    this.showWeightsConfig.data.forEach(data => { data.unshift('d3 workaround'); });
-
-    const comparisonItem = weightsComparison.selectAll('.comparison-item')
-      .data(this.showWeightsConfig.data)
-      .enter()
-      .append('g')
-      .attr('class', 'comparison-item');
-
-    comparisonItem.append('rect')
-      .attr('x', (d, i) =>
-        mouseX +
-        this.showWeightsConfig.quadrantAdjustment.x +
-        (i % 2) * this.showWeightsConfig.weightsFrame.width +
-        (i % 2 * .75 + 1) * this.showWeightsConfig.weightsFrame.margin
-      )
-      .attr('y', (d, i) => {
-        let totalTitles = 2 * this.showWeightsConfig.titles.margin +
-          this.showWeightsConfig.titles.dimension[0].height;
-        let totalContent = Math.floor(i / 2) * this.showWeightsConfig.weightsFrame.height +
-          .25 * this.showWeightsConfig.weightsFrame.margin;
-
-
-        for (let j = 0; j < this.showWeightsConfig.titles.dimension.length; j++) {
-          if (Math.floor(i / 2) === 0 && j > 2) { break; }
-
-          if (j % 3 === 0) { continue; }
-          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.showWeightsConfig.titles.dimension[j].height; }
-        }
-
-        if (Math.floor(i / 2) === 1) {
-          totalContent += .75 * this.showWeightsConfig.weightsFrame.margin;
-        }
-
-        return mouseY +
-          this.showWeightsConfig.quadrantAdjustment.y +
-          totalTitles +
-          totalContent;
-      })
-      .attr('width', this.showWeightsConfig.weightsFrame.width)
-      .attr('height', this.showWeightsConfig.weightsFrame.height)
-      .style('fill', this.showWeightsConfig.weightsFrame.fill);
-
-
-    let tempIndex = -1;
-    comparisonItem.selectAll('rect')
-      .data(d => d)
-      .enter()
-      .append('rect')
-      .attr('x', function (d, i) {
-        if (i === 1) { tempIndex++; }
-
-        const currIndex = tempIndex % self.showWeightsConfig.data.length;
-        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
-        const xPosition = ((i - 1) % self.showWeightsConfig.weights[currIndex].numElements) *
-          self.showWeightsConfig.weights[currIndex].width;
-
-        return rectXValue + xPosition;
-      })
-      .attr('y', function (d, i) {
-        if (i === 1) { tempIndex++; }
-
-        const currIndex = tempIndex % self.showWeightsConfig.data.length;
-        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
-        const yPosition = Math.floor((i - 1) / self.showWeightsConfig.weights[currIndex].numElements) *
-          self.showWeightsConfig.weights[currIndex].height;
-
-        return rectYValue + yPosition;
-      })
-      .attr('width', (d, i) => {
-        if (i === 1) { tempIndex++; }
-        const currIndex = tempIndex % this.showWeightsConfig.data.length;
-
-        return this.showWeightsConfig.weights[currIndex].width;
-      })
-      .attr('height', (d, i) => {
-        if (i === 1) { tempIndex++; }
-        const currIndex = tempIndex % this.showWeightsConfig.data.length;
-
-        return this.showWeightsConfig.weights[currIndex].height;
-      })
-      .style('fill', (d, i) => {
-        if (i === 1) { tempIndex++; }
-
-        const currIndex = tempIndex % this.showWeightsConfig.data.length;
-        let scaledValue = 0;
-
-        if (d > 0) {
-          scaledValue = d / this.showWeightsConfig.weights[currIndex].max;
-          return this.showWeightsConfig.positiveColor(scaledValue);
-        } else if (d < 0) {
-          scaledValue = d / this.showWeightsConfig.weights[currIndex].min;
-          return this.showWeightsConfig.negativeColor(scaledValue);
-        }
-      });
-
-
-    console.clear();
-
-    console.log('Incoming Weights before training:', this.untrainedWeights[incomingWeights][this.conMenuSelected.unit]);
-    console.log('Incoming Weights after training:', this.inputWeights['epoch_0'][incomingWeights][this.conMenuSelected.unit]);
-    console.log('Outgoing Weights before training:', outgoingWeightsBefore);
-    console.log('Outgoing Weights after training:', outgoingWeightsAfter);
-  }
-
-  modifyNodes() {
-    if (this.detachedNodes.length === 0) {
-      this.detachedNodes.push(this.conMenuSelected);
-    } else {
-      for (let i = 0; i < this.detachedNodes.length; i++) {
-        if (this.detachedNodes[i].layer === this.conMenuSelected.layer && this.detachedNodes[i].unit === this.conMenuSelected.unit) {
-          this.detachedNodes.splice(i, 1);
-          break;
-        } else if (i === this.detachedNodes.length - 1) {
-          this.detachedNodes.push(this.conMenuSelected);
-          break;
-        }
-      }
-    }
-
-    this.setupWeights();
-    this.bindWeights(false);
-  }
-
-  highlightSelectedFilter() {
-    let selectedConvLayer; let selectedUnit; let selectedWeight;
-    let highlightedTopology; let highlightedWeight;
-
-    if (this.selectedFilter) {
-      [selectedConvLayer, selectedUnit, selectedWeight] = [...this.selectedFilter.split('-')];
-
-      for (let i = 0; i < this.topology.length; i++) {
-        if (this.topology[i].isConv &&
-          this.topology[i].layer === +selectedConvLayer.substring(1) &&
-          this.topology[i].unit === +selectedUnit) {
-          highlightedTopology = this.topology[i];
-          break;
-        }
-      }
-
-      if (selectedWeight) {
-        const layer = +selectedConvLayer.substring(1) - 1;
-        if (layer >= 0) {
-          for (let i = 0; i < this.edges.length; i++) {
-            if (this.edges[i].layer === layer &&
-              this.edges[i].source === +selectedWeight &&
-              this.edges[i].target === +selectedUnit) {
-              highlightedWeight = this.edges[i];
-              break;
-            }
-          }
-        }
-      }
-
-      this.selectedFilter = [this.selectedFilter];
-
-      console.clear();
-      console.log(selectedConvLayer, selectedUnit, selectedWeight);
-      console.log(highlightedTopology);
-      console.log(this.topology);
-      console.log(this.edges);
-    }
-
-    if (this.vizContainer) {
-      if (this.selectedFilter) {
-        this.selectedFilter = [this.selectedFilter];
-      } else {
-        this.selectedFilter = [];
-      }
-      const rects = this.vizContainer.selectAll('.highlightedRect')
-        .data(this.selectedFilter, d => d);
-
-      rects.exit()
-        .remove();
-
-      if (highlightedTopology) {
-        rects.enter()
-          .append('rect')
-          .attr('class', 'highlightedRect')
-          .attr('x', () => {
-            const x: number = this.leftMargin +
-              (this.layerSpacing * highlightedTopology.layer) +
-              (this.layerSpacing / 2) -
-              (0.5 * this.defaultSettings.rectSide);
-            return x;
-          })
-          .attr('y', () => {
-            const y: number = this.topMargin +
-              (highlightedTopology.unitSpacing * highlightedTopology.unit) +
-              (highlightedTopology.unitSpacing / 2) -
-              (0.5 * this.defaultSettings.rectSide);
-            return y;
-          })
-          .attr('width', this.defaultSettings.rectSide)
-          .attr('height', this.defaultSettings.rectSide)
-          .attr('fill', 'whitesmoke')
-          .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-          .attr('stroke', this.defaultSettings.color)
-          .attr('stroke-width', this.defaultSettings.nodeStroke);
-      }
-
-
-      if (selectedWeight) {
-        selectedWeight = [selectedWeight];
-      } else {
-        selectedWeight = [];
-      }
-      const line = this.vizContainer.selectAll('.highlightedEdges')
-        .data(selectedWeight, d => d);
-
-      line.exit()
-        .remove();
-
-      if (highlightedWeight) {
-        line.enter()
-          .append('line')
-          .attr('class', 'highlightedEdges')
-          .attr('x1', (d) => {
-            const x1: number = this.leftMargin + (this.layerSpacing * highlightedWeight.layer) + (this.layerSpacing / 2);
-            return x1;
-          })
-          .attr('y1', (d) => {
-            const y1: number = this.topMargin +
-              (highlightedWeight.unitSpacing * highlightedWeight.source) +
-              (highlightedWeight.unitSpacing / 2);
-            return y1;
-          })
-          .attr('x2', (d) => {
-            const x2: number = this.leftMargin + (this.layerSpacing * (highlightedWeight.layer + 1)) + (this.layerSpacing / 2);
-            return x2;
-          })
-          .attr('y2', (d) => {
-            const y2: number = this.topMargin +
-              (highlightedWeight.targetUnitSpacing * highlightedWeight.target) +
-              (highlightedWeight.targetUnitSpacing / 2);
-            return y2;
-          })
-          .attr('stroke', 'whitesmoke');
-      }
-    }
-  }
+  // highlightSelectedFilter() {
+  //   let selectedConvLayer; let selectedUnit; let selectedWeight;
+  //   let highlightedTopology; let highlightedWeight;
+
+  //   if (this.selectedFilter) {
+  //     [selectedConvLayer, selectedUnit, selectedWeight] = [...this.selectedFilter.split('-')];
+
+  //     for (let i = 0; i < this.topology.length; i++) {
+  //       if (this.topology[i].isConv &&
+  //         this.topology[i].layer === +selectedConvLayer.substring(1) &&
+  //         this.topology[i].unit === +selectedUnit) {
+  //         highlightedTopology = this.topology[i];
+  //         break;
+  //       }
+  //     }
+
+  //     if (selectedWeight) {
+  //       const layer = +selectedConvLayer.substring(1) - 1;
+  //       if (layer >= 0) {
+  //         for (let i = 0; i < this.edges.length; i++) {
+  //           if (this.edges[i].layer === layer &&
+  //             this.edges[i].source === +selectedWeight &&
+  //             this.edges[i].target === +selectedUnit) {
+  //             highlightedWeight = this.edges[i];
+  //             break;
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     this.selectedFilter = [this.selectedFilter];
+
+  //     console.clear();
+  //     console.log(selectedConvLayer, selectedUnit, selectedWeight);
+  //     console.log(highlightedTopology);
+  //     console.log(this.topology);
+  //     console.log(this.edges);
+  //   }
+
+  //   if (this.vizContainer) {
+  //     if (this.selectedFilter) {
+  //       this.selectedFilter = [this.selectedFilter];
+  //     } else {
+  //       this.selectedFilter = [];
+  //     }
+  //     const rects = this.vizContainer.selectAll('.highlightedRect')
+  //       .data(this.selectedFilter, d => d);
+
+  //     rects.exit()
+  //       .remove();
+
+  //     if (highlightedTopology) {
+  //       rects.enter()
+  //         .append('rect')
+  //         .attr('class', 'highlightedRect')
+  //         .attr('x', () => {
+  //           const x: number = this.leftMargin +
+  //             (this.layerSpacing * highlightedTopology.layer) +
+  //             (this.layerSpacing / 2) -
+  //             (0.5 * this.defaultSettings.rectSide);
+  //           return x;
+  //         })
+  //         .attr('y', () => {
+  //           const y: number = this.topMargin +
+  //             (highlightedTopology.unitSpacing * highlightedTopology.unit) +
+  //             (highlightedTopology.unitSpacing / 2) -
+  //             (0.5 * this.defaultSettings.rectSide);
+  //           return y;
+  //         })
+  //         .attr('width', this.defaultSettings.rectSide)
+  //         .attr('height', this.defaultSettings.rectSide)
+  //         .attr('fill', 'whitesmoke')
+  //         .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+  //         .attr('stroke', this.defaultSettings.color)
+  //         .attr('stroke-width', this.defaultSettings.nodeStroke);
+  //     }
+
+
+  //     if (selectedWeight) {
+  //       selectedWeight = [selectedWeight];
+  //     } else {
+  //       selectedWeight = [];
+  //     }
+  //     const line = this.vizContainer.selectAll('.highlightedEdges')
+  //       .data(selectedWeight, d => d);
+
+  //     line.exit()
+  //       .remove();
+
+  //     if (highlightedWeight) {
+  //       line.enter()
+  //         .append('line')
+  //         .attr('class', 'highlightedEdges')
+  //         .attr('x1', (d) => {
+  //           const x1: number = this.leftMargin + (this.layerSpacing * highlightedWeight.layer) + (this.layerSpacing / 2);
+  //           return x1;
+  //         })
+  //         .attr('y1', (d) => {
+  //           const y1: number = this.topMargin +
+  //             (highlightedWeight.unitSpacing * highlightedWeight.source) +
+  //             (highlightedWeight.unitSpacing / 2);
+  //           return y1;
+  //         })
+  //         .attr('x2', (d) => {
+  //           const x2: number = this.leftMargin + (this.layerSpacing * (highlightedWeight.layer + 1)) + (this.layerSpacing / 2);
+  //           return x2;
+  //         })
+  //         .attr('y2', (d) => {
+  //           const y2: number = this.topMargin +
+  //             (highlightedWeight.targetUnitSpacing * highlightedWeight.target) +
+  //             (highlightedWeight.targetUnitSpacing / 2);
+  //           return y2;
+  //         })
+  //         .attr('stroke', 'whitesmoke');
+  //     }
+  //   }
+  // }
 
   ngOnDestroy() {
     this.destroyed.next();

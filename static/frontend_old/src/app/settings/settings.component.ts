@@ -1,12 +1,11 @@
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormArray } from '@angular/forms';
 import { MatTabChangeEvent } from '@angular/material';
 
-import { takeUntil, take, concatMap } from 'rxjs/operators';
+import { takeUntil, take, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
-import { PlaygroundService } from '../playground.service';
 import { NetworkService } from '../network.service';
 import { DataService } from '../services/data.service';
 
@@ -20,7 +19,7 @@ import { Option } from '../models/option.model';
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SettingsComponent implements OnInit, OnDestroy {
   activeSceneTab: number;
   activeSettingsTab: number;
 
@@ -32,7 +31,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   files; selectedFile;
 
-  epochSliderConfig;
   heatmapNormalConfig;
   drawFully;
 
@@ -41,7 +39,6 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     public router: Router,
     private fb: FormBuilder,
-    private playgroundService: PlaygroundService,
     private networkService: NetworkService,
     private dataService: DataService
   ) { }
@@ -55,29 +52,48 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.activeSettingsTab = 0;
+    this.activeSceneTab = this.dataService.activeSceneTab;
 
-    const currOption = this.dataService.optionData.getValue();
-    this.epochSliderConfig = currOption.epochSliderConfig;
-    this.heatmapNormalConfig = currOption.heatmapNormalConfig;
-    this.drawFully = currOption.drawFully;
 
-    this.dataService.activeSceneTab
-      .pipe(takeUntil(this.destroyed))
-      .subscribe(val => { this.activeSceneTab = val; });
 
     if (this.router.url.includes('builder')) {
-      this.dataService.playgroundData
-        .pipe(takeUntil(this.destroyed))
-        .subscribe(val => {
-          this.playgroundData = val;
+      this.playgroundData = this.dataService.playgroundData;
+      this.createForm();
+
+      this.dataService.resetPlaygroundForm
+        .pipe(
+          takeUntil(this.destroyed),
+          filter(val => val === true)
+        )
+        .subscribe(() => {
+          this.playgroundData = this.dataService.playgroundData;
           this.createForm();
         });
-    } else if (this.router.url.includes('archive') || this.router.url.includes('ablation')) {
+    }
+
+
+    if (this.router.url.includes('builder') || this.router.url.includes('archive')) {
+      const currOption = this.dataService.optionData;
+      this.heatmapNormalConfig = currOption.heatmapNormalConfig;
+      this.drawFully = currOption.drawFully;
+
+      this.dataService.resetOption
+        .pipe(
+          takeUntil(this.destroyed),
+          filter(val => val === true)
+        )
+        .subscribe(() => {
+          const defaultOption = this.dataService.optionData;
+          this.heatmapNormalConfig = defaultOption.heatmapNormalConfig;
+          this.drawFully = defaultOption.drawFully;
+        });
+    }
+
+
+    if (this.router.url.includes('archive') || this.router.url.includes('ablation')) {
       this.scanForFiles();
     }
   }
-
-  ngAfterViewInit() { }
 
   createForm() {
     this.playgroundForm = this.fb.group({
@@ -166,31 +182,30 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   trainNetwork() {
-    const captureForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
+    const capturedForm: any = JSON.parse(JSON.stringify(this.playgroundForm.value));
     const objToSend = {
-      batch_size_train: +captureForm.batchSizeTrain,
-      batch_size_test: +captureForm.batchSizeTest,
-      num_epochs: +captureForm.epoch,
-      learning_rate: +captureForm.learning_rate,
-      conv_layers: captureForm.convLayers.slice(0),
-      layers: captureForm.fcLayers.map(layer => layer.unitCount)
+      batch_size_train: +capturedForm.batchSizeTrain,
+      batch_size_test: +capturedForm.batchSizeTest,
+      num_epochs: +capturedForm.epoch,
+      learning_rate: +capturedForm.learning_rate,
+      conv_layers: capturedForm.convLayers.slice(0),
+      layers: capturedForm.fcLayers.map(layer => layer.unitCount)
     };
 
 
-    this.playgroundData.batchSizeTrain = +captureForm.batchSizeTrain;
-    this.playgroundData.batchSizeTest = +captureForm.batchSizeTest;
-    this.playgroundData.epoch = +captureForm.epoch;
+    this.playgroundData.batchSizeTrain = +capturedForm.batchSizeTrain;
+    this.playgroundData.batchSizeTest = +capturedForm.batchSizeTest;
+    this.playgroundData.epoch = +capturedForm.epoch;
     this.playgroundData.selectedLearningRates = this.playgroundData.learningRates.findIndex(
-      learningRate => learningRate.value === captureForm.learning_rate
+      learningRate => learningRate.value === capturedForm.learning_rate
     );
 
     this.playgroundData.firstChannel = this.firstChannel;
     this.playgroundData.lastChannel = this.lastChannel;
     this.playgroundData.commonChannels = this.commonChannels;
 
-    this.playgroundData.convLayers = captureForm.convLayers.slice(0);
-    this.playgroundData.fcLayers = captureForm.fcLayers.map(layer => layer.unitCount);
-    this.dataService.playgroundData.next(this.playgroundData);
+    this.playgroundData.convLayers = capturedForm.convLayers.slice(0);
+    this.playgroundData.fcLayers = capturedForm.fcLayers.map(layer => layer.unitCount);
 
     objToSend.conv_layers.forEach((convLayer, convLayerIndex) => {
       if (convLayerIndex === 0) {
@@ -207,20 +222,26 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
 
-    this.dataService.vizTopology.next(objToSend);
-    this.dataService.vizWeights.next(null);
     this.networkService.send('mlp', JSON.parse(JSON.stringify(objToSend)));
+
+
+    this.dataService.playgroundData = this.playgroundData;
+    this.dataService.topology = objToSend;
+    this.dataService.trainNetwork.next(true);
+
 
 
     // console.clear();
     // console.log(objToSend);
+    // console.log(this.playgroundData);
     // console.log(this.firstChannel);
     // console.log(this.commonChannels);
     // console.log(this.lastChannel);
   }
 
-  reset() {
-    this.dataService.playgroundData.next(new Playground());
+  resetForm() {
+    this.dataService.playgroundData = new Playground();
+    this.dataService.resetPlaygroundForm.next(true);
   }
 
   scanForFiles(isNewlyCreated?: boolean) {
@@ -254,7 +275,7 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
           } else {
             this.files = newFileList;
 
-            const selectedFile = this.dataService.selectedFile.getValue();
+            const selectedFile = this.dataService.selectedFile;
             if (selectedFile) {
               this.selectedFileClick(selectedFile);
             } else {
@@ -270,115 +291,41 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   visualize() {
-    this.dataService.selectedFile.next(this.selectedFile);
-    this.dataService.vizTopology.next(null);
-    this.dataService.vizWeights.next(null);
-    this.dataService.untrainedWeights.next(null);
-    this.dataService.filterWeights.next(null);
+    this.dataService.selectedFile = this.selectedFile;
 
     const nextEpochConfig = new EpochConfig();
     nextEpochConfig.epochRange = this.files.find(element => element.value === this.selectedFile).epochRange.map(x => x += 1);
-    let epochToVisualize = nextEpochConfig.epochRange[1] - 1;
-    let topologyTemp;
+    this.dataService.epochSliderConfig = nextEpochConfig;
 
     if (this.router.url.includes('archive')) {
       this.heatmapNormalConfig.weightValueMin = this.files.find(element => element.value === this.selectedFile).weightMinMax[0];
       this.heatmapNormalConfig.weightValueMax = this.files.find(element => element.value === this.selectedFile).weightMinMax[1];
-
-      this.dataService.optionData.next({
-        epochSliderConfig: nextEpochConfig,
+      this.dataService.optionData = {
         heatmapNormalConfig: this.heatmapNormalConfig,
         drawFully: this.drawFully
-      });
-
-      this.createHeatmap(0, true);
-      epochToVisualize = 0;
+      };
     }
 
-    this.playgroundService.getTopology(this.selectedFile)
-      .pipe(
-        take(1),
-        concatMap(topology => {
-          topologyTemp = topology;
-          return this.playgroundService.visualize(this.selectedFile, epochToVisualize);
-        })
-      )
-      .subscribe(val => {
-        const currEpoch = `epoch_0`;
-        const filterWeights = {};
 
-        Object.keys(val).forEach(key => {
-          if (key.startsWith('c')) {
-            filterWeights[key] = val[key];
-            delete val[key];
-          }
-        });
-
-        this.dataService.vizTopology.next(topologyTemp);
-        if (val) {
-          this.dataService.vizWeights.next({ [currEpoch]: val });
-          this.dataService.filterWeights.next(filterWeights);
-        }
-      });
-
-    if (this.router.url.includes('ablation')) {
-      const untrainedFile = this.selectedFile.replace('.json', '_untrained.json');
-      this.playgroundService.visualize(untrainedFile, 0)
-        .pipe(take(1))
-        .subscribe(val => { this.dataService.untrainedWeights.next(val); });
-    }
+    this.dataService.visualize.next(true);
+    // this.dataService.filterWeights.next(null);
   }
 
   resetOptions() {
-    this.dataService.optionData.next(new Option(this.epochSliderConfig, new HeatmapConfig(), false));
+    this.dataService.optionData = new Option(new HeatmapConfig(), false);
+    this.dataService.resetOption.next(true);
   }
 
   applyOptions() {
-    this.dataService.optionData.next({
-      epochSliderConfig: this.epochSliderConfig,
+    this.dataService.optionData = {
       heatmapNormalConfig: this.heatmapNormalConfig,
       drawFully: this.drawFully
-    });
-
-    if (this.router.url.includes('builder')) {
-      if (this.dataService.lastTraining.getValue()) {
-        const param = {
-          data: this.dataService.lastTraining.getValue(),
-          heatmapNormalConfig: this.heatmapNormalConfig
-        };
-        setTimeout(() => {
-          this.dataService.createHeatmap.next(param);
-        }, 200);
-      }
-    } else if (this.router.url.includes('archive')) {
-      if (this.epochSliderConfig) {
-        this.createHeatmap(this.epochSliderConfig.epochValue - 1, false);
-      }
-    }
+    };
+    this.dataService.applyOption.next(true);
   }
 
   tabChanged(tabChangeEvent: MatTabChangeEvent) {
     this.activeSettingsTab = tabChangeEvent.index;
-  }
-
-  createHeatmap(epoch, newFile) {
-    this.networkService.createHeatmapFromFile(
-      this.selectedFile,
-      epoch,
-      [this.heatmapNormalConfig.weightValueMin, this.heatmapNormalConfig.weightValueMax],
-      this.drawFully,
-      newFile,
-      this.heatmapNormalConfig.density,
-      undefined
-    )
-      .pipe(take(1))
-      .subscribe(data => {
-        const param = {
-          data: data,
-          heatmapNormalConfig: this.heatmapNormalConfig
-        };
-        this.dataService.createHeatmap.next(param);
-      });
   }
 
   ngOnDestroy() {

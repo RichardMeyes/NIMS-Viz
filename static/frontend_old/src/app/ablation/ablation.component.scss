@@ -1,25 +1,35 @@
-.loading {
+.container {
     position: fixed;
     width: 100vw;
     height: calc(100vh - 64px);
-    z-index: 10;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
-.test-network {
-    position: absolute;
-    bottom: 5.5rem;
-    width: 50vw;
-    z-index: 10;
+.loading { z-index: 10; }
+
+mat-grid-list { height: 100%; }
+mat-grid-tile { background: #3e3e3e; }
+
+app-accuracy-plot, app-t-sne-plot {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
-.right-chart {
-    position: absolute;
-    right: 0;
-    top: 0;
-
-    width: 50vw;
-    height: calc(100vh - 64px);
+app-playground-viz,
+app-ablation-playground,
+app-accuracy-plot,
+app-t-sne-plot,
+app-input-drawing {
+    visibility: hidden;
 }
 
 .visible { visibility: visible; }
-.hidden { visibility: hidden; }
+
+.test-network {
+    position: absolute;
+    bottom: 1.5rem;
+    width: 100%;
+    z-index: 10;
+}

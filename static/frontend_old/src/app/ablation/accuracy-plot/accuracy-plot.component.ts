@@ -14,69 +14,70 @@ import { PlaygroundService } from 'src/app/playground.service';
   styleUrls: ['./accuracy-plot.component.scss']
 })
 export class AccuracyPlotComponent implements OnInit, OnDestroy {
-  destroyed = new Subject<void>();
-
   @ViewChild('canvas') canvas;
-  chart; barChartData;
+  @Output() finished: EventEmitter<boolean>;
+
+  selectedFile;
+  topology;
 
   networkResultsCorrectData;
-  selectedFile; topology;
+  chart; barChartData;
 
-  @Output() finished: EventEmitter<boolean>;
+  destroyed = new Subject<void>();
 
   constructor(
     private dataService: DataService,
-    private networkService: NetworkService,
-    private playgroundService: PlaygroundService
+    private playgroundService: PlaygroundService,
+    private networkService: NetworkService
   ) {
     this.finished = new EventEmitter<boolean>();
   }
 
   ngOnInit() {
-    this.dataService.selectedFile
+    this.dataService.visualize
       .pipe(
-        filter(val => {
-          if (val) {
-            return true;
-          } else {
-            return false;
-          }
-        }),
-        concatMap(val => {
-          this.selectedFile = val;
+        takeUntil(this.destroyed),
+        filter(val => val === true),
+        concatMap(() => {
+          this.selectedFile = this.dataService.selectedFile;
           return this.playgroundService.getTopology(this.selectedFile);
-        }),
-        takeUntil(this.destroyed)
+        })
       )
-      .subscribe(val => {
-        this.topology = val;
+      .subscribe(topology => {
+        this.topology = topology;
         this.accTest(true, [], []);
       });
 
-    this.dataService.detachedNodes
-      .pipe(takeUntil(this.destroyed))
-      .subscribe((val: any) => {
-        if (val) {
-          const layers = [];
-          const units = [];
+    this.dataService.testNetwork
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(val => val === true)
+      )
+      .subscribe(() => {
+        const layers = [];
+        const units = [];
 
-          val.forEach(element => {
-            layers.push(element.layer);
-            units.push(element.unit);
-          });
+        this.dataService.detachedNodes.forEach(element => {
+          layers.push(element.layer - 1);
+          units.push(element.unit);
+        });
 
-          if (layers.length === 0 && units.length === 0) {
-            this.accTest(true, layers, units);
-          } else {
-            this.accTest(false, layers, units);
-          }
+        if (layers.length === 0 && units.length === 0) {
+          this.accTest(true, layers, units);
+        } else {
+          this.accTest(false, layers, units);
         }
       });
   }
 
   accTest(isInit, layers, units) {
-    const filename = this.selectedFile.split('\\')[1]
-      .split('.')[0];
+    let filename;
+    if (this.selectedFile.includes('\\')) {
+      filename = this.selectedFile.split('\\')[1].split('.')[0];
+    } else {
+      filename = this.selectedFile.split('/');
+      filename = filename[filename.length - 1].split('.')[0];
+    }
 
     this.networkService.ablationTest(this.topology, filename, layers, units)
       .pipe(take(1))
@@ -89,8 +90,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const networkResultsCorrect = {
             label: 'Correctly Classified',
-            backgroundColor: 'rgba(117, 117, 117, .1)',
-            borderColor: 'rgba(117, 117, 117, 1)',
+            backgroundColor: 'rgb(117, 117, 117)',
             borderWidth: 1,
             data: val['class specific accuracy'],
             stack: 'results'
@@ -98,8 +98,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const networkResultsMisclassified = {
             label: 'Misclassified',
-            backgroundColor: 'rgba(253, 160, 6, .1)',
-            borderColor: 'rgba(253, 160, 6, 1)',
+            backgroundColor: 'rgb(238, 160, 51)',
             borderWidth: 1,
             data: val['class specific accuracy'].map(acc => 100 - acc),
             stack: 'results'
@@ -110,10 +109,6 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
             datasets: [networkResultsCorrect, networkResultsMisclassified]
           };
         } else {
-          // console.log('From Backend:');
-          // console.log('before ablation:', this.networkResultsCorrectData);
-          // console.log('after ablation:', val['class specific accuracy']);
-
           this.barChartData.datasets[0].data = val['class specific accuracy'];
           this.barChartData.datasets[1].data = val['class specific accuracy'].map(acc => 100 - acc);
 
@@ -131,16 +126,14 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
 
           const networkChangesLoss = {
             label: 'Misclassified After Ablation',
-            backgroundColor: 'rgba(241, 83, 110, .25)',
-            borderColor: 'rgba(241, 83, 110, 1)',
+            backgroundColor: 'rgb(217, 84, 79)',
             borderWidth: 1,
             data: networkChangesData[0],
             stack: 'changes'
           };
           const networkChangesGain = {
             label: 'Correctly Classified After Ablation',
-            backgroundColor: 'rgba(0, 198, 137, .25)',
-            borderColor: 'rgba(0, 198, 137, 1)',
+            backgroundColor: 'rgb(91, 184, 93)',
             borderWidth: 1,
             data: networkChangesData[1],
             stack: 'changes'
@@ -156,7 +149,7 @@ export class AccuracyPlotComponent implements OnInit, OnDestroy {
         }
 
         this.plotAccuracies(isInit);
-        this.dataService.testResult.next(val);
+        this.dataService.ablationTestResult.next(val);
       });
   }
 
