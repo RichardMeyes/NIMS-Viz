@@ -6,6 +6,45 @@
       <button mat-raised-button (click)="addCNN()">CNN <i class="fas fa-plus"></i></button>
       <button mat-raised-button (click)="addMLP()">MLP <i class="fas fa-plus"></i></button>
     </div>
+
+    <!-- configurations -->
+    <!-- batch size train, batch size test, epoch, learning rate -->
+    <!-- on h3 click it toogles the visibility of the forms-->
+    <h3 class="settings-headline" (click)="hideConfig=!hideConfig">
+      Configurations
+      <i class="down-up-arrow" [ngClass]="hideConfig? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
+    </h3>
+    <form *ngIf="!hideConfig" class="cnn-input-form">
+      <mat-form-field class="config-input">
+        <input name="batchTrain" type="number" matInput min="0" placeholder="Batch Size Train"
+          [(ngModel)]="_nnSettings.configurations.batchTrain" value={{_nnSettings.configurations.batchTrain}}>
+      </mat-form-field>
+      <mat-form-field class="config-input">
+        <input name="batchTest" type="number" matInput min="0" placeholder="Batch Size Test"
+          [(ngModel)]="_nnSettings.configurations.batchTest" value={{_nnSettings.configurations.batchTest}}>
+      </mat-form-field>
+      <mat-form-field class="config-input">
+        <input name="epoch" type="number" matInput min="0" placeholder="Epoch"
+          [(ngModel)]="_nnSettings.configurations.epoch" value={{_nnSettings.configurations.epoch}}>
+      </mat-form-field>
+      <mat-form-field class="input-selector">
+        <mat-label>Learning Rate</mat-label>
+        <mat-select [(value)]="_nnSettings.configurations.learningRate">
+          <mat-option [value]="0.000001">0.000001</mat-option>
+          <mat-option [value]="0.00001">0.00001</mat-option>
+          <mat-option [value]="0.0001">0.0001</mat-option>
+          <mat-option [value]="0.001">0.001</mat-option>
+          <mat-option [value]="0.01">0.01</mat-option>
+          <mat-option [value]="0.03">0.03</mat-option>
+          <mat-option [value]="0.1">0.1</mat-option>
+          <mat-option [value]="0.3">0.3</mat-option>
+          <mat-option [value]="1">1</mat-option>
+          <mat-option [value]="3">3</mat-option>
+          <mat-option [value]="10">10</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </form>
+
     <!-- input layer -->
     <!-- has 3 forms for x, y, z axis, z axis is also the channel number -->
     <!-- on h3 click it toogles the visibility of the forms-->

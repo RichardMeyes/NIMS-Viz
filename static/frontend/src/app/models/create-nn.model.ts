@@ -66,7 +66,7 @@
  * Channel is a Helping Class that links the number of the channels for the ConvLayers
  */
 class Channel {
-    constructor(public value: number) {}
+    constructor(public value: number) { }
 }
 
 /**
@@ -97,16 +97,32 @@ export class NeuralNetworkSettings {
     }
 
     /**
+     * Configurations of neural network settings.
+     */
+    public configurations: {
+        batchTrain: number,
+        batchTest: number,
+        epoch: number,
+        learningRate: number
+    };
+
+    /**
      * Object Attribute that gets x, y and z axis for the Input.
      * The z axis is also the Channel output for the first ConvLayer
      */
-    public inputSize: {x: number, y: number, z: Channel}
+    public inputSize: { x: number, y: number, z: Channel }
 
     /**
      * Sets the inputSize to Default x = 0, y = 0, z = Channel.value = 0
      */
     constructor() {
-        this.inputSize = {x: 0, y: 0, z: new Channel(0)};
+        this.configurations = {
+            batchTrain: 64,
+            batchTest: 64,
+            epoch: 5,
+            learningRate: 0.01
+        };
+        this.inputSize = { x: 0, y: 0, z: new Channel(0) };
     }
 
     /**
@@ -180,7 +196,7 @@ export enum Activation {
     softplus = 'softplus',
     softmax = 'softmax',
     logSoftmax = 'logSoftmax',
- }
+}
 
 /**
  * Parent Class of all Layers Contains all shared attributes
@@ -220,7 +236,7 @@ export class ConvLayer extends Layer {
 /**
  * DenseLayer class extends from Layer
  */
-export class DenseLayer extends Layer{
+export class DenseLayer extends Layer {
     /**
      * 
      * @param size Number of Nodes in the fully Connected Layer

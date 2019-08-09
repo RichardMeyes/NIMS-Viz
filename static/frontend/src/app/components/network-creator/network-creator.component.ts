@@ -21,6 +21,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   /**
    * attributes to toogle the visibility of the input forms
    */
+  public hideConfig = false;
   public hideInput = false;
   public hideCNN = false;
   public hideMLP = false;

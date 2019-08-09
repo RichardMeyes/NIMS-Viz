@@ -104,3 +104,8 @@ button {
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(221, 175, 23, 0.486); 
 }
+
+.config-input {
+    width: 6.5vw;
+    margin-right: 0.5vw;
+}
