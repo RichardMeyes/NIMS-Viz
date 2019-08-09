@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { NeuralNetworkSettings, ConvLayer, DenseLayer } from '../../models/create-nn.model';
 import { BackendCommunicationService } from '../../backendCommunication/backend-communication.service';
 import { EventsService } from 'src/app/services/events.service';
+import { DataService } from 'src/app/services/data.service';
 
 /**
  * Component for Network creation
@@ -15,7 +16,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   /**
    * loads the possible settings for a neural network
    */
-  private _nnSettings = new NeuralNetworkSettings();
+  private _nnSettings: NeuralNetworkSettings;
 
   /**
    * attributes to toogle the visibility of the input forms
@@ -26,12 +27,14 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
 
   constructor(
     private backend: BackendCommunicationService,
-    private eventsService: EventsService
+    private eventsService: EventsService,
+    private dataService: DataService
   ) {
 
   }
 
   ngOnInit() {
+    this._nnSettings = this.dataService.nnSettings;
   }
 
 
@@ -82,6 +85,14 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   createNetwork() {
     //this.backend.createNetwork();
+  }
+
+  /**
+   * Resets network settings.
+   */
+  resetNetwork() {
+    this.dataService.nnSettings = new NeuralNetworkSettings();
+    this._nnSettings = this.dataService.nnSettings;
   }
 
 

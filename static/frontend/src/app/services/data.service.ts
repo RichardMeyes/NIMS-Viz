@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { NeuralNetworkSettings } from '../models/create-nn.model';
 
 /**
  * Service of shared data.
@@ -8,8 +9,14 @@ import { Injectable } from '@angular/core';
 })
 export class DataService {
 
-  // create network form value
+  /**
+   * NN settings of network-creator form.
+   */
+  nnSettings: NeuralNetworkSettings;
+
   // selected file
 
-  constructor() { }
+  constructor() {
+    this.nnSettings = new NeuralNetworkSettings();
+  }
 }
