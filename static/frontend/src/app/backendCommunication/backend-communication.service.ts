@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 
 import { throwError, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { NeuralNetworkSettingsJSON } from '../models/create-nn.model';
 
 /**
  * httpOptions copied from old project file don't know if its realy necessary.
@@ -54,10 +55,10 @@ export class BackendCommunicationService {
 
   /**
    * Creats a Neural Network with given parameters
-   * @param setup list of parameters, which the NN should have
+   * @param setup NN settings
    */
-  public createNetwork(setup: string[]): Observable<any> {
-    return this._http.post(`${this._backendURL}/nn/MLP`, setup);
+  public createNetwork(setup: NeuralNetworkSettingsJSON): Observable<any> {
+    return this._http.post(`${this._backendURL}/createNetwork`, setup);
   }
 
   /**

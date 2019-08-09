@@ -247,3 +247,21 @@ export class DenseLayer extends Layer {
         public activation: Activation = Activation.none
     ) { super(activation) }
 }
+
+export interface NeuralNetworkSettingsJSON {
+    configurations: {
+        batchTrain: number,
+        batchTest: number,
+        epoch: number,
+        learningRate: number
+    };
+
+    inputSize: {
+        x: number,
+        y: number,
+        z: Channel
+    };
+
+    convLayers: ConvLayer[];
+    denseLayers: DenseLayer[];
+}

@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { NeuralNetworkSettings, ConvLayer, DenseLayer } from '../../models/create-nn.model';
+import { NeuralNetworkSettings, ConvLayer, DenseLayer, NeuralNetworkSettingsJSON } from '../../models/create-nn.model';
 import { BackendCommunicationService } from '../../backendCommunication/backend-communication.service';
 import { EventsService } from 'src/app/services/events.service';
 import { DataService } from 'src/app/services/data.service';
@@ -85,7 +85,16 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    * Not implemented yet
    */
   createNetwork() {
-    //this.backend.createNetwork();
+    const setup: NeuralNetworkSettingsJSON = {
+      configurations: JSON.parse(JSON.stringify(this._nnSettings.configurations)),
+      inputSize: JSON.parse(JSON.stringify(this._nnSettings.inputSize)),
+      convLayers: [...this._nnSettings.convLayers],
+      denseLayers: [...this._nnSettings.denseLayers]
+    };
+
+    this.backend.createNetwork(setup).subscribe(() => {
+      console.log('New network created and trained.');
+    });
   }
 
   /**
