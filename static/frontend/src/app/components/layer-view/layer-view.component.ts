@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
 import { debounceTime } from 'rxjs/operators';
@@ -43,6 +43,23 @@ export class LayerViewComponent implements OnInit {
   layerSpacing: number;
   topology: LayerTopology[]; edges: LayerEdge[];
 
+  /**
+   * The latest nnsettings for resizing purpose.
+   */
+  lastNNSettings: NeuralNetworkSettings;
+
+  /**
+   * Resize event of the visualization.
+   */
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.resetViz();
+
+    this.setupTopology(this.lastNNSettings);
+    this.bindTopology();
+    // this.drawWeights(false);
+  }
+
   constructor(
     private eventsService: EventsService
   ) { }
@@ -55,7 +72,10 @@ export class LayerViewComponent implements OnInit {
         debounceTime(500)
       )
       .subscribe(nnSettings => {
+        this.lastNNSettings = nnSettings;
+
         this.resetViz();
+
         this.setupTopology(nnSettings);
         this.bindTopology();
       });
