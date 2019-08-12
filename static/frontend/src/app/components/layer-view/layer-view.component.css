@@ -15,8 +15,11 @@
     margin: 1rem;
 
     width: calc(100% - 1rem);
-    height: 3.5rem;
     background-color: indianred;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .full-width .information {

@@ -13,6 +13,8 @@ import { BackendCommunicationService } from './backendCommunication/backend-comm
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NetworkCreatorComponent } from './components/network-creator/network-creator.component';
 
+import { NouisliderModule } from 'ng2-nouislider';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -26,6 +28,7 @@ import { NetworkCreatorComponent } from './components/network-creator/network-cr
     HttpClientModule,
     BrowserAnimationsModule,
     MaterialModule,
+    NouisliderModule,
     FormsModule
   ],
   providers: [BackendCommunicationService],

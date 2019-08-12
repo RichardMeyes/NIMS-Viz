@@ -51,5 +51,16 @@ def saveNetwork(nnSettings):
 
     return filename
 
+# Load network's settings
+@app.route("/loadNetwork", methods=["POST"])
+@cross_origin()
+def loadNetwork():
+    params = request.get_json()
+    filename = params['filename']
+
+    nnSettings = json.load(open("static/data/topologies/" + filename))
+
+    return json.dumps(nnSettings)
+
 if __name__ == "__main__":
     app.run(debug=True)

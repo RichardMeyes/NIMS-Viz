@@ -1,3 +1,37 @@
-<div #container class="container" [class.full-width]="!dataService.showSideMenu" >
-    <div class="information"></div>
+<div #container class="container" [class.full-width]="!dataService.showSideMenu">
+    <div class="information">
+        <button mat-icon-button (click)="toggleAnimation()">
+            <mat-icon *ngIf="!isPlaying">play_circle_outline</mat-icon>
+            <mat-icon *ngIf="isPlaying">pause_circle_outline</mat-icon>
+        </button>
+        <div class="form-field">Epoch</div>
+    </div>
+
+
+
+    <!-- <div *ngIf="epochSliderConfig && epochSliderConfig.epochRange[0] != epochSliderConfig.epochRange[1]">
+
+
+        <div>{{epochSliderConfig.epochRange[0]}}</div>
+        <nouislider [min]="epochSliderConfig.epochRange[0]" [max]="epochSliderConfig.epochRange[1]" [step]="1"
+            [(ngModel)]="epochSliderConfig.epochValue" (change)="epochSliderChange()" [tooltips]="[ true ]"
+            style="margin-top: 4em;"></nouislider>
+        <div>{{epochSliderConfig.epochRange[1]}}</div>
+    </div>
+
+
+    <div fxLayout="row wrap" fxLayoutAlign="center center"
+        *ngIf="epochSliderConfig && epochSliderConfig.epochRange[0] != epochSliderConfig.epochRange[1]"
+        class="information">
+        <button mat-icon-button (click)="toggleAnimation()">
+            <mat-icon *ngIf="!isPlaying">play_circle_outline</mat-icon>
+            <mat-icon *ngIf="isPlaying">pause_circle_outline</mat-icon>
+        </button>
+        <div class="form-field">Epoch</div>
+        <div>{{epochSliderConfig.epochRange[0]}}</div>
+        <nouislider [min]="epochSliderConfig.epochRange[0]" [max]="epochSliderConfig.epochRange[1]" [step]="1"
+            [(ngModel)]="epochSliderConfig.epochValue" (change)="epochSliderChange()" [tooltips]="[ true ]"
+            style="margin-top: 4em;"></nouislider>
+        <div>{{epochSliderConfig.epochRange[1]}}</div>
+    </div> -->
 </div>

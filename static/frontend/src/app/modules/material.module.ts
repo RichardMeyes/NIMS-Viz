@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import {MatMenuModule} from '@angular/material/menu';
 import {MatButtonModule} from '@angular/material/button';
 import {MatInputModule} from '@angular/material/input';
+import {MatIconModule} from '@angular/material/icon';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatSelectModule} from '@angular/material/select';
 
@@ -11,6 +12,7 @@ import {MatSelectModule} from '@angular/material/select';
         MatMenuModule,
         MatButtonModule,
         MatInputModule,
+        MatIconModule,
         MatFormFieldModule,
         MatSelectModule
     ],
@@ -18,6 +20,7 @@ import {MatSelectModule} from '@angular/material/select';
         MatMenuModule,
         MatButtonModule,
         MatInputModule,
+        MatIconModule,
         MatFormFieldModule,
         MatSelectModule
     ],

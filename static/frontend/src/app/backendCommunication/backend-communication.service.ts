@@ -62,6 +62,17 @@ export class BackendCommunicationService {
   }
 
   /**
+   * Loads network
+   * @param selectedNetwork the filename (static/data/topologies) of the network to be loaded.
+   * @returns the network's settings
+   */
+  public loadNetwork(selectedNetwork: string): Observable<any> {
+    const body = { filename: selectedNetwork };
+    return this._http.post(`${this._backendURL}/loadNetwork`, body);
+  }
+
+
+  /**
    * Creates a heatmap from file
    * @param filePath given file Path
    * @param epoch number of epochs
