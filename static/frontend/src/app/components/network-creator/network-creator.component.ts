@@ -49,7 +49,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   addCNN() {
     this._nnSettings.addConvLayer();
-    this.updateLayerView();
+    this.updateTopology();
   }
 
   /**
@@ -59,7 +59,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   deleteCNN(layer: ConvLayer) {
     const id = this._nnSettings.convLayers.findIndex(l => layer === l);
     this._nnSettings.deleteConvLayer(id);
-    this.updateLayerView();
+    this.updateTopology();
   }
 
   /**
@@ -67,7 +67,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   addMLP() {
     this._nnSettings.addDenseLayer(new DenseLayer());
-    this.updateLayerView();
+    this.updateTopology();
   }
 
   /**
@@ -77,7 +77,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   deleteMLP(layer: DenseLayer) {
     const id = this._nnSettings.denseLayers.findIndex(l => layer === l);
     this._nnSettings.deleteDenseLayer(id);
-    this.updateLayerView();
+    this.updateTopology();
   }
 
   /**
@@ -92,8 +92,9 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
       denseLayers: [...this._nnSettings.denseLayers]
     };
 
-    this.backend.createNetwork(setup).subscribe(() => {
-      console.log('New network created and trained.');
+    this.backend.createNetwork(setup).subscribe(filename => {
+      this.dataService.selectedNetwork = filename;
+      this.eventsService.updateWeights.next(true);
     });
   }
 
@@ -109,7 +110,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   /**
    * Emits update-layer-view event
    */
-  updateLayerView() {
-    this.eventsService.updateLayerView.next(this._nnSettings);
+  updateTopology() {
+    this.eventsService.updateTopology.next(this._nnSettings);
   }
 }

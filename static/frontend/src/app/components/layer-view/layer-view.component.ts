@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { debounceTime } from 'rxjs/operators';
 import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
 import { LayerDefaultSettings, LayerTopology, LayerEdge } from 'src/app/models/layer-view.model';
+import { DataService } from 'src/app/services/data.service';
 
 /**
  * Component for network graph visualization
@@ -61,13 +62,14 @@ export class LayerViewComponent implements OnInit {
   }
 
   constructor(
-    private eventsService: EventsService
+    private eventsService: EventsService,
+    private dataService: DataService
   ) { }
 
   ngOnInit() {
     this.defaultSettings = new LayerDefaultSettings();
 
-    this.eventsService.updateLayerView
+    this.eventsService.updateTopology
       .pipe(
         debounceTime(500)
       )
@@ -79,6 +81,12 @@ export class LayerViewComponent implements OnInit {
         this.setupTopology(nnSettings);
         this.bindTopology();
       });
+
+    this.eventsService.updateWeights.subscribe(val => {
+      if (val) {
+        console.log(this.dataService.selectedNetwork);
+      }
+    });
   }
 
   /**

@@ -77,11 +77,11 @@
       <form *ngIf="!hideCNN" class="cnn-input-form">
         <mat-form-field class="channel-inputs">
           <input name="inChannel" type="number" matInput min="0" placeholder="Input" [(ngModel)]="layer.inChannel.value"
-            (ngModelChange)="updateLayerView()" value={{layer.inChannel.value}}>
+            (ngModelChange)="updateTopology()" value={{layer.inChannel.value}}>
         </mat-form-field>
         <mat-form-field class="channel-inputs">
           <input name="outChannel" type="number" matInput min="0" placeholder="Output"
-            [(ngModel)]="layer.outChannel.value" (ngModelChange)="updateLayerView()" value={{layer.outChannel.value}}>
+            [(ngModel)]="layer.outChannel.value" (ngModelChange)="updateTopology()" value={{layer.outChannel.value}}>
         </mat-form-field>
         <mat-form-field class="channel-inputs">
           <input name="kernel" type="number" matInput min="0" placeholder="Kernel" [(ngModel)]="layer.kernelSize"
@@ -130,7 +130,7 @@
       <form *ngIf="!hideMLP" class="cnn-input-form">
         <mat-form-field class="channel-inputs">
           <input name="inChannel" type="number" matInput min="0" placeholder="Input" [(ngModel)]="layer.size"
-            (ngModelChange)="updateLayerView()" value={{layer.size}}>
+            (ngModelChange)="updateTopology()" value={{layer.size}}>
         </mat-form-field>
         <!-- selector options hard coded to improve use ngFor and a list of possibilities -->
         <mat-form-field class="input-selector">

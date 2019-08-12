@@ -9,9 +9,18 @@ import { NeuralNetworkSettings } from '../models/create-nn.model';
   providedIn: 'root'
 })
 export class EventsService {
-  updateLayerView: Subject<NeuralNetworkSettings>;
+  /**
+   * Update the topology of layer view.
+   */
+  updateTopology: Subject<NeuralNetworkSettings>;
+
+  /**
+   * Update the weights of layer view.
+   */
+  updateWeights: Subject<boolean>;
 
   constructor() {
-    this.updateLayerView = new Subject();
+    this.updateTopology = new Subject();
+    this.updateWeights = new Subject();
   }
 }

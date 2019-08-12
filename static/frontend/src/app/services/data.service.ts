@@ -14,7 +14,11 @@ export class DataService {
    */
   nnSettings: NeuralNetworkSettings;
 
-  // selected file
+  /**
+   * Selected network at the moment.
+   * It referes to the filename of the topology file.
+   */
+  selectedNetwork: string;
 
   constructor() {
     this.nnSettings = new NeuralNetworkSettings();

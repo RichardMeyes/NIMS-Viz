@@ -40,7 +40,7 @@ def createNetwork():
 
     MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
 
-    return json.dumps('New network created and trained.')
+    return json.dumps("MLP_" + filename + ".json")
 
 # Save network's settings
 def saveNetwork(nnSettings):
