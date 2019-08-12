@@ -63,7 +63,7 @@ export class LayerViewComponent implements OnInit {
 
   constructor(
     private eventsService: EventsService,
-    private dataService: DataService
+    public dataService: DataService
   ) { }
 
   ngOnInit() {

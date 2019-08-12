@@ -1,5 +1,9 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
+html {
+    overflow: hidden;
+}
+
 *:focus {outline:none !important}
 
 * { font-family: Calibri; }

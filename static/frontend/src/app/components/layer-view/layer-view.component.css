@@ -1,4 +1,24 @@
 .container {
     width: 65vw;
-    height: 94vh;
+    height: calc(100vh - 55px);
+
+    position: relative;
+}
+
+.full-width {
+    width: 100vw;
+}
+
+.information {
+    position: absolute;
+    bottom: 0;
+    margin: 1rem;
+
+    width: calc(100% - 1rem);
+    height: 3.5rem;
+    background-color: indianred;
+}
+
+.full-width .information {
+    width: calc(100% - 2rem);
 }

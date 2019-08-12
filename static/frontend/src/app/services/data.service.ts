@@ -10,6 +10,11 @@ import { NeuralNetworkSettings } from '../models/create-nn.model';
 export class DataService {
 
   /**
+   * The state of showing side menu or not.
+   */
+  showSideMenu: boolean;
+
+  /**
    * NN settings of network-creator form.
    */
   nnSettings: NeuralNetworkSettings;
@@ -21,6 +26,7 @@ export class DataService {
   selectedNetwork: string;
 
   constructor() {
+    this.showSideMenu = false;
     this.nnSettings = new NeuralNetworkSettings();
   }
 }
