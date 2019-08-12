@@ -20,7 +20,7 @@ def test():
 def createNetwork():
     nnSettings = request.get_json()
 
-    saveNetwork(nnSettings)
+    filename = saveNetwork(nnSettings)
 
     batch_size_train = nnSettings['configurations']['batchTrain']
     batch_size_test = nnSettings['configurations']['batchTest']
@@ -38,19 +38,18 @@ def createNetwork():
     denseLayers = nnSettings['denseLayers']
     layers = list(map(lambda x: x['size'], denseLayers))
 
-    # MLP.mlp(batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
 
     return json.dumps('New network created and trained.')
 
 # Save network's settings
-@cross_origin()
 def saveNetwork(nnSettings):
     filename = str(uuid.uuid4())
 
     with open("static/data/topologies/MLP_" + filename + ".json", "w") as f:
         json.dump(nnSettings, f)
-    
-    return json.dumps("Network's settings saved.")
+
+    return filename
 
 if __name__ == "__main__":
     app.run(debug=True)
