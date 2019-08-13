@@ -13,7 +13,7 @@ import { BackendCommunicationService } from 'src/app/backendCommunication/backen
 @Component({
   selector: 'app-layer-view',
   templateUrl: './layer-view.component.html',
-  styleUrls: ['./layer-view.component.css']
+  styleUrls: ['./layer-view.component.scss']
 })
 export class LayerViewComponent implements OnInit {
   /**

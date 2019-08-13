@@ -10,7 +10,7 @@ import { DataService } from 'src/app/services/data.service';
 @Component({
   selector: 'app-network-creator',
   templateUrl: './network-creator.component.html',
-  styleUrls: ['./network-creator.component.css']
+  styleUrls: ['./network-creator.component.scss']
 })
 export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   /**

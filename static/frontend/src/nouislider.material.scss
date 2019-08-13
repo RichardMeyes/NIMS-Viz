@@ -34,10 +34,10 @@ nouislider {
         width: 100%;
     }
 
-    .noUi-connect { background: rgb(221, 175, 23) !important; }
+    .noUi-connect { background: #ff4081; }
 
     .noUi-handle {
-        background-color: rgb(221, 175, 23) !important;
+        background-color: #ff4081;
         position: absolute;
         right: -$mat-slider-thumb-size / 2 !important;
         bottom: -$mat-slider-thumb-size / 2;

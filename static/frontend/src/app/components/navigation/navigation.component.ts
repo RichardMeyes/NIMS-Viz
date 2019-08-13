@@ -6,7 +6,7 @@ import { BackendCommunicationService } from 'src/app/backendCommunication/backen
 @Component({
   selector: 'app-navigation',
   templateUrl: './navigation.component.html',
-  styleUrls: ['./navigation.component.css']
+  styleUrls: ['./navigation.component.scss']
 })
 export class NavigationComponent implements OnInit {
   // mocked values for showing the feature, have to be changed later
