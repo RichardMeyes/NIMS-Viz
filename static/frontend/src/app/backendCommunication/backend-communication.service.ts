@@ -62,13 +62,23 @@ export class BackendCommunicationService {
   }
 
   /**
-   * Loads network
+   * Loads network.
    * @param selectedNetwork the filename (static/data/topologies) of the network to be loaded.
    * @returns the network's settings
    */
   public loadNetwork(selectedNetwork: string): Observable<any> {
     const body = { filename: selectedNetwork };
     return this._http.post(`${this._backendURL}/loadNetwork`, body);
+  }
+
+  /**
+   * Loads weights.
+   * @param selectedNetwork the filename (static/data/topologies) of the network to be loaded.
+   * @returns the network's weights.
+   */
+  loadWeights(selectedNetwork: string): Observable<any> {
+    const body = { filename: selectedNetwork };
+    return this._http.post(`${this._backendURL}/loadWeights`, body);
   }
 
 

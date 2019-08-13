@@ -33,9 +33,12 @@ class Net(nn.Module):
             self.layers = layers        
             self.h0 = nn.Linear(h0Shape, self.layers[0])
             for i_layer in range(len(layers)-1):
-                self.__setattr__("h{0}".format(i_layer+1),
+                if i_layer+1 == len(layers)-1:
+                    self.__setattr__("output",
                                 nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
-            self.output = nn.Linear(self.layers[-1], 10)
+                else:
+                    self.__setattr__("h{0}".format(i_layer+1),
+                                nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
 
     def forward(self, x):
         if len(self.conv_layers):
@@ -47,7 +50,7 @@ class Net(nn.Module):
 
         self.h0 = nn.Linear(x.shape[1], self.layers[0])
         self.topology_dict["h0Shape"] = x.shape[1]
-        for i_layer in range(len(self.layers)):
+        for i_layer in range(len(self.layers)-1):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
 
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
@@ -59,11 +62,13 @@ class Net(nn.Module):
         weights = self.h0.weight.data.numpy().tolist()
         self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
         for i_layer in range(len(self.layers)-1):
-            layer = self.__getattr__("h{0}".format(i_layer+1))
-            weights = layer.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
-        weights = self.output.weight.data.numpy().tolist()
-        self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            if i_layer+1 == len(self.layers)-1:
+                weights = self.output.weight.data.numpy().tolist()
+                self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            else:
+                layer = self.__getattr__("h{0}".format(i_layer+1))
+                weights = layer.weight.data.numpy().tolist()
+                self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
         
         with open("static/data/weights/MLP_" + filename + "_untrained.json", "w") as f:
             json.dump(self.weights_dict, f)
@@ -104,13 +109,14 @@ class Net(nn.Module):
                 temp_epoch_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
 
             for i_layer in range(len(self.layers)-1):
-                layer = self.__getattr__("h{0}".format(i_layer+1))
-                weights = layer.weight.data.numpy().tolist()
-                self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
-                temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
-
-            weights = self.output.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+                if i_layer+1 == len(self.layers)-1:
+                    weights = self.output.weight.data.numpy().tolist()
+                    self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+                else:
+                    layer = self.__getattr__("h{0}".format(i_layer+1))
+                    weights = layer.weight.data.numpy().tolist()
+                    self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+                    temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             
             
             # temp_epoch_dict["epoch_{0}".format(epoch)].update({"output": weights})

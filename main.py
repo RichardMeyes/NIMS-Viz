@@ -62,5 +62,16 @@ def loadNetwork():
 
     return json.dumps(nnSettings)
 
+# Load network's weights.
+@app.route("/loadWeights", methods=["POST"])
+@cross_origin()
+def loadWeights():
+    params = request.get_json()
+    filename = params['filename']
+
+    nnWeights = json.load(open("static/data/weights/" + filename))
+
+    return json.dumps(nnWeights)
+
 if __name__ == "__main__":
     app.run(debug=True)

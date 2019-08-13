@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
-import { debounceTime, takeUntil } from 'rxjs/operators';
+import { debounceTime, takeUntil, concatMap } from 'rxjs/operators';
 import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
 import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
+import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 
 /**
  * Component for network graph visualization
@@ -46,9 +47,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   topology: LayerTopology[]; edges: LayerEdge[];
 
   /**
-   * The latest nnsettings for resizing purpose.
+   * Cached NN settings and weights for resizing purpose.
    */
   lastNNSettings: NeuralNetworkSettings;
+  lastNNWeights;
 
   /**
    * Epoch slider configurations.
@@ -68,14 +70,15 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   onResize() {
     this.resetViz();
 
-    this.setupTopology(this.lastNNSettings);
+    this.setupTopology();
     this.bindTopology();
     // this.drawWeights(false);
   }
 
   constructor(
     private eventsService: EventsService,
-    public dataService: DataService
+    public dataService: DataService,
+    private backend: BackendCommunicationService
   ) { }
 
   ngOnInit() {
@@ -93,14 +96,20 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
         this.resetViz();
 
-        this.setupTopology(nnSettings);
+        this.setupTopology();
         this.bindTopology();
       });
 
     this.eventsService.updateWeights
-      .pipe(takeUntil(this.destroyed))
-      .subscribe((epochSlider: EpochSlider) => {
-        this.epochSlider = epochSlider;
+      .pipe(
+        takeUntil(this.destroyed),
+        concatMap((epochSlider: EpochSlider) => {
+          this.epochSlider = epochSlider;
+          return this.backend.loadWeights(this.dataService.selectedNetwork);
+        })
+      )
+      .subscribe(nnWeights => {
+        this.lastNNWeights = nnWeights;
         this.updateWeights();
       });
   }
@@ -109,7 +118,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Reshape nn settings to graph topology.
    * @param nnSettings nn settings
    */
-  setupTopology(nnSettings: NeuralNetworkSettings) {
+  setupTopology() {
     const convLayers: number[] = [];
     const layers: number[] = [];
     const filteredTopology: LayerTopology[] = [];
@@ -119,12 +128,12 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     const unitSpacing = { otherColumns: 0, lastColumn: 0 };
     const targetUnitSpacing = { otherColumns: 0, lastColumn: 0 };
 
-    if (nnSettings.convLayers.length > 0) {
-      convLayers.push(nnSettings.convLayers[0].inChannel.value);
-      convLayers.push(...nnSettings.convLayers.map(convLayer => +convLayer.outChannel.value));
+    if (this.lastNNSettings.convLayers.length > 0) {
+      convLayers.push(this.lastNNSettings.convLayers[0].inChannel.value);
+      convLayers.push(...this.lastNNSettings.convLayers.map(convLayer => +convLayer.outChannel.value));
     }
-    if (nnSettings.denseLayers.length > 0) {
-      layers.push(...nnSettings.denseLayers.map(layer => +layer.size));
+    if (this.lastNNSettings.denseLayers.length > 0) {
+      layers.push(...this.lastNNSettings.denseLayers.map(layer => +layer.size));
     }
 
 
@@ -365,108 +374,103 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Update the weights visualization on current-epoch change.
    */
   updateWeights() {
-    console.log(this.epochSlider);
+    this.setupWeights();
   }
 
-  // setupWeights() {
-  //   const filteredData = [];
-  //   let currEpoch;
-  //   let diffsPerEpoch;
+  setupWeights() {
+    const filteredData = [];
+    const currEpoch = `epoch_${this.epochSlider.currEpoch - 1}`;
+    let diffsPerEpoch;
 
-  //   if (this.epochSliderConfig) {
-  //     currEpoch = `epoch_${this.epochSliderConfig.epochValue - 1}`;
-  //   } else {
-  //     currEpoch = Object.keys(this.inputWeights)[0];
-  //   }
+    const unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
+      (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
+    const unitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
+    const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
 
-  //   const unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
-  //     (this.defaultSettings.nodeRadius * 2 + this.defaultSettings.unitGutter));
-  //   const unitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
-  //   const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
+    console.log(this.lastNNWeights);
+    // Object.keys(this.lastNNWeights[currEpoch]).forEach((layer, layerIndex) => {
+    //   if (!layer.startsWith('c') && layer !== 'h0') {
+    //     if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
 
-  //   Object.keys(this.inputWeights[currEpoch]).forEach((layer, layerIndex) => {
-  //     if (!layer.startsWith('c') && layer !== 'h0') {
-  //       if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
+    //     const totalColumns = { layer: 1, nextLayer: 1 };
+    //     const column = { layer: -1, nextLayer: -1 };
+    //     if (this.inputWeights[currEpoch][layer][0].length > unitsPerColumn) {
+    //       totalColumns.layer = Math.ceil(this.inputWeights[currEpoch][layer][0].length / unitsPerColumn);
+    //     }
+    //     if (this.inputWeights[currEpoch][layer].length > unitsPerColumn) {
+    //       totalColumns.nextLayer = Math.ceil(this.inputWeights[currEpoch][layer].length / unitsPerColumn);
+    //     }
 
-  //       const totalColumns = { layer: 1, nextLayer: 1 };
-  //       const column = { layer: -1, nextLayer: -1 };
-  //       if (this.inputWeights[currEpoch][layer][0].length > unitsPerColumn) {
-  //         totalColumns.layer = Math.ceil(this.inputWeights[currEpoch][layer][0].length / unitsPerColumn);
-  //       }
-  //       if (this.inputWeights[currEpoch][layer].length > unitsPerColumn) {
-  //         totalColumns.nextLayer = Math.ceil(this.inputWeights[currEpoch][layer].length / unitsPerColumn);
-  //       }
+    //     if (totalColumns.nextLayer % 2 === 1) {
+    //       column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+    //     } else {
+    //       column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+    //     }
 
-  //       if (totalColumns.nextLayer % 2 === 1) {
-  //         column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
-  //       } else {
-  //         column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
-  //       }
+    //     targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+    //     if (this.inputWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
+    //       targetUnitSpacing.lastColumn = this.minWidthHeight / (this.inputWeights[currEpoch][layer].length % unitsPerColumn);
+    //     }
 
-  //       targetUnitSpacing.lastColumn =  this.minWidthHeight / unitsPerColumn;
-  //       if (this.inputWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
-  //         targetUnitSpacing.lastColumn = this.minWidthHeight / (this.inputWeights[currEpoch][layer].length % unitsPerColumn);
-  //       }
+    //     this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
+    //       let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+    //       if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
+    //       if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
+    //         targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
+    //       }
 
-  //       this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
-  //         let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
-  //         if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
-  //         if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
-  //           targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
-  //         }
+    //       if (totalColumns.layer % 2 === 1) {
+    //         column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+    //       } else {
+    //         column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+    //       }
 
-  //         if (totalColumns.layer % 2 === 1) {
-  //           column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
-  //         } else {
-  //           column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
-  //         }
+    //       unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+    //       if (destination.length % unitsPerColumn !== 0) {
+    //         unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
+    //       }
 
-  //         unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
-  //         if (destination.length % unitsPerColumn !== 0) {
-  //           unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
-  //         }
+    //       destination.forEach((source, sourceIndex) => {
+    //         let currUnitSpacing = unitSpacing.otherColumns;
+    //         if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
+    //         if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
 
-  //         destination.forEach((source, sourceIndex) => {
-  //           let currUnitSpacing = unitSpacing.otherColumns;
-  //           if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
-  //           if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+    //         if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
+    //         if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
 
-  //           if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
-  //           if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
+    //         filteredData.push({
+    //           layer: layerIndex,
+    //           source: sourceIndex,
+    //           target: destinationIndex,
+    //           column: column.layer,
+    //           targetColumn: column.nextLayer,
+    //           // unitSpacing: (this.minWidthHeight / +destination.length),
+    //           // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
+    //           unitSpacing: currUnitSpacing,
+    //           targetUnitSpacing: targetCurrUnitSpacing,
+    //           unitsPerColumn: unitsPerColumn,
+    //           value: source
+    //         });
+    //       });
+    //     });
+    //   }
+    // });
 
-  //           filteredData.push({
-  //             layer: layerIndex,
-  //             source: sourceIndex,
-  //             target: destinationIndex,
-  //             column: column.layer,
-  //             targetColumn: column.nextLayer,
-  //             // unitSpacing: (this.minWidthHeight / +destination.length),
-  //             // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
-  //             unitSpacing: currUnitSpacing,
-  //             targetUnitSpacing: targetCurrUnitSpacing,
-  //             unitsPerColumn: unitsPerColumn,
-  //             value: source
-  //           });
-  //         });
-  //       });
-  //     }
-  //   });
+    // this.weights = filteredData;
+    // this.minMaxDiffs = diffsPerEpoch;
 
-  //   this.weights = filteredData;
-  //   this.minMaxDiffs = diffsPerEpoch;
+    // this.weights.forEach(el => { el.stroke = this.generateWeightsColor(el); });
+    // this.topology.forEach(el => {
+    //   const nodeColor = this.generateNodesColor(el);
+    //   el.fill = nodeColor.color;
+    //   el.opacity = nodeColor.opacity;
+    // });
 
-  //   this.weights.forEach(el => { el.stroke = this.generateWeightsColor(el); });
-  //   this.topology.forEach(el => {
-  //     const nodeColor = this.generateNodesColor(el);
-  //     el.fill = nodeColor.color;
-  //     el.opacity = nodeColor.opacity;
-  //   });
+    // this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
 
-  //   this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
-
-  //   console.clear();
-  //   console.log(this.weights);
-  // }
+    // console.clear();
+    // console.log(this.weights);
+  }
 
   // bindWeights(runAnimation) {
   //   d3.selectAll('.weights').remove();
