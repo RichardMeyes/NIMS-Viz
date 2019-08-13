@@ -16,7 +16,7 @@
         <li title="Train Network" class="frame">
             <i class="fas fa-dumbbell"></i>
         </li>
-        <li title="Ablate Network"class="frame">
+        <li title="Ablate Network" class="frame">
             <i class="fas fa-cut"></i>
         </li>
         <li title="Save Network" class="frame">
@@ -38,15 +38,9 @@
                     deselect
                 </button>
 
-                <button *ngFor="let v of values" (click)="this.selectNetwork(v)" mat-menu-item
-                    [matMenuTriggerFor]="cnn">
-                    {{v}}
-                </button>
-
-            </mat-menu>
-            <mat-menu #cnn="matMenu">
-                <button *ngFor="let v of values" (click)="this.selectNetwork(v)" mat-menu-item>
-                    {{v}}
+                <button *ngFor="let network of savedNetworks" (click)="this.selectNetwork(network.fileName)"
+                    mat-menu-item>
+                    {{ network.fileName }}
                 </button>
             </mat-menu>
         </li>

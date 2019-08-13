@@ -75,11 +75,13 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   @HostListener('window:resize', ['$event'])
   onResize() {
-    this.resetViz();
+    if (this.lastNNSettings) {
+      this.resetViz();
 
-    this.setupTopology();
-    this.bindTopology();
-    // this.drawWeights(false);
+      this.setupTopology();
+      this.bindTopology();
+      this.updateWeights(false);
+    }
   }
 
   constructor(

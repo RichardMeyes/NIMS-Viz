@@ -81,6 +81,14 @@ export class BackendCommunicationService {
     return this._http.post(`${this._backendURL}/loadWeights`, body);
   }
 
+  /**
+   * Gets saved networks.
+   * @returns list of saved networks.
+   */
+  getSavedNetworks(): Observable<any> {
+    return this._http.get(`${this._backendURL}/getSavedNetworks`);
+  }
+
 
   /**
    * Creates a heatmap from file
