@@ -13,15 +13,21 @@
     position: absolute;
     bottom: 0;
     margin: 1rem;
-
     width: calc(100% - 1rem);
-    background-color: indianred;
 
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+.form-field {
+    margin-right: 1rem;
+}
+
 .full-width .information {
     width: calc(100% - 2rem);
+}
+
+nouislider {
+    width: 175px;
 }

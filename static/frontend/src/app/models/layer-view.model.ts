@@ -43,3 +43,14 @@ export class LayerEdge {
         public unitsPerColumn: number
     ) { }
 }
+
+/**
+ * Layer view's epoch slider configurations.
+ */
+export class EpochSlider {
+    constructor(
+        public currEpoch: number = 1,
+        public maxEpoch: number = 1,
+        public isPlaying: boolean = false
+    ) { }
+}

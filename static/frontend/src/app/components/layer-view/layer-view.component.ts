@@ -3,7 +3,7 @@ import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
 import { debounceTime, concatMap } from 'rxjs/operators';
 import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
-import { LayerDefaultSettings, LayerTopology, LayerEdge } from 'src/app/models/layer-view.model';
+import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 
@@ -51,9 +51,9 @@ export class LayerViewComponent implements OnInit {
   lastNNSettings: NeuralNetworkSettings;
 
   /**
-   * Determines whether epoch is playing.
+   * Epoch slider configurations.
    */
-  isPlaying: boolean;
+  epochSlider: EpochSlider;
 
   /**
    * Resize event of the visualization.
@@ -98,7 +98,8 @@ export class LayerViewComponent implements OnInit {
         })
       )
       .subscribe((nnSettings: NeuralNetworkSettings) => {
-        console.log(nnSettings);
+        this.epochSlider = new EpochSlider();
+        this.epochSlider.maxEpoch = nnSettings.configurations.epoch;
       });
   }
 
@@ -572,7 +573,11 @@ export class LayerViewComponent implements OnInit {
    * Toggles epoch animation.
    */
   toggleAnimation() {
-    this.isPlaying = !this.isPlaying;
+    this.epochSlider.isPlaying = !this.epochSlider.isPlaying;
+  }
+
+  epochSliderChange() {
+    console.log(this.epochSlider.currEpoch);
   }
 
   /**

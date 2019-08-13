@@ -1,26 +1,20 @@
 <div #container class="container" [class.full-width]="!dataService.showSideMenu">
-    <div class="information">
+    <div *ngIf="epochSlider && epochSlider.maxEpoch > 1" class="information">
         <button mat-icon-button (click)="toggleAnimation()">
-            <mat-icon *ngIf="!isPlaying">play_circle_outline</mat-icon>
-            <mat-icon *ngIf="isPlaying">pause_circle_outline</mat-icon>
+            <mat-icon *ngIf="!epochSlider.isPlaying">play_circle_outline</mat-icon>
+            <mat-icon *ngIf="epochSlider.isPlaying">pause_circle_outline</mat-icon>
         </button>
         <div class="form-field">Epoch</div>
+        <div>1</div>
+        <nouislider [min]="1" [max]="epochSlider.maxEpoch" [step]="1" [(ngModel)]="epochSlider.currEpoch"
+            (change)="epochSliderChange()" [tooltips]="[ true ]"></nouislider>
+        <div>{{epochSlider.maxEpoch}}</div>
     </div>
 
 
 
-    <!-- <div *ngIf="epochSliderConfig && epochSliderConfig.epochRange[0] != epochSliderConfig.epochRange[1]">
 
-
-        <div>{{epochSliderConfig.epochRange[0]}}</div>
-        <nouislider [min]="epochSliderConfig.epochRange[0]" [max]="epochSliderConfig.epochRange[1]" [step]="1"
-            [(ngModel)]="epochSliderConfig.epochValue" (change)="epochSliderChange()" [tooltips]="[ true ]"
-            style="margin-top: 4em;"></nouislider>
-        <div>{{epochSliderConfig.epochRange[1]}}</div>
-    </div>
-
-
-    <div fxLayout="row wrap" fxLayoutAlign="center center"
+    <!-- <div fxLayout="row wrap" fxLayoutAlign="center center"
         *ngIf="epochSliderConfig && epochSliderConfig.epochRange[0] != epochSliderConfig.epochRange[1]"
         class="information">
         <button mat-icon-button (click)="toggleAnimation()">
