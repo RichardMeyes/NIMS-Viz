@@ -29,6 +29,31 @@ export class LayerTopology {
 }
 
 /**
+ * Layer view's weighted topology.
+ */
+export class WeightedTopology extends LayerTopology {
+    constructor(
+        public layer: number,
+        public unit: number,
+        public column: number,
+        public unitSpacing: number,
+        public unitsPerColumn: number,
+        public isOutput: boolean,
+        public isConv: boolean
+    ) {
+        super(
+            layer,
+            unit,
+            column,
+            unitSpacing,
+            unitsPerColumn,
+            isOutput,
+            isConv
+        );
+    }
+}
+
+/**
  * Layer-view's edge.
  */
 export class LayerEdge {
@@ -42,6 +67,34 @@ export class LayerEdge {
         public targetUnitSpacing: number,
         public unitsPerColumn: number
     ) { }
+}
+
+/**
+ * Layer view's weighted edges.
+ */
+export class WeightedEdges extends LayerEdge {
+    constructor(
+        public layer: number,
+        public source: number,
+        public target: number,
+        public column: number,
+        public targetColumn: number,
+        public unitSpacing: number,
+        public targetUnitSpacing: number,
+        public unitsPerColumn: number,
+        public value: number,
+        public stroke: string
+    ) {
+        super(
+            layer,
+            source,
+            target,
+            column,
+            targetColumn,
+            unitSpacing,
+            targetUnitSpacing,
+            unitsPerColumn);
+    }
 }
 
 /**

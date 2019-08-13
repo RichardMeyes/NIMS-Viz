@@ -3,7 +3,7 @@ import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
 import { debounceTime, takeUntil, concatMap } from 'rxjs/operators';
 import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
-import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider } from 'src/app/models/layer-view.model';
+import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider, WeightedEdges, WeightedTopology } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
@@ -45,6 +45,13 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   defaultSettings: LayerDefaultSettings;
   layerSpacing: number;
   topology: LayerTopology[]; edges: LayerEdge[];
+
+  /**
+   * Graph's weights configurations.
+   */
+  wTopology: WeightedTopology[]; wEdges: WeightedEdges[];
+  minMaxDiffs; activities;
+  // selectedFilter;
 
   /**
    * Cached NN settings and weights for resizing purpose.
@@ -110,13 +117,12 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       )
       .subscribe(nnWeights => {
         this.lastNNWeights = nnWeights;
-        this.updateWeights();
+        this.updateWeights(true);
       });
   }
 
   /**
    * Reshape nn settings to graph topology.
-   * @param nnSettings nn settings
    */
   setupTopology() {
     const convLayers: number[] = [];
@@ -373,12 +379,17 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   /**
    * Update the weights visualization on current-epoch change.
    */
-  updateWeights() {
+  updateWeights(runAnimation: boolean) {
+    this.activities = [];
     this.setupWeights();
+    this.bindWeights(runAnimation);
   }
 
+  /**
+   * Reshape the trained weights to graph topology.
+   */
   setupWeights() {
-    const filteredData = [];
+    const filteredData: WeightedEdges[] = [];
     const currEpoch = `epoch_${this.epochSlider.currEpoch - 1}`;
     let diffsPerEpoch;
 
@@ -387,200 +398,267 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     const unitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
     const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
 
-    console.log(this.lastNNWeights);
-    // Object.keys(this.lastNNWeights[currEpoch]).forEach((layer, layerIndex) => {
-    //   if (!layer.startsWith('c') && layer !== 'h0') {
-    //     if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
+    Object.keys(this.lastNNWeights[currEpoch]).forEach((layer, layerIndex) => {
+      if (!layer.startsWith('c') && layer !== 'input') {
+        if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
 
-    //     const totalColumns = { layer: 1, nextLayer: 1 };
-    //     const column = { layer: -1, nextLayer: -1 };
-    //     if (this.inputWeights[currEpoch][layer][0].length > unitsPerColumn) {
-    //       totalColumns.layer = Math.ceil(this.inputWeights[currEpoch][layer][0].length / unitsPerColumn);
-    //     }
-    //     if (this.inputWeights[currEpoch][layer].length > unitsPerColumn) {
-    //       totalColumns.nextLayer = Math.ceil(this.inputWeights[currEpoch][layer].length / unitsPerColumn);
-    //     }
+        const totalColumns = { layer: 1, nextLayer: 1 };
+        const column = { layer: -1, nextLayer: -1 };
+        if (this.lastNNWeights[currEpoch][layer][0].length > unitsPerColumn) {
+          totalColumns.layer = Math.ceil(this.lastNNWeights[currEpoch][layer][0].length / unitsPerColumn);
+        }
+        if (this.lastNNWeights[currEpoch][layer].length > unitsPerColumn) {
+          totalColumns.nextLayer = Math.ceil(this.lastNNWeights[currEpoch][layer].length / unitsPerColumn);
+        }
 
-    //     if (totalColumns.nextLayer % 2 === 1) {
-    //       column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
-    //     } else {
-    //       column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
-    //     }
+        if (totalColumns.nextLayer % 2 === 1) {
+          column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+        } else {
+          column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
+        }
 
-    //     targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
-    //     if (this.inputWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
-    //       targetUnitSpacing.lastColumn = this.minWidthHeight / (this.inputWeights[currEpoch][layer].length % unitsPerColumn);
-    //     }
+        targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+        if (this.lastNNWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
+          targetUnitSpacing.lastColumn = this.minWidthHeight / (this.lastNNWeights[currEpoch][layer].length % unitsPerColumn);
+        }
 
-    //     this.inputWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
-    //       let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
-    //       if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
-    //       if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
-    //         targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
-    //       }
+        this.lastNNWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
+          let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+          if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
+          if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
+            targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
+          }
 
-    //       if (totalColumns.layer % 2 === 1) {
-    //         column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
-    //       } else {
-    //         column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
-    //       }
+          if (totalColumns.layer % 2 === 1) {
+            column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+          } else {
+            column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+          }
 
-    //       unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
-    //       if (destination.length % unitsPerColumn !== 0) {
-    //         unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
-    //       }
+          unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+          if (destination.length % unitsPerColumn !== 0) {
+            unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
+          }
 
-    //       destination.forEach((source, sourceIndex) => {
-    //         let currUnitSpacing = unitSpacing.otherColumns;
-    //         if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
-    //         if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+          destination.forEach((source, sourceIndex) => {
+            let currUnitSpacing = unitSpacing.otherColumns;
+            if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
+            if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
 
-    //         if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
-    //         if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
+            if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
+            if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
 
-    //         filteredData.push({
-    //           layer: layerIndex,
-    //           source: sourceIndex,
-    //           target: destinationIndex,
-    //           column: column.layer,
-    //           targetColumn: column.nextLayer,
-    //           // unitSpacing: (this.minWidthHeight / +destination.length),
-    //           // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
-    //           unitSpacing: currUnitSpacing,
-    //           targetUnitSpacing: targetCurrUnitSpacing,
-    //           unitsPerColumn: unitsPerColumn,
-    //           value: source
-    //         });
-    //       });
-    //     });
-    //   }
-    // });
+            filteredData.push({
+              layer: layerIndex,
+              source: sourceIndex,
+              target: destinationIndex,
+              column: column.layer,
+              targetColumn: column.nextLayer,
+              // unitSpacing: (this.minWidthHeight / +destination.length),
+              // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
+              unitSpacing: currUnitSpacing,
+              targetUnitSpacing: targetCurrUnitSpacing,
+              unitsPerColumn,
+              value: source,
+              stroke: this.defaultSettings.color
+            });
+          });
+        });
+      }
+    });
 
-    // this.weights = filteredData;
-    // this.minMaxDiffs = diffsPerEpoch;
+    this.wTopology = [];
+    this.wEdges = filteredData;
+    this.minMaxDiffs = diffsPerEpoch;
 
-    // this.weights.forEach(el => { el.stroke = this.generateWeightsColor(el); });
-    // this.topology.forEach(el => {
-    //   const nodeColor = this.generateNodesColor(el);
-    //   el.fill = nodeColor.color;
-    //   el.opacity = nodeColor.opacity;
-    // });
+    this.wEdges.forEach(el => { el.stroke = this.generateWeightsColor(el); });
+    this.topology.forEach(el => {
+      const nodeColor = this.generateNodesColor(el);
+      this.wTopology.push(Object.assign({}, el, { fill: nodeColor.color, opacity: nodeColor.opacity }));
+    });
 
-    // this.weights = this.weights.filter(weight => weight.stroke !== this.defaultSettings.color);
-
-    // console.clear();
-    // console.log(this.weights);
+    this.wEdges = this.wEdges.filter(weight => weight.stroke !== this.defaultSettings.color);
   }
 
-  // bindWeights(runAnimation) {
-  //   d3.selectAll('.weights').remove();
-  //   d3.selectAll('circle').remove();
-  //   const self = this;
+  /**
+   * Draw the weights.
+   * @param runAnimation a boolean to determine whether to play animation.
+   */
+  bindWeights(runAnimation: boolean) {
+    d3.selectAll('.weights').remove();
+    d3.selectAll('circle').remove();
+    const self = this;
 
 
-  //   const line = this.vizContainer.selectAll('.weights')
-  //     .data(this.weights);
+    const line = this.graphGroup.selectAll('.weights')
+      .data(this.wEdges);
 
-  //   let enterWeights = line.enter()
-  //     .append('line')
-  //     .attr('class', 'weights')
-  //     .attr('x1', function (d) {
-  //       const x1: number = self.leftMargin +
-  //         self.layerSpacing * d.layer +
-  //         (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
-  //         self.layerSpacing / 2;
-  //       return x1;
-  //     })
-  //     .attr('y1', function (d) {
-  //       const y1: number = self.topMargin +
-  //         d.unitSpacing * (d.source % d.unitsPerColumn) +
-  //         d.unitSpacing / 2;
-  //       return y1;
-  //     })
-  //     .attr('x2', function (d) {
-  //       const x2: number = self.leftMargin +
-  //         self.layerSpacing * d.layer +
-  //         (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
-  //         self.layerSpacing / 2;
-  //       return x2;
-  //     })
-  //     .attr('y2', function (d) {
-  //       const y2: number = self.topMargin +
-  //         d.unitSpacing * (d.source % d.unitsPerColumn) +
-  //         d.unitSpacing / 2;
-  //       return y2;
-  //     })
-  //     .attr('stroke', function (d) { return d.stroke; });
+    let enterWeights = line.enter()
+      .append('line')
+      .attr('class', 'weights')
+      .attr('x1', function (d) {
+        const x1: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
+        return x1;
+      })
+      .attr('y1', function (d) {
+        const y1: number = self.topMargin +
+          d.unitSpacing * (d.source % d.unitsPerColumn) +
+          d.unitSpacing / 2;
+        return y1;
+      })
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin +
+          d.unitSpacing * (d.source % d.unitsPerColumn) +
+          d.unitSpacing / 2;
+        return y2;
+      })
+      .attr('stroke', function (d) { return d.stroke; });
 
-  //   if (runAnimation) {
-  //     enterWeights = enterWeights.transition()
-  //       .duration(2.5 * this.defaultSettings.duration)
-  //       .delay(function (d) {
-  //         // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
-  //         // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-  //         const nodesDelay = self.defaultSettings.duration * (d.layer + 1 - self.inputTopology['conv_layers'].length - 1);
-  //         const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
-  //         return nodesDelay + weightsDelay;
-  //       });
-  //   }
-  //   enterWeights
-  //     .attr('x2', function (d) {
-  //       const x2: number = self.leftMargin +
-  //         self.layerSpacing * (d.layer + 1) +
-  //         (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.targetColumn +
-  //         self.layerSpacing / 2;
-  //       return x2;
-  //     })
-  //     .attr('y2', function (d) {
-  //       const y2: number = self.topMargin +
-  //         d.targetUnitSpacing * (d.target % d.unitsPerColumn) +
-  //         d.targetUnitSpacing / 2;
-  //       return y2;
-  //     });
+    if (runAnimation) {
+      enterWeights = enterWeights.transition()
+        .duration(2.5 * this.defaultSettings.animationDuration)
+        .delay(function (d) {
+          // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
+          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          const nodesDelay = self.defaultSettings.animationDuration * (d.layer + 1 - self.lastNNSettings.convLayers.length - 1);
+          const weightsDelay = 2.5 * self.defaultSettings.animationDuration * (d.layer - self.lastNNSettings.convLayers.length - 1);
+          return nodesDelay + weightsDelay;
+        });
+    }
+    enterWeights
+      .attr('x2', function (d) {
+        const x2: number = self.leftMargin +
+          self.layerSpacing * (d.layer + 1) +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.targetColumn +
+          self.layerSpacing / 2;
+        return x2;
+      })
+      .attr('y2', function (d) {
+        const y2: number = self.topMargin +
+          d.targetUnitSpacing * (d.target % d.unitsPerColumn) +
+          d.targetUnitSpacing / 2;
+        return y2;
+      });
 
 
-  //   const circles = this.vizContainer.selectAll('circle')
-  //     .data(this.topology.filter(nodes => !nodes.isConv));
+    const circles = this.graphGroup.selectAll('circle')
+      .data(this.wTopology.filter(nodes => !nodes.isConv));
 
-  //   let enterCircles = circles.enter()
-  //     .append('circle')
-  //     .attr('class', 'circle')
-  //     .attr('cx', function (d) {
-  //       const cx: number = self.leftMargin +
-  //         self.layerSpacing * d.layer +
-  //         (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
-  //         self.layerSpacing / 2;
-  //       return cx;
-  //     })
-  //     .attr('cy', function (d) {
-  //       const cy: number = self.topMargin +
-  //         d.unitSpacing * (d.unit % d.unitsPerColumn) +
-  //         d.unitSpacing / 2;
-  //       return cy;
-  //     })
-  //     .attr('r', this.defaultSettings.nodeRadius)
-  //     .attr('fill', this.defaultSettings.color)
-  //     .attr('fill-opacity', this.defaultSettings.nodeOpacity)
-  //     .attr('stroke', this.defaultSettings.color)
-  //     .attr('stroke-width', this.defaultSettings.nodeStroke);
+    let enterCircles = circles.enter()
+      .append('circle')
+      .attr('class', 'circle')
+      .attr('cx', function (d) {
+        const cx: number = self.leftMargin +
+          self.layerSpacing * d.layer +
+          (self.defaultSettings.nodeRadius * 2 + self.defaultSettings.unitGutter) * d.column +
+          self.layerSpacing / 2;
+        return cx;
+      })
+      .attr('cy', function (d) {
+        const cy: number = self.topMargin +
+          d.unitSpacing * (d.unit % d.unitsPerColumn) +
+          d.unitSpacing / 2;
+        return cy;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color)
+      .attr('fill-opacity', this.defaultSettings.nodeOpacity)
+      .attr('stroke', this.defaultSettings.color)
+      .attr('stroke-width', this.defaultSettings.nodeStroke);
 
-  //   if (runAnimation) {
-  //     enterCircles = enterCircles.transition()
-  //       .duration(this.defaultSettings.duration)
-  //       .delay(function (d) {
-  //         // const nodesDelay = self.defaultSettings.duration * d.layer;
-  //         // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-  //         const nodesDelay = self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
-  //         const weightsDelay = 2.5 * self.defaultSettings.duration * (d.layer - self.inputTopology['conv_layers'].length - 1);
-  //         return nodesDelay + weightsDelay;
-  //       });
-  //   }
-  //   enterCircles
-  //     .attr('fill', function (d) { return d.fill; })
-  //     .attr('fill-opacity', function (d) { return d.opacity; })
-  //     .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
-  //     .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
-  // }
+    if (runAnimation) {
+      enterCircles = enterCircles.transition()
+        .duration(this.defaultSettings.animationDuration)
+        .delay(function (d) {
+          // const nodesDelay = self.defaultSettings.duration * d.layer;
+          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
+          const nodesDelay = self.defaultSettings.animationDuration * (d.layer - self.lastNNSettings.convLayers.length - 1);
+          const weightsDelay = 2.5 * self.defaultSettings.animationDuration * (d.layer - self.lastNNSettings.convLayers.length - 1);
+          return nodesDelay + weightsDelay;
+        });
+    }
+    enterCircles
+      .attr('fill', function (d) { return d.fill; })
+      .attr('fill-opacity', function (d) { return d.opacity; })
+      .attr('stroke', function (d) { return (d.fill === '#373737') ? d.fill : '#F44336'; })
+      .attr('stroke-width', .15 * this.defaultSettings.nodeRadius);
+  }
+
+  /**
+   * Generates color of the edges
+   * @param el the edges
+   * @returns  the color of the edges
+   */
+  generateWeightsColor(el) {
+    let color = this.defaultSettings.color;
+    let activity = 0;
+    let recordActivities = false;
+
+    const range = Math.abs(this.minMaxDiffs.max - this.minMaxDiffs.min);
+    const valuePercentage = (el.value - this.minMaxDiffs.min) / range;
+
+    if (valuePercentage > .9) {
+      color = '#EF5350';
+      activity = valuePercentage;
+      recordActivities = true;
+    } else if (valuePercentage > .85) {
+      color = '#EF9A9A';
+      activity = valuePercentage;
+      recordActivities = true;
+    }
+
+    if (recordActivities) {
+      this.activities.push({
+        layer: el.layer,
+        source: el.source,
+        target: el.target,
+        activity
+      });
+    }
+
+    return color;
+  }
+
+  /**
+   * Generates color of the nodes
+   * @param el the nodes
+   * @returns the color and the opacity of the nodes
+   */
+  generateNodesColor(el) {
+    const allActivities = [];
+
+    let color = this.defaultSettings.color;
+    let opacity = 1;
+
+    for (let i = 0; i < this.activities.length; i++) {
+      if ((this.activities[i].layer === el.layer && this.activities[i].source === el.unit) ||
+        (this.activities[i].layer === el.layer - 1 && this.activities[i].target === el.unit)) {
+        if (this.activities[i].activity > .9) {
+          color = '#EF5350';
+        } else if (this.activities[i].activity > .85) {
+          color = '#EF9A9A';
+        }
+
+        allActivities.push(this.activities[i].activity);
+      }
+    }
+
+    if (allActivities.length > 0) {
+      opacity = allActivities.reduce((a, b) => a + b) / allActivities.length;
+    }
+
+    return { color, opacity };
+  }
 
   /**
    * Toggles epoch animation.
@@ -595,14 +673,12 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         } else {
           this.epochSlider.currEpoch = 1;
         }
-        this.updateWeights();
+        this.updateWeights(true);
       };
       runAnimation();
 
-      this.animationIntervals.push(setInterval(runAnimation, 4.5 *
-        500 *
-        (this.lastNNSettings.convLayers.length + this.lastNNSettings.denseLayers.length) +
-        150
+      this.animationIntervals.push(setInterval(runAnimation, 4.5 * this.defaultSettings.animationDuration *
+        (this.lastNNSettings.denseLayers.length - 1) + 150
       ));
     } else {
       this.animationIntervals.forEach(animationInterval => {

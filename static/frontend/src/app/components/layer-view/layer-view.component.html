@@ -7,7 +7,7 @@
         <div class="form-field">Epoch</div>
         <div>1</div>
         <nouislider [min]="1" [max]="epochSlider.maxEpoch" [step]="1" [(ngModel)]="epochSlider.currEpoch"
-            (change)="updateWeights()" [tooltips]="[ true ]"></nouislider>
+            (change)="updateWeights(true)" [tooltips]="[ true ]"></nouislider>
         <div>{{epochSlider.maxEpoch}}</div>
     </div>
 
