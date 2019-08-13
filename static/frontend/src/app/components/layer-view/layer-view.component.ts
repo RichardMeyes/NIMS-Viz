@@ -1,11 +1,11 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
-import { debounceTime, concatMap } from 'rxjs/operators';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
 import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
-import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
+import { Subject } from 'rxjs';
 
 /**
  * Component for network graph visualization
@@ -15,7 +15,7 @@ import { BackendCommunicationService } from 'src/app/backendCommunication/backen
   templateUrl: './layer-view.component.html',
   styleUrls: ['./layer-view.component.scss']
 })
-export class LayerViewComponent implements OnInit {
+export class LayerViewComponent implements OnInit, OnDestroy {
   /**
    * Visualization's container.
    */
@@ -54,6 +54,12 @@ export class LayerViewComponent implements OnInit {
    * Epoch slider configurations.
    */
   epochSlider: EpochSlider;
+  animationIntervals;
+
+  /**
+   * Flag to unsubscribe.
+   */
+  destroyed = new Subject<void>();
 
   /**
    * Resize event of the visualization.
@@ -69,15 +75,17 @@ export class LayerViewComponent implements OnInit {
 
   constructor(
     private eventsService: EventsService,
-    public dataService: DataService,
-    private backend: BackendCommunicationService
+    public dataService: DataService
   ) { }
 
   ngOnInit() {
     this.defaultSettings = new LayerDefaultSettings();
+    this.epochSlider = new EpochSlider();
+    this.animationIntervals = [];
 
     this.eventsService.updateTopology
       .pipe(
+        takeUntil(this.destroyed),
         debounceTime(500)
       )
       .subscribe(nnSettings => {
@@ -90,16 +98,10 @@ export class LayerViewComponent implements OnInit {
       });
 
     this.eventsService.updateWeights
-      .pipe(
-        concatMap(val => {
-          if (val) {
-            return this.backend.loadNetwork(this.dataService.selectedNetwork);
-          }
-        })
-      )
-      .subscribe((nnSettings: NeuralNetworkSettings) => {
-        this.epochSlider = new EpochSlider();
-        this.epochSlider.maxEpoch = nnSettings.configurations.epoch;
+      .pipe(takeUntil(this.destroyed))
+      .subscribe((epochSlider: EpochSlider) => {
+        this.epochSlider = epochSlider;
+        this.updateWeights();
       });
   }
 
@@ -359,6 +361,13 @@ export class LayerViewComponent implements OnInit {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
   }
 
+  /**
+   * Update the weights visualization on current-epoch change.
+   */
+  updateWeights() {
+    console.log(this.epochSlider);
+  }
+
   // setupWeights() {
   //   const filteredData = [];
   //   let currEpoch;
@@ -574,10 +583,29 @@ export class LayerViewComponent implements OnInit {
    */
   toggleAnimation() {
     this.epochSlider.isPlaying = !this.epochSlider.isPlaying;
-  }
 
-  epochSliderChange() {
-    console.log(this.epochSlider.currEpoch);
+    if (this.epochSlider.isPlaying) {
+      const runAnimation = () => {
+        if (this.epochSlider.currEpoch < this.epochSlider.maxEpoch) {
+          this.epochSlider.currEpoch++;
+        } else {
+          this.epochSlider.currEpoch = 1;
+        }
+        this.updateWeights();
+      };
+      runAnimation();
+
+      this.animationIntervals.push(setInterval(runAnimation, 4.5 *
+        500 *
+        (this.lastNNSettings.convLayers.length + this.lastNNSettings.denseLayers.length) +
+        150
+      ));
+    } else {
+      this.animationIntervals.forEach(animationInterval => {
+        clearInterval(animationInterval);
+      });
+      this.animationIntervals = [];
+    }
   }
 
   /**
@@ -611,4 +639,7 @@ export class LayerViewComponent implements OnInit {
     this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
   }
 
+  ngOnDestroy() {
+    this.destroyed.next();
+  }
 }

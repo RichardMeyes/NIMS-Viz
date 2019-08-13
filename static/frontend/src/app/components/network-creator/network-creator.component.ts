@@ -3,6 +3,7 @@ import { NeuralNetworkSettings, ConvLayer, DenseLayer, NeuralNetworkSettingsJSON
 import { BackendCommunicationService } from '../../backendCommunication/backend-communication.service';
 import { EventsService } from 'src/app/services/events.service';
 import { DataService } from 'src/app/services/data.service';
+import { EpochSlider } from 'src/app/models/layer-view.model';
 
 /**
  * Component for Network creation
@@ -94,7 +95,11 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
 
     this.backend.createNetwork(setup).subscribe(filename => {
       this.dataService.selectedNetwork = filename;
-      this.eventsService.updateWeights.next(true);
+
+      const epochSlider = new EpochSlider();
+      epochSlider.maxEpoch = this._nnSettings.configurations.epoch;
+      epochSlider.currEpoch = this._nnSettings.configurations.epoch;
+      this.eventsService.updateWeights.next(epochSlider);
     });
   }
 

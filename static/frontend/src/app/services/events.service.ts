@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { NeuralNetworkSettings } from '../models/create-nn.model';
+import { EpochSlider } from '../models/layer-view.model';
 
 /**
  * Service of shared events.
@@ -17,7 +18,7 @@ export class EventsService {
   /**
    * Update the weights of layer view.
    */
-  updateWeights: Subject<boolean>;
+  updateWeights: Subject<EpochSlider>;
 
   constructor() {
     this.updateTopology = new Subject();

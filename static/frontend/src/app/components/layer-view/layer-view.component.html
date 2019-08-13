@@ -1,5 +1,5 @@
 <div #container class="container" [class.full-width]="!dataService.showSideMenu">
-    <div *ngIf="epochSlider && epochSlider.maxEpoch > 1" class="information">
+    <div *ngIf="epochSlider.maxEpoch > 1" class="information">
         <button mat-icon-button (click)="toggleAnimation()">
             <mat-icon *ngIf="!epochSlider.isPlaying">play_circle_outline</mat-icon>
             <mat-icon *ngIf="epochSlider.isPlaying">pause_circle_outline</mat-icon>
@@ -7,7 +7,7 @@
         <div class="form-field">Epoch</div>
         <div>1</div>
         <nouislider [min]="1" [max]="epochSlider.maxEpoch" [step]="1" [(ngModel)]="epochSlider.currEpoch"
-            (change)="epochSliderChange()" [tooltips]="[ true ]"></nouislider>
+            (change)="updateWeights()" [tooltips]="[ true ]"></nouislider>
         <div>{{epochSlider.maxEpoch}}</div>
     </div>
 
