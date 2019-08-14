@@ -44,13 +44,13 @@ def createNetwork():
 
     MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
 
-    return json.dumps(TOPOLOGY_DIR + "MLP_" + filename + ".json")
+    return json.dumps("MLP_" + filename + ".json")
 
 # Save network's settings
 def saveNetwork(nnSettings):
     filename = str(uuid.uuid4())
 
-    with open("MLP_" + filename + ".json", "w") as f:
+    with open(TOPOLOGY_DIR + "MLP_" + filename + ".json", "w") as f:
         json.dump(nnSettings, f)
 
     return filename

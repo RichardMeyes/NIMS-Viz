@@ -114,7 +114,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyed),
         concatMap((epochSlider: EpochSlider) => {
           this.epochSlider = epochSlider;
-          return this.backend.loadWeights(this.dataService.selectedNetwork);
+          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
         })
       )
       .subscribe(nnWeights => {

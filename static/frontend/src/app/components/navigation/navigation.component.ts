@@ -1,5 +1,5 @@
-import { Component, OnInit, AfterViewInit, Output, EventEmitter, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router'
+import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { Subject } from 'rxjs';
@@ -13,8 +13,7 @@ import { SavedNetworks } from 'src/app/models/saved-networks.model';
 })
 export class NavigationComponent implements OnInit, OnDestroy {
   // mocked values for showing the feature, have to be changed later
-  public values = ["value1", "value2", "value3"];
-  public selectedNetwork = "No Network Selected";
+  public selectedNetwork = 'No Network Selected';
 
   private _showAddNetwork = false;
   /**
@@ -55,8 +54,8 @@ export class NavigationComponent implements OnInit, OnDestroy {
    * Shows in the dropdown the selected Network
    * @param name then Name of the selected Network
    */
-  public selectNetwork(name: string) {
-    this.selectedNetwork = name;
+  public selectNetwork(selectedNetwork: SavedNetworks) {
+    this.selectedNetwork = selectedNetwork.fileName;
   }
 
   public toogleAddNetwork() {

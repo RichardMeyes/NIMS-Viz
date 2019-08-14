@@ -38,7 +38,7 @@
                     deselect
                 </button>
 
-                <button *ngFor="let network of savedNetworks" (click)="this.selectNetwork(network.fileName)"
+                <button *ngFor="let network of savedNetworks" (click)="this.selectNetwork(network)"
                     mat-menu-item>
                     {{ network.fileName }}
                 </button>

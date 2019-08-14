@@ -4,6 +4,7 @@ import { BackendCommunicationService } from '../../backendCommunication/backend-
 import { EventsService } from 'src/app/services/events.service';
 import { DataService } from 'src/app/services/data.service';
 import { EpochSlider } from 'src/app/models/layer-view.model';
+import { SavedNetworks } from 'src/app/models/saved-networks.model';
 
 /**
  * Component for Network creation
@@ -93,8 +94,13 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
       denseLayers: [...this._nnSettings.denseLayers]
     };
 
-    this.backend.createNetwork(setup).subscribe(filename => {
-      this.dataService.selectedNetwork = filename;
+    this.backend.createNetwork(setup).subscribe((filename: string) => {
+      const selectedNetwork: SavedNetworks = {
+        fileName: filename,
+        nnSettings: this._nnSettings,
+        viewName: ''
+      };
+      this.dataService.selectedNetwork = selectedNetwork;
 
       const epochSlider = new EpochSlider();
       epochSlider.maxEpoch = this._nnSettings.configurations.epoch;

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NeuralNetworkSettings } from '../models/create-nn.model';
+import { SavedNetworks } from '../models/saved-networks.model';
 
 /**
  * Service of shared data.
@@ -23,7 +24,7 @@ export class DataService {
    * Selected network at the moment.
    * It referes to the filename of the topology file.
    */
-  selectedNetwork: string;
+  selectedNetwork: SavedNetworks;
 
   constructor() {
     this.showSideMenu = false;
