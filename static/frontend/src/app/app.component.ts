@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './services/data.service';
+import { ActiveSideMenu } from './models/navigation.model';
 
 @Component({
   selector: 'app-root',
@@ -8,14 +9,9 @@ import { DataService } from './services/data.service';
 })
 export class AppComponent {
   title = 'frontend';
-  public createModel: boolean;
+  activeSideMenu = ActiveSideMenu;
 
   constructor(
-    private dataService: DataService
+    public dataService: DataService
   ) { }
-
-  public toggleCreateModel(state: boolean) {
-    this.createModel = state;
-    this.dataService.showSideMenu = state;
-  }
 }

@@ -15,13 +15,15 @@ import { NetworkCreatorComponent } from './components/network-creator/network-cr
 
 import { NouisliderModule } from 'ng2-nouislider';
 import { AngularResizedEventModule } from 'angular-resize-event';
+import { NetworkAblatorComponent } from './components/network-ablator/network-ablator.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     NavigationComponent,
     routingComponents,
-    NetworkCreatorComponent
+    NetworkCreatorComponent,
+    NetworkAblatorComponent
   ],
   imports: [
     BrowserModule,

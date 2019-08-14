@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
@@ -7,6 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
 import { DataService } from 'src/app/services/data.service';
 import { EventsService } from 'src/app/services/events.service';
+import { ActiveSideMenu } from 'src/app/models/navigation.model';
 
 @Component({
   selector: 'app-navigation',
@@ -14,16 +15,12 @@ import { EventsService } from 'src/app/services/events.service';
   styleUrls: ['./navigation.component.scss']
 })
 export class NavigationComponent implements OnInit, OnDestroy {
-  private _showAddNetwork = false;
-  /**
-   * Emits a toogle event for add Network
-   */
-  @Output() emitAddNetwork = new EventEmitter<boolean>();
-
   /**
    * List of saved networks.
    */
   savedNetworks: SavedNetworks[];
+
+  activeSideMenu = ActiveSideMenu;
 
   /**
    * Flag to unsubscribe.
@@ -60,9 +57,20 @@ export class NavigationComponent implements OnInit, OnDestroy {
     this.eventService.updateLayerView.next(selectedNetwork);
   }
 
-  public toogleAddNetwork() {
-    this._showAddNetwork = !this._showAddNetwork;
-    this.emitAddNetwork.emit(this._showAddNetwork);
+  public toggleAddNetwork() {
+    if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkCreator) {
+      this.dataService.activeSideMenu = ActiveSideMenu.None;
+    } else {
+      this.dataService.activeSideMenu = ActiveSideMenu.NetworkCreator;
+    }
+  }
+
+  toggleAblation() {
+    if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
+      this.dataService.activeSideMenu = ActiveSideMenu.None;
+    } else {
+      this.dataService.activeSideMenu = ActiveSideMenu.NetworkAblator;
+    }
   }
 
   ngOnDestroy() {

@@ -8,6 +8,7 @@ import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
+import { ActiveSideMenu } from 'src/app/models/navigation.model';
 
 /**
  * Component for network graph visualization
@@ -22,6 +23,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Visualization's container.
    */
   @ViewChild('container', { static: false }) container: ElementRef;
+
+  activeSideMenu = ActiveSideMenu;
 
   /**
    * SVG configurations.

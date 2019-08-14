@@ -1,4 +1,4 @@
-<div #container class="container" [class.full-width]="!dataService.showSideMenu" (resized)="containerResized()">
+<div #container class="container" [class.full-width]="dataService.activeSideMenu === activeSideMenu.None" (resized)="containerResized()">
     <div *ngIf="epochSlider.maxEpoch > 1" class="information">
         <button mat-icon-button (click)="toggleAnimation()">
             <mat-icon *ngIf="!epochSlider.isPlaying">play_circle_outline</mat-icon>

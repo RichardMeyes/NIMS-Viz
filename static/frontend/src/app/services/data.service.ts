@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { NeuralNetworkSettings } from '../models/create-nn.model';
 import { SavedNetworks } from '../models/saved-networks.model';
+import { ActiveSideMenu } from '../models/navigation.model';
 
 /**
  * Service of shared data.
@@ -9,11 +10,6 @@ import { SavedNetworks } from '../models/saved-networks.model';
   providedIn: 'root'
 })
 export class DataService {
-
-  /**
-   * The state of showing side menu or not.
-   */
-  showSideMenu: boolean;
 
   /**
    * NN settings of network-creator form.
@@ -26,13 +22,18 @@ export class DataService {
    */
   selectedNetwork: SavedNetworks;
 
+  /**
+   * Currently active side menu.
+   */
+  activeSideMenu: ActiveSideMenu;
+
   constructor() {
-    this.showSideMenu = false;
     this.nnSettings = new NeuralNetworkSettings();
     this.selectedNetwork = {
       fileName: 'No Network Selected',
       nnSettings: undefined,
       viewName: undefined
     };
+    this.activeSideMenu = ActiveSideMenu.None;
   }
 }

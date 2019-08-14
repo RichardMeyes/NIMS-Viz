@@ -9,14 +9,15 @@
         </li>
     </ul>
     <ul class="menu-elements">
-        <li title="Add Network" class="frame" (click)="toogleAddNetwork()"
-            [ngClass]="{'active-frame': _showAddNetwork}">
+        <li title="Add Network" class="frame" (click)="toggleAddNetwork()"
+            [ngClass]="{'active-frame': dataService.activeSideMenu === activeSideMenu.NetworkCreator}">
             <i class="fas fa-plus"></i>
         </li>
         <li title="Train Network" class="frame">
             <i class="fas fa-dumbbell"></i>
         </li>
-        <li title="Ablate Network" class="frame">
+        <li title="Ablate Network" class="frame" (click)="toggleAblation()"
+            [ngClass]="{'active-frame': dataService.activeSideMenu === activeSideMenu.NetworkAblator}">
             <i class="fas fa-cut"></i>
         </li>
         <li title="Save Network" class="frame">
@@ -38,8 +39,7 @@
                     deselect
                 </button>
 
-                <button *ngFor="let network of savedNetworks" (click)="this.selectNetwork(network)"
-                    mat-menu-item>
+                <button *ngFor="let network of savedNetworks" (click)="this.selectNetwork(network)" mat-menu-item>
                     {{ network.fileName }}
                 </button>
             </mat-menu>
