@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
 import { debounceTime, takeUntil, concatMap } from 'rxjs/operators';
@@ -7,6 +7,7 @@ import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider, WeightedEd
 import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
+import { SavedNetworks } from 'src/app/models/saved-networks.model';
 
 /**
  * Component for network graph visualization
@@ -70,20 +71,6 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   destroyed = new Subject<void>();
 
-  /**
-   * Resize event of the visualization.
-   */
-  @HostListener('window:resize', ['$event'])
-  onResize() {
-    if (this.lastNNSettings) {
-      this.resetViz();
-
-      this.setupTopology();
-      this.bindTopology();
-      this.updateWeights(false);
-    }
-  }
-
   constructor(
     private eventsService: EventsService,
     public dataService: DataService,
@@ -115,6 +102,32 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         concatMap((epochSlider: EpochSlider) => {
           this.epochSlider = epochSlider;
           return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
+        })
+      )
+      .subscribe(nnWeights => {
+        this.lastNNWeights = nnWeights;
+        this.updateWeights(true);
+      });
+
+    this.eventsService.updateLayerView
+      .pipe(
+        takeUntil(this.destroyed),
+        concatMap((selectedNetwork: SavedNetworks) => {
+          this.lastNNSettings = selectedNetwork.nnSettings;
+
+          this.resetViz();
+          this.setupTopology();
+          this.bindTopology();
+
+
+          this.epochSlider = {
+            currEpoch: 1,
+            maxEpoch: selectedNetwork.nnSettings.configurations.epoch,
+            isPlaying: false
+          };
+
+
+          return this.backend.loadWeights(selectedNetwork.fileName);
         })
       )
       .subscribe(nnWeights => {
@@ -719,6 +732,19 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     this.svg.call(this.zoom);
 
     this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
+  }
+
+  /**
+   * Viz container is resized.
+   */
+  containerResized() {
+    if (this.lastNNSettings) {
+      this.resetViz();
+
+      this.setupTopology();
+      this.bindTopology();
+      this.updateWeights(false);
+    }
   }
 
   ngOnDestroy() {

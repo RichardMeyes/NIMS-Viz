@@ -5,6 +5,8 @@ import { BackendCommunicationService } from 'src/app/backendCommunication/backen
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
+import { DataService } from 'src/app/services/data.service';
+import { EventsService } from 'src/app/services/events.service';
 
 @Component({
   selector: 'app-navigation',
@@ -12,9 +14,6 @@ import { SavedNetworks } from 'src/app/models/saved-networks.model';
   styleUrls: ['./navigation.component.scss']
 })
 export class NavigationComponent implements OnInit, OnDestroy {
-  // mocked values for showing the feature, have to be changed later
-  public selectedNetwork = 'No Network Selected';
-
   private _showAddNetwork = false;
   /**
    * Emits a toogle event for add Network
@@ -33,7 +32,9 @@ export class NavigationComponent implements OnInit, OnDestroy {
 
   constructor(
     public router: Router,
-    private backend: BackendCommunicationService
+    private backend: BackendCommunicationService,
+    public dataService: DataService,
+    private eventService: EventsService
   ) { }
 
   ngOnInit() {
@@ -55,12 +56,13 @@ export class NavigationComponent implements OnInit, OnDestroy {
    * @param name then Name of the selected Network
    */
   public selectNetwork(selectedNetwork: SavedNetworks) {
-    this.selectedNetwork = selectedNetwork.fileName;
+    this.dataService.selectedNetwork = selectedNetwork;
+    this.eventService.updateLayerView.next(selectedNetwork);
   }
 
   public toogleAddNetwork() {
-    this._showAddNetwork = !this._showAddNetwork
-    this.emitAddNetwork.emit(this._showAddNetwork)
+    this._showAddNetwork = !this._showAddNetwork;
+    this.emitAddNetwork.emit(this._showAddNetwork);
   }
 
   ngOnDestroy() {

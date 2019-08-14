@@ -14,6 +14,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NetworkCreatorComponent } from './components/network-creator/network-creator.component';
 
 import { NouisliderModule } from 'ng2-nouislider';
+import { AngularResizedEventModule } from 'angular-resize-event';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import { NouisliderModule } from 'ng2-nouislider';
     BrowserAnimationsModule,
     MaterialModule,
     NouisliderModule,
+    AngularResizedEventModule,
     FormsModule
   ],
   providers: [BackendCommunicationService],
