@@ -39,9 +39,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   topMargin: number; leftMargin: number;
 
   /**
-   * Graph's elements configurations.
+   * SVG groups configurations.
    */
-  graphGroup;
+  graphGroup; tooltipGroup;
 
   /**
    * Graph's design configurations.
@@ -68,6 +68,13 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   epochSlider: EpochSlider;
   animationIntervals;
+
+  /**
+   * Tooltip configurations.
+   */
+  selectedUnit: WeightedTopology;
+  untrainedWeights;
+  tooltipTexts: string[]; tooltipConfig;
 
   /**
    * Flag to unsubscribe.
@@ -105,11 +112,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         concatMap((epochSlider: EpochSlider) => {
           this.epochSlider = epochSlider;
           return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
+        }),
+        concatMap(nnWeights => {
+          this.lastNNWeights = nnWeights;
+          this.updateWeights(true);
+
+          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName.replace('.json', '_untrained.json'));
         })
       )
-      .subscribe(nnWeights => {
-        this.lastNNWeights = nnWeights;
-        this.updateWeights(true);
+      .subscribe(untrainedWeights => {
+        this.untrainedWeights = untrainedWeights;
       });
 
     this.eventsService.updateLayerView
@@ -131,11 +143,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
           return this.backend.loadWeights(selectedNetwork.fileName);
+        }),
+        concatMap(nnWeights => {
+          this.lastNNWeights = nnWeights;
+          this.updateWeights(true);
+
+          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName.replace('.json', '_untrained.json'));
         })
       )
-      .subscribe(nnWeights => {
-        this.lastNNWeights = nnWeights;
-        this.updateWeights(true);
+      .subscribe(untrainedWeights => {
+        this.untrainedWeights = untrainedWeights;
       });
   }
 
@@ -369,6 +386,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('fill', this.defaultSettings.color)
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
+    rects.on('mouseover', function (d) {
+      d3.select(this)
+        .classed('focused', true);
+    });
+
+    rects.on('mouseout', function (d) {
+      d3.select(this)
+        .classed('focused', false);
+    });
+
 
     const circles = this.graphGroup.selectAll('circle')
       .data(this.topology.filter(nodes => !nodes.isConv));
@@ -594,6 +621,25 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('stroke', this.defaultSettings.color)
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
+    enterCircles.on('mouseover', function (d) {
+      self.selectedUnit = Object.assign({}, d);
+      self.selectedUnit.layer -= (self.lastNNSettings.convLayers.length + 1);
+
+      if (!d.isOutput) {
+        self.setupMLPTooltip();
+        self.bindMLPTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
+      }
+
+      d3.select(this)
+        .classed('focused', true);
+    });
+
+    enterCircles.on('mouseout', function (d) {
+      d3.selectAll('.weights-comparison').remove();
+      d3.select(this)
+        .classed('focused', false);
+    });
+
     if (runAnimation) {
       enterCircles = enterCircles.transition()
         .duration(this.defaultSettings.animationDuration)
@@ -707,6 +753,297 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Setups the tooltip of mlp units.
+   */
+  setupMLPTooltip() {
+    const self = this;
+    this.tooltipTexts = [
+      `FC Layer ${this.selectedUnit.layer + 1} - Unit ${this.selectedUnit.unit + 1}`,
+      `Incoming Weights`,
+      `Before`,
+      `After`,
+      `Outgoing Weights`,
+      `Before`,
+      `After`
+    ];
+
+    this.tooltipConfig = {
+      outerFrame: {
+        width: 0,
+        height: 0,
+        margin: 5,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      title: {
+        margin: 15,
+        color: '#ffffff',
+        dimension: []
+      },
+      weightsFrame: {
+        width: 84,
+        height: 84,
+        margin: 15,
+        fill: 'whitesmoke'
+      },
+      positiveColor: d3.interpolateLab('whitesmoke', 'indianred'),
+      negativeColor: d3.interpolateLab('whitesmoke', 'royalblue')
+    };
+
+    this.tooltipGroup.selectAll('.tmp')
+      .data(this.tooltipTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('class', 'tmp')
+      .each(function (d, i) {
+        const bbox = this.getBBox();
+        const dimension = {
+          width: bbox.width,
+          height: bbox.height
+        };
+
+        self.tooltipConfig.title.dimension[i] = dimension;
+      });
+    d3.selectAll('.tmp').remove();
+
+    this.tooltipConfig.outerFrame.width = 2 * this.tooltipConfig.weightsFrame.width +
+      2.75 * this.tooltipConfig.weightsFrame.margin;
+    this.tooltipConfig.outerFrame.height =
+      this.tooltipConfig.title.dimension.map(dimension => dimension.height).reduce((a, b) => a + b) +
+      2 * this.tooltipConfig.title.margin +
+      2 * this.tooltipConfig.weightsFrame.height;
+  }
+
+  /**
+   * Bind MLP tooltip to svg.
+   * @param mouseX Mouse's X coordinate.
+   * @param mouseY Mouse's Y coordinate.
+   */
+  bindMLPTooltip(mouseX, mouseY) {
+    const self = this;
+
+
+    const currEpoch = `epoch_${this.epochSlider.currEpoch - 1}`;
+    const incomingWeights = (this.selectedUnit.layer === 0) ?
+      'input' : `h${this.selectedUnit.layer}`;
+    const outgoingWeights = (this.selectedUnit.layer + 1 === this.lastNNSettings.denseLayers.length - 1) ?
+      'output' : `h${this.selectedUnit.layer + 1}`;
+
+    const outgoingWeightsBefore = [];
+    const outgoingWeightsAfter = [];
+    this.untrainedWeights.epoch_0[outgoingWeights].forEach(element => {
+      outgoingWeightsBefore.push(element[this.selectedUnit.unit]);
+    });
+    this.lastNNWeights[currEpoch][outgoingWeights].forEach(element => {
+      outgoingWeightsAfter.push(element[this.selectedUnit.unit]);
+    });
+
+    this.tooltipConfig.quadrantAdjustment = {
+      x: this.tooltipConfig.outerFrame.margin,
+      y: this.tooltipConfig.outerFrame.margin
+    };
+    if (mouseX > this.svgWidth / 2) {
+      this.tooltipConfig.quadrantAdjustment.x *= -1;
+      this.tooltipConfig.quadrantAdjustment.x += -1 * this.tooltipConfig.outerFrame.width;
+    }
+    if (mouseY > this.svgHeight / 2) {
+      this.tooltipConfig.quadrantAdjustment.y *= -1;
+      this.tooltipConfig.quadrantAdjustment.y += -1 * this.tooltipConfig.outerFrame.height;
+    }
+
+
+    const weightsComparison = this.graphGroup.append('g')
+      .attr('class', 'weights-comparison');
+
+    weightsComparison.append('rect')
+      .attr('x', mouseX + this.tooltipConfig.quadrantAdjustment.x)
+      .attr('y', mouseY + this.tooltipConfig.quadrantAdjustment.y)
+      .attr('width', this.tooltipConfig.outerFrame.width)
+      .attr('height', this.tooltipConfig.outerFrame.height)
+      .attr('rx', this.tooltipConfig.outerFrame.cornerRad)
+      .attr('ry', this.tooltipConfig.outerFrame.cornerRad)
+      .style('fill', this.tooltipConfig.outerFrame.fill);
+
+
+    weightsComparison.selectAll('text')
+      .data(this.tooltipTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('x', (d, i) => {
+        let centerAligned = 0;
+        if (i === 0 || d === 'Before' || d === 'After') {
+          if (i === 0) {
+            centerAligned += this.tooltipConfig.outerFrame.width / 2;
+          } else if (d === 'Before') {
+            centerAligned += this.tooltipConfig.outerFrame.width / 4;
+          } else if (d === 'After') {
+            centerAligned += 3 * this.tooltipConfig.outerFrame.width / 4;
+          }
+
+          centerAligned -= this.tooltipConfig.title.dimension[i].width / 2;
+          centerAligned -= this.tooltipConfig.title.margin;
+        }
+
+
+        return mouseX +
+          this.tooltipConfig.quadrantAdjustment.x +
+          this.tooltipConfig.title.margin +
+          centerAligned;
+      })
+      .attr('y', (d, i) => {
+        let totalTitles = this.tooltipConfig.title.margin;
+        let totalContent = 0;
+
+        if (i > 0) {
+          totalTitles = 2 * this.tooltipConfig.title.margin;
+        }
+        for (let j = 0; j <= i; j++) {
+          totalTitles += this.tooltipConfig.title.dimension[j].height;
+        }
+        if (d === 'After') {
+          totalTitles -= this.tooltipConfig.title.dimension[i].height;
+        }
+
+        if (i > 3) {
+          totalTitles -= this.tooltipConfig.title.dimension[3].height;
+          totalContent += this.tooltipConfig.weightsFrame.height;
+          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
+        }
+
+
+        return mouseY +
+          this.tooltipConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('fill', this.tooltipConfig.title.color);
+
+
+    this.tooltipConfig.data = [];
+    this.tooltipConfig.data.push([...this.untrainedWeights.epoch_0[incomingWeights][this.selectedUnit.unit]]);
+    this.tooltipConfig.data.push([...this.lastNNWeights[currEpoch][incomingWeights][this.selectedUnit.unit]]);
+    this.tooltipConfig.data.push([...outgoingWeightsBefore]);
+    this.tooltipConfig.data.push([...outgoingWeightsAfter]);
+
+    this.tooltipConfig.weights = [];
+    this.tooltipConfig.data.forEach(data => {
+      this.tooltipConfig.weights.push({
+        min: Math.min(...data),
+        max: Math.max(...data),
+        width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(data.length)),
+        height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(data.length)),
+        numElements: Math.ceil(Math.sqrt(data.length))
+      });
+    });
+
+    // d3 workaround - attr's index starts from 1 instead of 0
+    this.tooltipConfig.data.forEach(data => { data.unshift('d3 workaround'); });
+
+    const comparisonItem = weightsComparison.selectAll('.comparison-item')
+      .data(this.tooltipConfig.data)
+      .enter()
+      .append('g')
+      .attr('class', 'comparison-item');
+
+    comparisonItem.append('rect')
+      .attr('x', (d, i) =>
+        mouseX +
+        this.tooltipConfig.quadrantAdjustment.x +
+        (i % 2) * this.tooltipConfig.weightsFrame.width +
+        (i % 2 * .75 + 1) * this.tooltipConfig.weightsFrame.margin
+      )
+      .attr('y', (d, i) => {
+        let totalTitles = 2 * this.tooltipConfig.title.margin +
+          this.tooltipConfig.title.dimension[0].height;
+        let totalContent = Math.floor(i / 2) * this.tooltipConfig.weightsFrame.height +
+          .25 * this.tooltipConfig.weightsFrame.margin;
+
+
+        for (let j = 0; j < this.tooltipConfig.title.dimension.length; j++) {
+          if (Math.floor(i / 2) === 0 && j > 2) { break; }
+
+          if (j % 3 === 0) { continue; }
+          if (j % 3 === 1 || j % 3 === 2) { totalTitles += this.tooltipConfig.title.dimension[j].height; }
+        }
+
+        if (Math.floor(i / 2) === 1) {
+          totalContent += .75 * this.tooltipConfig.weightsFrame.margin;
+        }
+
+        return mouseY +
+          this.tooltipConfig.quadrantAdjustment.y +
+          totalTitles +
+          totalContent;
+      })
+      .attr('width', this.tooltipConfig.weightsFrame.width)
+      .attr('height', this.tooltipConfig.weightsFrame.height)
+      .style('fill', this.tooltipConfig.weightsFrame.fill);
+
+
+    let tempIndex = -1;
+    comparisonItem.selectAll('rect')
+      .data(d => d)
+      .enter()
+      .append('rect')
+      .attr('x', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.tooltipConfig.data.length;
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+        const xPosition = ((i - 1) % self.tooltipConfig.weights[currIndex].numElements) *
+          self.tooltipConfig.weights[currIndex].width;
+
+        return rectXValue + xPosition;
+      })
+      .attr('y', function (d, i) {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % self.tooltipConfig.data.length;
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+        const yPosition = Math.floor((i - 1) / self.tooltipConfig.weights[currIndex].numElements) *
+          self.tooltipConfig.weights[currIndex].height;
+
+        return rectYValue + yPosition;
+      })
+      .attr('width', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
+
+        return this.tooltipConfig.weights[currIndex].width;
+      })
+      .attr('height', (d, i) => {
+        if (i === 1) { tempIndex++; }
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
+
+        return this.tooltipConfig.weights[currIndex].height;
+      })
+      .style('fill', (d, i) => {
+        if (i === 1) { tempIndex++; }
+
+        const currIndex = tempIndex % this.tooltipConfig.data.length;
+        let scaledValue = 0;
+
+        if (d > 0) {
+          scaledValue = d / this.tooltipConfig.weights[currIndex].max;
+          return this.tooltipConfig.positiveColor(scaledValue);
+        } else if (d < 0) {
+          scaledValue = d / this.tooltipConfig.weights[currIndex].min;
+          return this.tooltipConfig.negativeColor(scaledValue);
+        }
+      });
+
+
+    // console.clear();
+
+    // console.log('Incoming Weights before training:', this.untrainedWeights.epoch_0[incomingWeights][this.selectedUnit.unit]);
+    // console.log('Incoming Weights after training:', this.lastNNWeights[currEpoch][incomingWeights][this.selectedUnit.unit]);
+    // console.log('Outgoing Weights before training:', outgoingWeightsBefore);
+    // console.log('Outgoing Weights after training:', outgoingWeightsAfter);
+  }
+
+  /**
    * Resets visualization
    */
   resetViz() {
@@ -724,6 +1061,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('width', this.svgWidth)
       .attr('height', this.svgHeight);
     this.graphGroup = this.svg.append('g');
+    this.tooltipGroup = this.svg.append('g');
 
     const self = this;
     this.zoom = d3.zoom()

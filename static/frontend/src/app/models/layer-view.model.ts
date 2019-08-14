@@ -39,7 +39,9 @@ export class WeightedTopology extends LayerTopology {
         public unitSpacing: number,
         public unitsPerColumn: number,
         public isOutput: boolean,
-        public isConv: boolean
+        public isConv: boolean,
+        public fill: string,
+        public opacity: number
     ) {
         super(
             layer,

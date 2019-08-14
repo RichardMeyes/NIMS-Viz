@@ -6,18 +6,27 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 import torch.nn.functional as F
+import numpy as np
 
 from torch.autograd import Variable
 
 
 class Net(nn.Module):
-    def __init__(self, num_epochs, conv_layers, layers, h0Shape=1):
+    def __init__(self, num_epochs, conv_layers, layers):
         # create Net
         super(Net, self).__init__()
+
         self.topology_dict = dict()
+
+        self.nodes_dict = dict()
         self.weights_dict = dict()
+
         self.filename = dict()
+
         self.num_epochs = num_epochs
+
+        self.widthLinear = 28
+        self.heightLinear = 28
 
 
         # Conv Layers
@@ -27,11 +36,22 @@ class Net(nn.Module):
                 self.__setattr__("c{0}".format(i_layer),
                                 nn.Conv2d(self.conv_layers[i_layer]["inChannel"], self.conv_layers[i_layer]["outChannel"], kernel_size=self.conv_layers[i_layer]["kernelSize"], stride=self.conv_layers[i_layer]["stride"], padding=self.conv_layers[i_layer]["padding"]))
 
+                self.widthLinear = np.floor(((self.widthLinear - self.conv_layers[i_layer]["kernelSize"] + (2 * self.conv_layers[i_layer]["padding"])) / self.conv_layers[i_layer]["stride"]) + 1)
+                self.widthLinear = np.floor(((self.widthLinear - 2) / 2) + 1)
+
+                self.heightLinear = np.floor(((self.heightLinear - self.conv_layers[i_layer]["kernelSize"] + (2 * self.conv_layers[i_layer]["padding"])) / self.conv_layers[i_layer]["stride"]) + 1)
+                self.heightLinear = np.floor(((self.heightLinear - 2) / 2) + 1)
+
 
         # FC Layers
         if layers:
-            self.layers = layers        
-            self.h0 = nn.Linear(h0Shape, self.layers[0])
+            self.layers = layers
+
+            if len(self.conv_layers):
+                self.h0 = nn.Linear(int(self.conv_layers[-1]["outChannel"] * self.widthLinear * self.heightLinear), int(self.layers[0]))
+            else:
+                self.h0 = nn.Linear(28 * 28, self.layers[0])
+
             for i_layer in range(len(layers)-1):
                 if i_layer+1 == len(layers)-1:
                     self.__setattr__("output",

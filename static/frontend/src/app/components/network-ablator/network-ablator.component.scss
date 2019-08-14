@@ -1,0 +1,17 @@
+.main {
+    height: calc(100vh - 55px);
+    padding: 1.5rem;
+    box-sizing: border-box;
+    
+    border-left: 3px solid rgb(27, 27, 27, 0.25);
+}
+
+.content {
+    height: 100%;
+    padding: 1rem;
+    border-radius: 20px;
+    box-sizing: border-box;
+    overflow-y:auto;
+
+    background-color: rgba(255, 255, 255, 0.603);
+}
