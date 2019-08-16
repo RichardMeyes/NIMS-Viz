@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
-import { debounceTime, takeUntil, concatMap } from 'rxjs/operators';
+import { debounceTime, takeUntil, concatMap, filter } from 'rxjs/operators';
 import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
 import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider, WeightedEdges, WeightedTopology } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
@@ -127,10 +127,18 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     this.eventsService.updateLayerView
       .pipe(
         takeUntil(this.destroyed),
+        filter((selectedNetwork: SavedNetworks) => {
+          this.resetViz();
+
+          if (selectedNetwork) {
+            return true;
+          } else {
+            return false;
+          }
+        }),
         concatMap((selectedNetwork: SavedNetworks) => {
           this.lastNNSettings = selectedNetwork.nnSettings;
 
-          this.resetViz();
           this.setupTopology();
           this.bindTopology();
 

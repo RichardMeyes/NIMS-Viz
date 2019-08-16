@@ -1,5 +1,5 @@
 <div #container class="container" [class.full-width]="dataService.activeSideMenu === activeSideMenu.None" (resized)="containerResized()">
-    <div *ngIf="epochSlider.maxEpoch > 1" class="information">
+    <div *ngIf="epochSlider.maxEpoch > 1 && dataService.selectedNetwork" class="information">
         <button mat-icon-button (click)="toggleAnimation()">
             <mat-icon *ngIf="!epochSlider.isPlaying">play_circle_outline</mat-icon>
             <mat-icon *ngIf="epochSlider.isPlaying">pause_circle_outline</mat-icon>
