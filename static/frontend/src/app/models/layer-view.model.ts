@@ -9,7 +9,8 @@ export class LayerDefaultSettings {
         public nodeOpacity: number = .5,
         public nodeStroke: number = 0,
         public animationDuration: number = 500,
-        public unitGutter: number = 5
+        public unitGutter: number = 5,
+        public filterGutter: number = 5
     ) { }
 }
 
