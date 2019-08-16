@@ -41,7 +41,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   /**
    * SVG groups configurations.
    */
-  graphGroup; tooltipGroup;
+  graphGroup; tooltipGroup; legendGroup;
 
   /**
    * Graph's design configurations.
@@ -1455,6 +1455,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         .attr('height', this.svgHeight);
       this.graphGroup = this.svg.append('g');
       this.tooltipGroup = this.svg.append('g');
+      this.legendGroup = this.svg.append('g');
 
       const self = this;
       this.zoom = d3.zoom()
@@ -1466,6 +1467,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       this.svg.call(this.zoom);
 
       this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
+
+      if (this.dataService.activeSideMenu === this.activeSideMenu.NetworkAblator) {
+        this.drawLegend();
+      }
     }
   }
 
@@ -1503,6 +1508,86 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     d3.selectAll('.weights-comparison').remove();
     d3.select(this)
       .classed('focused', false);
+  }
+
+  /**
+   * Draws legend when ablation mode is active.
+   */
+  drawLegend() {
+    const self = this;
+    const legendConfig = {
+      outerFrame: {
+        width: 125,
+        height: 70,
+        margin: 15,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      item: {
+        margin: 10
+      },
+      data: ['ablated', 'not ablated']
+    };
+
+    const legend = this.legendGroup.attr('class', 'legend');
+
+    legend.append('rect')
+      .attr('x', legendConfig.outerFrame.margin)
+      .attr('y', legendConfig.outerFrame.margin)
+      .attr('width', legendConfig.outerFrame.width)
+      .attr('height', legendConfig.outerFrame.height)
+      .attr('rx', legendConfig.outerFrame.cornerRad)
+      .attr('ry', legendConfig.outerFrame.cornerRad)
+      .style('fill', legendConfig.outerFrame.fill);
+
+    legend.selectAll('.legend-circles')
+      .data(legendConfig.data)
+      .enter()
+      .append('circle')
+      .attr('class', function (d) {
+        let className = 'legend-circles';
+        if (d === 'ablated') { className += ' legend-ablated'; }
+        return className;
+      })
+      .attr('cx', function () {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+
+        return rectXValue +
+          legendConfig.item.margin +
+          self.defaultSettings.nodeRadius;
+      })
+      .attr('cy', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+
+        return rectYValue +
+          (i + 1) * legendConfig.item.margin +
+          (i * 2 + 1) * self.defaultSettings.nodeRadius;
+      })
+      .attr('r', this.defaultSettings.nodeRadius)
+      .attr('fill', this.defaultSettings.color);
+
+    legend.selectAll('text')
+      .data(legendConfig.data)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('x', function (d, i) {
+        const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+
+        return rectXValue +
+          2 * legendConfig.item.margin +
+          2 * self.defaultSettings.nodeRadius +
+          3;
+      })
+      .attr('y', function (d, i) {
+        const rectYValue = +d3.select(this.parentNode).select('rect').attr('y');
+
+        return rectYValue +
+          (i + 1) * legendConfig.item.margin +
+          (i * 2 + 1) * self.defaultSettings.nodeRadius +
+          5;
+      })
+      .attr('fill', 'whitesmoke');
   }
 
   ngOnDestroy() {
