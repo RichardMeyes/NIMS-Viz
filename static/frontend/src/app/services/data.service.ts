@@ -29,11 +29,7 @@ export class DataService {
 
   constructor() {
     this.nnSettings = new NeuralNetworkSettings();
-    this.selectedNetwork = {
-      fileName: 'No Network Selected',
-      nnSettings: undefined,
-      viewName: undefined
-    };
+    this.selectedNetwork = undefined;
     this.activeSideMenu = ActiveSideMenu.None;
   }
 }

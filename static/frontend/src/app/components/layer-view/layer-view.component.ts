@@ -144,23 +144,25 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
           this.epochSlider = {
-            currEpoch: 1,
+            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ?
+              selectedNetwork.nnSettings.configurations.epoch : 1,
             maxEpoch: selectedNetwork.nnSettings.configurations.epoch,
             isPlaying: false
           };
 
 
-          return this.backend.loadWeights(selectedNetwork.fileName);
+          return this.backend.loadWeights(selectedNetwork.fileName.replace('.json', '_untrained.json'));
         }),
-        concatMap(nnWeights => {
-          this.lastNNWeights = nnWeights;
-          this.updateWeights(true);
-
-          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName.replace('.json', '_untrained.json'));
+        concatMap(untrainedWeights => {
+          this.untrainedWeights = untrainedWeights;
+          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
         })
       )
-      .subscribe(untrainedWeights => {
-        this.untrainedWeights = untrainedWeights;
+      .subscribe(nnWeights => {
+        this.lastNNWeights = nnWeights;
+        if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {
+          this.updateWeights(true);
+        }
       });
   }
 
@@ -405,10 +407,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     });
 
 
-    const circles = this.graphGroup.selectAll('circle')
+    let circles = this.graphGroup.selectAll('circle')
       .data(this.topology.filter(nodes => !nodes.isConv));
 
-    circles.enter()
+    circles = circles.enter()
       .append('circle')
       .attr('class', 'circle')
       .attr('cx', function (d) {
@@ -427,6 +429,14 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('r', this.defaultSettings.nodeRadius)
       .attr('fill', this.defaultSettings.color)
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
+
+
+    if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
+      circles.on('mouseover', function (d) {
+        self.showMLPTooltip(d, self, this);
+      });
+      circles.on('mouseout', this.removeMLPTooltip);
+    }
   }
 
   /**
@@ -630,23 +640,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('stroke-width', this.defaultSettings.nodeStroke);
 
     enterCircles.on('mouseover', function (d) {
-      self.selectedUnit = Object.assign({}, d);
-      self.selectedUnit.layer -= (self.lastNNSettings.convLayers.length + 1);
-
-      if (!d.isOutput) {
-        self.setupMLPTooltip();
-        self.bindMLPTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
-      }
-
-      d3.select(this)
-        .classed('focused', true);
+      self.showMLPTooltip(d, self, this);
     });
-
-    enterCircles.on('mouseout', function (d) {
-      d3.selectAll('.weights-comparison').remove();
-      d3.select(this)
-        .classed('focused', false);
-    });
+    enterCircles.on('mouseout', this.removeMLPTooltip);
 
     if (runAnimation) {
       enterCircles = enterCircles.transition()
@@ -1055,45 +1051,70 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Resets visualization
    */
   resetViz() {
-    this.svgWidth = this.container.nativeElement.offsetWidth;
-    this.svgHeight = this.container.nativeElement.offsetHeight;
+    if (this.container) {
+      this.svgWidth = this.container.nativeElement.offsetWidth;
+      this.svgHeight = this.container.nativeElement.offsetHeight;
 
-    this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
-    this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
-    this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
+      this.minWidthHeight = Math.min(this.svgWidth, this.svgHeight);
+      this.topMargin = (this.svgHeight - this.minWidthHeight) / 2;
+      this.leftMargin = (this.svgWidth - this.minWidthHeight) / 2;
 
 
-    if (this.svg) { this.svg.remove(); }
-    this.svg = d3.select(this.container.nativeElement)
-      .append('svg')
-      .attr('width', this.svgWidth)
-      .attr('height', this.svgHeight);
-    this.graphGroup = this.svg.append('g');
-    this.tooltipGroup = this.svg.append('g');
+      if (this.svg) { this.svg.remove(); }
+      this.svg = d3.select(this.container.nativeElement)
+        .append('svg')
+        .attr('width', this.svgWidth)
+        .attr('height', this.svgHeight);
+      this.graphGroup = this.svg.append('g');
+      this.tooltipGroup = this.svg.append('g');
 
-    const self = this;
-    this.zoom = d3.zoom()
-      .scaleExtent([0.1, 10])
-      .on('zoom', () => {
-        self.graphGroup.attr('transform', d3.event.transform);
-      })
-      .on('end', () => { this.currTransform = d3.event.transform; });
-    this.svg.call(this.zoom);
+      const self = this;
+      this.zoom = d3.zoom()
+        .scaleExtent([0.1, 10])
+        .on('zoom', () => {
+          self.graphGroup.attr('transform', d3.event.transform);
+        })
+        .on('end', () => { this.currTransform = d3.event.transform; });
+      this.svg.call(this.zoom);
 
-    this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
+      this.svg.on('contextmenu', () => { d3.event.preventDefault(); });
+    }
   }
 
   /**
    * Viz container is resized.
    */
   containerResized() {
-    if (this.lastNNSettings) {
-      this.resetViz();
+    this.eventsService.updateLayerView.next(this.dataService.selectedNetwork);
+  }
 
-      this.setupTopology();
-      this.bindTopology();
-      this.updateWeights(false);
+  /**
+   * A callback to show mlp'S tooltip.
+   * @param d The D3-bounded data.
+   * @param self Reference to LayerViewComponent.
+   * @param currCircle Reference to the selected circle.
+   */
+  showMLPTooltip(d, self, currCircle) {
+    self.selectedUnit = Object.assign({}, d);
+    self.selectedUnit.layer -= (self.lastNNSettings.convLayers.length + 1);
+
+    if (!d.isOutput) {
+      self.setupMLPTooltip();
+      self.bindMLPTooltip(d3.mouse(currCircle)[0], d3.mouse(currCircle)[1]);
     }
+
+    d3.select(currCircle)
+      .classed('focused', true);
+  }
+
+  /**
+   * A callback to remove mlp'S tooltip.
+   * @param d The D3-bounded data.
+   */
+  removeMLPTooltip(d) {
+    d3.selectAll('.weights-comparison').remove();
+    d3.select(this)
+      .classed('focused', false);
   }
 
   ngOnDestroy() {
