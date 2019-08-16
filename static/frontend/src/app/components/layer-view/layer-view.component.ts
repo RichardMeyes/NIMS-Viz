@@ -397,11 +397,20 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
     rects.on('mouseover', function (d) {
+      self.selectedUnit = Object.assign({}, d);
+      self.selectedUnit.layer -= 1;
+
+      if (self.selectedUnit.layer >= 0) {
+        self.setupConvTooltip();
+        self.bindConvTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
+      }
+
       d3.select(this)
         .classed('focused', true);
     });
 
     rects.on('mouseout', function (d) {
+      d3.selectAll('.filters-comparison').remove();
       d3.select(this)
         .classed('focused', false);
     });
@@ -757,6 +766,382 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Setups the tooltip of conv layers.
+   */
+  setupConvTooltip() {
+    const self = this;
+    this.tooltipTexts = [
+      `Conv Layer ${this.selectedUnit.layer + 1} - Unit ${this.selectedUnit.unit + 1}`,
+      `Incoming Filters`,
+      `Before`,
+      `After`
+    ];
+
+    this.tooltipConfig = {
+      outerFrame: {
+        width: 0,
+        height: 0,
+        margin: 5,
+        cornerRad: 7.5,
+        fill: '#2b2b2b'
+      },
+      title: {
+        margin: 15,
+        color: '#ffffff',
+        dimension: []
+      },
+      featureMapFrame: {
+        width: 177,
+        height: 177,
+        margin: 15,
+        fill: 'black'
+      },
+      weightsFrame: {
+        width: 300,
+        height: 60,
+        margin: 15,
+        fill: 'black'
+      },
+      filtersFrame: {
+        width: 25,
+        height: 25,
+        numElements: 10
+      },
+      color: d3.interpolateLab('black', 'white')
+    };
+
+    this.graphGroup.selectAll('.tmp')
+      .data(this.tooltipTexts)
+      .enter()
+      .append('text')
+      .text(d => d)
+      .attr('class', 'tmp')
+      .each(function (d, i) {
+        const bbox = this.getBBox();
+        const dimension = {
+          width: bbox.width,
+          height: bbox.height
+        };
+
+        self.tooltipConfig.title.dimension[i] = dimension;
+      });
+    d3.selectAll('.tmp').remove();
+
+    this.tooltipConfig.outerFrame.width = this.tooltipConfig.featureMapFrame.width +
+      2 * this.tooltipConfig.featureMapFrame.margin +
+      this.tooltipConfig.weightsFrame.width +
+      .75 * this.tooltipConfig.weightsFrame.margin;
+    this.tooltipConfig.outerFrame.height =
+      this.tooltipConfig.title.dimension[0].height +
+      2 * this.tooltipConfig.title.margin +
+      this.tooltipConfig.featureMapFrame.height +
+      .2 * this.tooltipConfig.featureMapFrame.height;
+  }
+
+  /**
+   * Bind conv tooltip to svg.
+   * @param mouseX Mouse's X coordinate.
+   * @param mouseY Mouse's Y coordinate.
+   */
+  bindConvTooltip(mouseX, mouseY) {
+    // const self = this;
+    // const incomingFilters = `c${this.conMenuSelected.layer}`;
+
+
+    // this.tooltipConfig.quadrantAdjustment = {
+    //   x: this.tooltipConfig.outerFrame.margin,
+    //   y: this.tooltipConfig.outerFrame.margin
+    // };
+    // if (mouseX > this.svgWidth / 2) {
+    //   this.tooltipConfig.quadrantAdjustment.x *= -1;
+    //   this.tooltipConfig.quadrantAdjustment.x += -1 * this.tooltipConfig.outerFrame.width;
+    // }
+    // if (mouseY > this.svgHeight / 2) {
+    //   this.tooltipConfig.quadrantAdjustment.y *= -1;
+    //   this.tooltipConfig.quadrantAdjustment.y += -1 * this.tooltipConfig.outerFrame.height;
+    // }
+
+
+    // const filtersComparison = this.vizContainer.append('g')
+    //   .attr('class', 'filters-comparison');
+
+    // filtersComparison.append('rect')
+    //   .attr('x', mouseX + this.tooltipConfig.quadrantAdjustment.x)
+    //   .attr('y', mouseY + this.tooltipConfig.quadrantAdjustment.y)
+    //   .attr('width', this.tooltipConfig.outerFrame.width)
+    //   .attr('height', this.tooltipConfig.outerFrame.height)
+    //   .attr('rx', this.tooltipConfig.outerFrame.cornerRad)
+    //   .attr('ry', this.tooltipConfig.outerFrame.cornerRad)
+    //   .style('fill', this.tooltipConfig.outerFrame.fill);
+
+    // filtersComparison.selectAll('text')
+    //   .data(this.tooltipTexts)
+    //   .enter()
+    //   .append('text')
+    //   .text(d => d)
+    //   .attr('x', (d, i) => {
+    //     let centerAligned = 0;
+    //     let leftSpacing = 0;
+
+    //     if (i === 0) {
+    //       centerAligned += this.tooltipConfig.outerFrame.width / 2;
+    //       centerAligned -= this.tooltipConfig.title.dimension[0].width / 2;
+    //       centerAligned -= this.tooltipConfig.title.margin;
+    //     }
+    //     if (i > 0) {
+    //       leftSpacing += this.tooltipConfig.featureMapFrame.width;
+    //       leftSpacing += this.tooltipConfig.featureMapFrame.margin;
+    //     }
+
+    //     return mouseX +
+    //       this.tooltipConfig.quadrantAdjustment.x +
+    //       this.tooltipConfig.title.margin +
+    //       centerAligned +
+    //       leftSpacing;
+    //   })
+    //   .attr('y', (d, i) => {
+    //     let totalTitles = this.tooltipConfig.title.margin;
+
+    //     if (i > 0) {
+    //       totalTitles = 2 * this.tooltipConfig.title.margin;
+    //     }
+    //     for (let j = 0; j <= i; j++) {
+    //       totalTitles += this.tooltipConfig.title.dimension[j].height;
+    //     }
+    //     if (d === 'After') {
+    //       totalTitles += this.tooltipConfig.weightsFrame.height;
+    //       totalTitles += .5 * this.tooltipConfig.weightsFrame.margin;
+    //     }
+
+    //     return mouseY +
+    //       this.tooltipConfig.quadrantAdjustment.y +
+    //       totalTitles;
+    //   })
+    //   .attr('fill', this.tooltipConfig.title.color);
+
+
+    // this.tooltipConfig.featureMapData = [];
+    // if (this.classifyResult) {
+    //   const classifyResultCloned = JSON.parse(JSON.stringify(this.classifyResult));
+    //   this.tooltipConfig.featureMapData.push(classifyResultCloned['nodes_dict'][incomingFilters][this.conMenuSelected.unit]);
+    //   this.tooltipConfig.featureMap = {
+    //     width: this.tooltipConfig.featureMapFrame.width / this.tooltipConfig.featureMapData[0].length,
+    //     height: this.tooltipConfig.featureMapFrame.height / this.tooltipConfig.featureMapData[0].length,
+    //     numElements: this.tooltipConfig.featureMapData[0].length
+    //   };
+    // } else {
+    //   this.tooltipConfig.featureMapData.push([undefined]);
+    // }
+
+    // this.tooltipConfig.data = [];
+    // const untrainedWeightsCloned = JSON.parse(JSON.stringify(this.untrainedWeights));
+    // const inputWeightsCloned = JSON.parse(JSON.stringify(this.inputWeights));
+    // this.tooltipConfig.data.push(untrainedWeightsCloned[incomingFilters][this.conMenuSelected.unit]);
+    // this.tooltipConfig.data.push(inputWeightsCloned[incomingFilters][this.conMenuSelected.unit]);
+
+    // // this.tooltipConfig.filtersFrame = {
+    // //   width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
+    // //   height: this.tooltipConfig.weightsFrame.height / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
+    // //   numElements: Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length))
+    // // };
+
+    // this.tooltipConfig.filter = {
+    //   width: this.tooltipConfig.filtersFrame.width / this.tooltipConfig.data[0][0].length,
+    //   height: this.tooltipConfig.filtersFrame.height / this.tooltipConfig.data[0][0].length,
+    //   numElements: this.tooltipConfig.data[0][0].length
+    // };
+
+    // // d3 workaround - attr's index starts from 1 instead of 0
+    // if (this.classifyResult) {
+    //   this.tooltipConfig.featureMapData[0].forEach(featureMap => { featureMap.unshift('d3 workaround'); });
+    // }
+    // this.tooltipConfig.data.forEach((data, dataIndex) => {
+    //   this.tooltipConfig.data[dataIndex] = this.tooltipConfig.data[dataIndex].slice(0, 20);
+    //   data.forEach(filterRow => {
+    //     filterRow.forEach(filter => {
+    //       filter.unshift('d3 workaround');
+    //     });
+    //   });
+    // });
+
+
+    // const featureMaps = filtersComparison.selectAll('.feature-maps')
+    //   .data(this.tooltipConfig.featureMapData)
+    //   .enter()
+    //   .append('g')
+    //   .attr('class', 'feature-maps');
+
+    // featureMaps.append('rect')
+    //   .attr('x', () =>
+    //     mouseX +
+    //     this.tooltipConfig.quadrantAdjustment.x +
+    //     this.tooltipConfig.featureMapFrame.margin
+    //   )
+    //   .attr('y', () => {
+    //     const totalTitles = 2 * this.tooltipConfig.title.margin +
+    //       this.tooltipConfig.title.dimension[0].height;
+
+    //     return mouseY +
+    //       this.tooltipConfig.quadrantAdjustment.y +
+    //       totalTitles;
+    //   })
+    //   .attr('width', this.tooltipConfig.featureMapFrame.width)
+    //   .attr('height', this.tooltipConfig.featureMapFrame.height)
+    //   .style('fill', this.tooltipConfig.featureMapFrame.fill);
+
+    // if (this.classifyResult) {
+    //   const featureMapRows = featureMaps.selectAll('.feature-map-rows')
+    //     .data(d => d)
+    //     .enter()
+    //     .append('g')
+    //     .attr('class', 'feature-map-rows');
+
+    //   featureMapRows.append('rect')
+    //     .attr('x', function () {
+    //       return +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+    //     })
+    //     .attr('y', function (d, i) {
+    //       const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+    //       const yPosition = i * self.tooltipConfig.featureMap.height;
+
+    //       return rectYValue + yPosition;
+    //     })
+    //     .attr('width', this.tooltipConfig.featureMapFrame.width)
+    //     .attr('height', this.tooltipConfig.featureMap.height);
+
+    //   featureMapRows.selectAll('rect')
+    //     .data(d => d)
+    //     .enter()
+    //     .append('rect')
+    //     .attr('x', function (d, i) {
+    //       const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+    //       const xPosition = (i - 1) * self.tooltipConfig.featureMap.width;
+
+    //       return rectXValue + xPosition;
+    //     })
+    //     .attr('y', function (d, i) {
+    //       return +d3.select(this.parentNode).select('rect').attr('y');
+    //     })
+    //     .attr('width', this.tooltipConfig.featureMap.width)
+    //     .attr('height', this.tooltipConfig.featureMap.height)
+    //     .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
+    // }
+
+
+    // const comparisonItem = filtersComparison.selectAll('.comparison-item')
+    //   .data(this.tooltipConfig.data)
+    //   .enter()
+    //   .append('g')
+    //   .attr('class', 'comparison-item');
+
+    // comparisonItem.append('rect')
+    //   .attr('x', (d, i) =>
+    //     mouseX +
+    //     this.tooltipConfig.quadrantAdjustment.x +
+    //     this.tooltipConfig.featureMapFrame.width +
+    //     2 * this.tooltipConfig.featureMapFrame.margin
+    //   )
+    //   .attr('y', (d, i) => {
+    //     let totalTitles = 2 * this.tooltipConfig.title.margin;
+    //     let totalContent = 0;
+
+    //     for (let j = 0; j < this.tooltipConfig.title.dimension.length; j++) {
+    //       if (i === 0 && j === this.tooltipConfig.title.dimension.length - 1) {
+    //         break;
+    //       }
+    //       totalTitles += this.tooltipConfig.title.dimension[j].height;
+    //     }
+
+    //     totalContent += this.defaultSettings.filterGutter;
+
+    //     if (i === 1) {
+    //       totalContent += this.tooltipConfig.weightsFrame.height;
+    //       totalContent += .5 * this.tooltipConfig.weightsFrame.margin;
+    //     }
+
+    //     return mouseY +
+    //       this.tooltipConfig.quadrantAdjustment.y +
+    //       totalTitles +
+    //       totalContent;
+    //   })
+    //   .attr('width', this.tooltipConfig.weightsFrame.width)
+    //   .attr('height', this.tooltipConfig.weightsFrame.height)
+    //   .attr('fill', 'transparent');
+
+
+    // const filtersFrames = comparisonItem.selectAll('.filters-frames')
+    //   .data(d => d)
+    //   .enter()
+    //   .append('g')
+    //   .attr('class', 'filters-frames');
+
+    // filtersFrames.append('rect')
+    //   .attr('x', function (d, i) {
+    //     const rectXValue = +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+    //     const xPosition = (i % self.tooltipConfig.filtersFrame.numElements) *
+    //       self.tooltipConfig.filtersFrame.width;
+    //     const xGutter = (i % self.tooltipConfig.filtersFrame.numElements) *
+    //       self.defaultSettings.filterGutter;
+
+    //     return rectXValue + xPosition + xGutter;
+    //   })
+    //   .attr('y', function (d, i) {
+    //     const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+    //     const yPosition = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
+    //       self.tooltipConfig.filtersFrame.height;
+    //     const yGutter = Math.floor(i / self.tooltipConfig.filtersFrame.numElements) *
+    //       self.defaultSettings.filterGutter;
+
+    //     return rectYValue + yPosition + yGutter;
+    //   })
+    //   .attr('width', this.tooltipConfig.filtersFrame.width)
+    //   .attr('height', this.tooltipConfig.filtersFrame.height);
+
+
+    // const filtersRows = filtersFrames.selectAll('.filters-rows')
+    //   .data(d => d)
+    //   .enter()
+    //   .append('g')
+    //   .attr('class', 'filters-rows');
+
+    // filtersRows.append('rect')
+    //   .attr('x', function () {
+    //     return +d3.select(this.parentNode.parentNode).select('rect').attr('x');
+    //   })
+    //   .attr('y', function (d, i) {
+    //     const rectYValue = +d3.select(this.parentNode.parentNode).select('rect').attr('y');
+    //     const yPosition = i * self.tooltipConfig.filter.height;
+
+    //     return rectYValue + yPosition;
+    //   })
+    //   .attr('width', this.tooltipConfig.filtersFrame.width)
+    //   .attr('height', this.tooltipConfig.filter.height);
+
+    // filtersRows.selectAll('rect')
+    //   .data(d => d)
+    //   .enter()
+    //   .append('rect')
+    //   .attr('x', function (d, i) {
+    //     const rectXValue = +d3.select(this.parentNode).select('rect').attr('x');
+    //     const xPosition = (i - 1) * self.tooltipConfig.filter.width;
+
+    //     return rectXValue + xPosition;
+    //   })
+    //   .attr('y', function () {
+    //     return +d3.select(this.parentNode).select('rect').attr('y');
+    //   })
+    //   .attr('width', this.tooltipConfig.filter.width)
+    //   .attr('height', this.tooltipConfig.filter.height)
+    //   .style('fill', d => this.tooltipConfig.color(Math.round(d * 100) / 100));
+
+
+    // // console.clear();
+
+    // // console.log('Incoming Weights before training:', this.untrainedWeights[incomingFilters][this.conMenuSelected.unit]);
+    // // console.log('Incoming Weights after training:', this.inputWeights[incomingFilters][this.conMenuSelected.unit]);
+  }
+
+  /**
    * Setups the tooltip of mlp units.
    */
   setupMLPTooltip() {
@@ -857,7 +1242,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     }
 
 
-    const weightsComparison = this.graphGroup.append('g')
+    const weightsComparison = this.tooltipGroup.append('g')
       .attr('class', 'weights-comparison');
 
     weightsComparison.append('rect')
