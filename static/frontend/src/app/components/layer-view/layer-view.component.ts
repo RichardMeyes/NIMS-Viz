@@ -78,6 +78,11 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   classifyResult; //nanti check frontend lama, ambil dari subject
 
   /**
+   * Ablation configuration.
+   */
+  detachedNodes: WeightedTopology[];
+
+  /**
    * Flag to unsubscribe.
    */
   destroyed = new Subject<void>();
@@ -89,10 +94,6 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.defaultSettings = new LayerDefaultSettings();
-    this.epochSlider = new EpochSlider();
-    this.animationIntervals = [];
-
     this.eventsService.updateTopology
       .pipe(
         takeUntil(this.destroyed),
@@ -132,6 +133,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           this.resetViz();
 
           if (selectedNetwork) {
+            if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
+              console.log(this.detachedNodes);
+              console.log('test full network');
+            }
             return true;
           } else {
             return false;
@@ -416,6 +421,26 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         .classed('focused', false);
     });
 
+    if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
+      rects.on('click', function (d) {
+        d3.event.stopPropagation();
+        self.selectedUnit = Object.assign({}, d);
+
+        if (self.selectedUnit.layer >= 0) {
+          const ablated = self.findAblated();
+
+          if (ablated === -1) {
+            self.detachedNodes.push(self.selectedUnit);
+          } else {
+            self.detachedNodes.splice(ablated, 1);
+          }
+
+          d3.select(this)
+            .classed('ablated', !d3.select(this).classed('ablated'));
+        }
+      });
+    }
+
 
     let circles = this.graphGroup.selectAll('circle')
       .data(this.topology.filter(nodes => !nodes.isConv));
@@ -446,6 +471,24 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         self.showMLPTooltip(d, self, this);
       });
       circles.on('mouseout', this.removeMLPTooltip);
+
+      circles.on('click', function (d) {
+        d3.event.stopPropagation();
+        self.selectedUnit = Object.assign({}, d);
+
+        if (!d.isOutput) {
+          const ablated = self.findAblated();
+
+          if (ablated === -1) {
+            self.detachedNodes.push(self.selectedUnit);
+          } else {
+            self.detachedNodes.splice(ablated, 1);
+          }
+
+          d3.select(this)
+            .classed('ablated', !d3.select(this).classed('ablated'));
+        }
+      });
     }
   }
 
@@ -1440,6 +1483,11 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   resetViz() {
     if (this.container) {
+      this.defaultSettings = new LayerDefaultSettings();
+      this.epochSlider = new EpochSlider();
+      this.animationIntervals = [];
+      this.detachedNodes = [];
+
       this.svgWidth = this.container.nativeElement.offsetWidth;
       this.svgHeight = this.container.nativeElement.offsetHeight;
 
@@ -1588,6 +1636,25 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           5;
       })
       .attr('fill', 'whitesmoke');
+  }
+
+  /**
+   * Get the index of an ablated unit.
+   * @returns The index of the ablated unit, -1 if not found.
+   */
+  findAblated() {
+    let ablated = -1;
+
+    if (this.detachedNodes.length > 0) {
+      for (let i = 0; i < this.detachedNodes.length; i++) {
+        if (this.detachedNodes[i].layer === this.selectedUnit.layer && this.detachedNodes[i].unit === this.selectedUnit.unit) {
+          ablated = i;
+          break;
+        }
+      }
+    }
+
+    return ablated;
   }
 
   ngOnDestroy() {

@@ -1,6 +1,6 @@
 <div #container class="container" [class.full-width]="dataService.activeSideMenu === activeSideMenu.None"
     (resized)="containerResized()">
-    <div *ngIf="epochSlider.maxEpoch > 1 && dataService.selectedNetwork && dataService.activeSideMenu !== activeSideMenu.NetworkAblator"
+    <div *ngIf="epochSlider && epochSlider.maxEpoch > 1 && dataService.selectedNetwork && dataService.activeSideMenu !== activeSideMenu.NetworkAblator"
         class="information">
         <button mat-icon-button (click)="toggleAnimation()">
             <mat-icon *ngIf="!epochSlider.isPlaying">play_circle_outline</mat-icon>
@@ -11,5 +11,10 @@
         <nouislider [min]="1" [max]="epochSlider.maxEpoch" [step]="1" [(ngModel)]="epochSlider.currEpoch"
             (change)="updateWeights(true)" [tooltips]="[ true ]"></nouislider>
         <div>{{epochSlider.maxEpoch}}</div>
+    </div>
+    <div *ngIf="dataService.activeSideMenu === activeSideMenu.NetworkAblator" class="information">
+        <button class="form-item" mat-raised-button (click)="testNetwork()">Test Ablated Network</button>
+        <div style="width: 1rem;"></div>
+        <button class="form-item" mat-raised-button (click)="resetNetwork()">Reset Network</button>
     </div>
 </div>

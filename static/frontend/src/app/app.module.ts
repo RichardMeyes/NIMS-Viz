@@ -16,6 +16,7 @@ import { NetworkCreatorComponent } from './components/network-creator/network-cr
 import { NouisliderModule } from 'ng2-nouislider';
 import { AngularResizedEventModule } from 'angular-resize-event';
 import { NetworkAblatorComponent } from './components/network-ablator/network-ablator.component';
+import { AblationAccuracyComponent } from './components/ablation-accuracy/ablation-accuracy.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { NetworkAblatorComponent } from './components/network-ablator/network-ab
     NavigationComponent,
     routingComponents,
     NetworkCreatorComponent,
-    NetworkAblatorComponent
+    NetworkAblatorComponent,
+    AblationAccuracyComponent
   ],
   imports: [
     BrowserModule,
