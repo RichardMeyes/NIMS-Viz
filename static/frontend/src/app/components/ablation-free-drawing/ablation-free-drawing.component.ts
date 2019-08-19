@@ -3,6 +3,7 @@ import { DataService } from 'src/app/services/data.service';
 import { take, concatMap } from 'rxjs/operators';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { TestDigitResult } from 'src/app/models/ablation.model';
+import { EventsService } from 'src/app/services/events.service';
 
 import 'fabric';
 declare const fabric: any;
@@ -19,7 +20,8 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
 
   constructor(
     private backend: BackendCommunicationService,
-    public dataService: DataService
+    public dataService: DataService,
+    private eventService: EventsService
   ) { }
 
   ngOnInit() {
@@ -63,35 +65,17 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
             );
           })
         )
-        .subscribe((testResult: TestDigitResult) => {
-          console.clear();
-          console.log(testResult);
+        .subscribe(testResult => {
+          testResult.netOut = testResult.netOut.flat();
+          Object.keys(testResult.nodesDict).forEach(layer => {
+            testResult.nodesDict[layer] = testResult.nodesDict[layer].flat();
+          });
+
+
+          this.dataService.classifyResult = testResult;
+          this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
         });
     });
-
-
-
-
-    //   concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile)),
-    //     concatMap(val => {
-    //       const layers = [];
-    //       const units = [];
-
-    //       this.dataService.detachedNodes.forEach(element => {
-    //         layers.push(element.layer - 1);
-    //         units.push(element.unit);
-    //       });
-
-    //       return this.ablationService.testDigit(val, this.dataService.selectedFile, layers, units);
-    //     })
-    //       )
-    //       .subscribe(val => {
-    //       Object.keys(val['nodes_dict']).forEach(key => {
-    //         val['nodes_dict'][key] = val['nodes_dict'][key].flat();
-    //       });
-    //       this.dataService.classifyResult.next(val);
-    //     });
-    // });
   }
 
   /**
@@ -108,6 +92,11 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
     this.canvas.freeDrawingBrush.width = multiplier;
     this.canvas.setHeight(28 * multiplier);
     this.canvas.setWidth(28 * multiplier);
+
+    this.dataService.classifyResult = undefined;
+    if (this.dataService.selectedNetwork) {
+      this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
+    }
   }
 
 }

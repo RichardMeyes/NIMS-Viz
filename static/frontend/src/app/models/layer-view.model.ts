@@ -6,6 +6,7 @@ export class LayerDefaultSettings {
         public rectSide: number = 20,
         public nodeRadius: number = 10,
         public color: string = '#3D59AB',
+        public classifiedColor: string = '#EF5350',
         public nodeOpacity: number = .5,
         public nodeStroke: number = 0,
         public animationDuration: number = 500,

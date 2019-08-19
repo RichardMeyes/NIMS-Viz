@@ -54,6 +54,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
    */
   public selectNetwork(selectedNetwork: SavedNetworks) {
     this.dataService.selectedNetwork = selectedNetwork;
+    this.dataService.detachedNodes = [];
     this.eventService.updateLayerView.next(selectedNetwork);
   }
 
@@ -66,6 +67,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
   }
 
   toggleAblation() {
+    this.dataService.detachedNodes = [];
     if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
       this.dataService.activeSideMenu = ActiveSideMenu.None;
     } else {

@@ -9,7 +9,7 @@ import { Subject } from 'rxjs';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
 import { ActiveSideMenu } from 'src/app/models/navigation.model';
-import { TestResult } from 'src/app/models/ablation.model';
+import { TestDigitResult } from 'src/app/models/ablation.model';
 
 /**
  * Component for network graph visualization
@@ -76,7 +76,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   selectedUnit: WeightedTopology;
   untrainedWeights;
   tooltipTexts: string[]; tooltipConfig;
-  classifyResult; //nanti check frontend lama, ambil dari subject
+  // classifyResult; //nanti check frontend lama, ambil dari subject
 
   /**
    * Flag to unsubscribe.
@@ -376,7 +376,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
     rects = rects.enter()
       .append('rect')
-      .attr('class', 'rect')
+      .attr('class', function (d) {
+        self.selectedUnit = Object.assign({}, d);
+
+        let className = 'rect';
+        const ablated = self.findAblated();
+
+        if (ablated !== -1) { className += ' ablated'; }
+
+        return className;
+      })
       .attr('x', function (d) {
         const x: number = self.leftMargin +
           self.layerSpacing * d.layer +
@@ -442,7 +451,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
     circles = circles.enter()
       .append('circle')
-      .attr('class', 'circle')
+      .attr('class', function (d) {
+        self.selectedUnit = Object.assign({}, d);
+
+        let className = 'circle';
+        const ablated = self.findAblated();
+
+        if (ablated !== -1) { className += ' ablated'; }
+
+        return className;
+      })
       .attr('cx', function (d) {
         const cx: number = self.leftMargin +
           self.layerSpacing * d.layer +
@@ -457,7 +475,17 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         return cy;
       })
       .attr('r', this.defaultSettings.nodeRadius)
-      .attr('fill', this.defaultSettings.color)
+      .attr('fill', d => {
+        let color = this.defaultSettings.color;
+
+        if (this.dataService.classifyResult &&
+          d.isOutput &&
+          d.unit === this.dataService.classifyResult.netOut.indexOf(Math.max(...this.dataService.classifyResult.netOut))) {
+          color = this.defaultSettings.classifiedColor;
+        }
+
+        return color;
+      })
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
 
@@ -962,9 +990,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
     this.tooltipConfig.featureMapData = [];
-    if (this.classifyResult) {
-      const classifyResultCloned = JSON.parse(JSON.stringify(this.classifyResult));
-      this.tooltipConfig.featureMapData.push(classifyResultCloned['nodes_dict'][incomingFilters][this.selectedUnit.unit]);
+    if (this.dataService.classifyResult) {
+      const classifyResultCloned: TestDigitResult = JSON.parse(JSON.stringify(this.dataService.classifyResult));
+      this.tooltipConfig.featureMapData.push(classifyResultCloned.nodesDict[incomingFilters][this.selectedUnit.unit]);
       this.tooltipConfig.featureMap = {
         width: this.tooltipConfig.featureMapFrame.width / this.tooltipConfig.featureMapData[0].length,
         height: this.tooltipConfig.featureMapFrame.height / this.tooltipConfig.featureMapData[0].length,
@@ -993,7 +1021,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     };
 
     // d3 workaround - attr's index starts from 1 instead of 0
-    if (this.classifyResult) {
+    if (this.dataService.classifyResult) {
       this.tooltipConfig.featureMapData[0].forEach(featureMap => { featureMap.unshift('d3 workaround'); });
     }
     this.tooltipConfig.data.forEach((data, dataIndex) => {
@@ -1030,7 +1058,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('height', this.tooltipConfig.featureMapFrame.height)
       .style('fill', this.tooltipConfig.featureMapFrame.fill);
 
-    if (this.classifyResult) {
+    if (this.dataService.classifyResult) {
       const featureMapRows = featureMaps.selectAll('.feature-map-rows')
         .data(d => d)
         .enter()
@@ -1481,7 +1509,6 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       this.defaultSettings = new LayerDefaultSettings();
       this.epochSlider = new EpochSlider();
       this.animationIntervals = [];
-      this.dataService.detachedNodes = [];
 
       this.svgWidth = this.container.nativeElement.offsetWidth;
       this.svgHeight = this.container.nativeElement.offsetHeight;
