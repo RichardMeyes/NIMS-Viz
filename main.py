@@ -96,5 +96,42 @@ def getSavedNetworks():
     
     return json.dumps(validFiles)
 
+# Test trained network.
+@app.route("/testNetwork", methods=["POST", "OPTIONS"])
+@cross_origin()
+def testNetwork():
+    params = request.get_json()
+
+    convLayers = params['nnSettings']["convLayers"]
+    conv_layers = list(map(lambda x: {
+        'kernelSize': x['kernelSize'],
+        'stride': x['stride'],
+        'padding': x['padding'],
+        'inChannel': x['inChannel']['value'],
+        'outChannel': x['outChannel']['value']
+        }, convLayers))
+    denseLayers = params['nnSettings']['denseLayers']
+    layers = list(map(lambda x: x['size'], denseLayers))
+
+    topology = {
+        'conv_layers': conv_layers,
+        'layers': layers
+    }
+    filename = params['filename']
+    ko_layers = params['koLayers']
+    ko_units = params['koUnits']
+
+    acc, correct_labels, acc_class, class_labels = MLP.mlp_ablation(topology, filename, ko_layers, ko_units)
+
+    result = {
+        "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        "class labels": class_labels.tolist(),
+        "averaged accuracy": acc,
+        "class specific accuracy": acc_class.tolist(),
+        "color labels": correct_labels.tolist()
+    }
+
+    return json.dumps(result)
+
 if __name__ == "__main__":
     app.run(debug=True)

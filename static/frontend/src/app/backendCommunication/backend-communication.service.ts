@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 
 import { throwError, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NeuralNetworkSettingsJSON } from '../models/create-nn.model';
+import { NeuralNetworkSettingsJSON, NeuralNetworkSettings } from '../models/create-nn.model';
 
 /**
  * httpOptions copied from old project file don't know if its realy necessary.
@@ -69,6 +69,16 @@ export class BackendCommunicationService {
   public loadNetwork(selectedNetwork: string): Observable<any> {
     const body = { filename: selectedNetwork };
     return this._http.post(`${this._backendURL}/loadNetwork`, body);
+  }
+
+  public testNetwork(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
+    const body = {
+      nnSettings,
+      filename,
+      koLayers,
+      koUnits
+    };
+    return this._http.post(`${this._backendURL}/testNetwork`, body);
   }
 
   /**

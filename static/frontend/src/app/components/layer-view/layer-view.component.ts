@@ -134,8 +134,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
           if (selectedNetwork) {
             if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
-              console.log(this.detachedNodes);
-              console.log('test full network');
+              this.testNetwork();
             }
             return true;
           } else {
@@ -1655,6 +1654,35 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     }
 
     return ablated;
+  }
+
+  /**
+   * Tests ablated network.
+   */
+  testNetwork() {
+    const koLayers: number[] = [];
+    const koUnits: number[] = [];
+
+    this.detachedNodes.forEach(element => {
+      koLayers.push(element.layer - 1);
+      koUnits.push(element.unit);
+    });
+
+    this.backend.testNetwork(this.dataService.selectedNetwork.nnSettings,
+      this.dataService.selectedNetwork.fileName.split('.')[0],
+      koLayers,
+      koUnits
+    ).subscribe(result => { console.log(result); });
+  }
+
+  /**
+   * Resets ablated units.
+   */
+  resetNetwork() {
+    this.detachedNodes = [];
+
+    d3.selectAll('.ablated')
+      .classed('ablated', false);
   }
 
   ngOnDestroy() {
