@@ -13,10 +13,10 @@
         <div>{{epochSlider.maxEpoch}}</div>
     </div>
     <div *ngIf="dataService.activeSideMenu === activeSideMenu.NetworkAblator" class="information">
-        <button class="form-item" mat-raised-button [disabled]="!dataService.selectedNetwork"
-            (click)="testNetwork()">Test Ablated Network</button>
+        <button [ngClass]="{'form-item': dataService.selectedNetwork}" mat-raised-button
+            [disabled]="!dataService.selectedNetwork" (click)="testNetwork()">Test Ablated Network</button>
         <div style="width: 1rem;"></div>
-        <button class="form-item" mat-raised-button [disabled]="!dataService.selectedNetwork"
-            (click)="resetNetwork()">Reset Network</button>
+        <button [ngClass]="{'form-item': dataService.selectedNetwork}" mat-raised-button
+            [disabled]="!dataService.selectedNetwork" (click)="resetNetwork()">Reset Network</button>
     </div>
 </div>

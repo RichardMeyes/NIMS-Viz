@@ -71,7 +71,7 @@ export class BackendCommunicationService {
     return this._http.post(`${this._backendURL}/loadNetwork`, body);
   }
 
-  public testNetwork(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
+  testNetwork(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
     const body = {
       nnSettings,
       filename,
@@ -79,6 +79,13 @@ export class BackendCommunicationService {
       koUnits
     };
     return this._http.post(`${this._backendURL}/testNetwork`, body);
+  }
+
+  saveDigit(blob) {
+    const form = new FormData();
+    form.append('digit', blob, 'digit.png');
+
+    return this._http.post(`${this._backendURL}/saveDigit`, form);
   }
 
   /**

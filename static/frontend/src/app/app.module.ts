@@ -18,6 +18,7 @@ import { AngularResizedEventModule } from 'angular-resize-event';
 import { NetworkAblatorComponent } from './components/network-ablator/network-ablator.component';
 import { AblationAccuracyComponent } from './components/ablation-accuracy/ablation-accuracy.component';
 import { AblationMappingComponent } from './components/ablation-mapping/ablation-mapping.component';
+import { AblationFreeDrawingComponent } from './components/ablation-free-drawing/ablation-free-drawing.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { AblationMappingComponent } from './components/ablation-mapping/ablation
     NetworkCreatorComponent,
     NetworkAblatorComponent,
     AblationAccuracyComponent,
-    AblationMappingComponent
+    AblationMappingComponent,
+    AblationFreeDrawingComponent
   ],
   imports: [
     BrowserModule,

@@ -1,5 +1,6 @@
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
+from werkzeug.utils import secure_filename
 
 import json
 import uuid
@@ -10,6 +11,7 @@ import static.backend.MLP as MLP
 
 TOPOLOGY_DIR = "static/data/topologies/"
 WEIGHTS_DIR = "static/data/weights/"
+DIGIT_DIR = "static/data/digit"
 
 app = Flask(__name__)
 CORS(app)
@@ -134,11 +136,27 @@ def testNetwork():
 
     return json.dumps(result)
 
+# Get TSNE Coordinate
 @app.route("/getTSNECoordinate", methods=["GET"])
 @cross_origin()
 def getTSNECoordinate():
     result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
     return json.dumps(result.tolist())
+
+# Classify the free-drawing drawing.
+@app.route("/saveDigit", methods=["POST", "OPTIONS"])
+@cross_origin()
+def saveDigit():
+    digit = request.files['digit']
+
+    if digit:
+        if not(os.path.exists(DIGIT_DIR)):
+            os.mkdir(DIGIT_DIR)
+
+        filename = secure_filename(digit.filename)
+        digit.save(os.path.join(DIGIT_DIR, filename))
+
+    return json.dumps("Digit saved.")
 
 if __name__ == "__main__":
     app.run(debug=True)
