@@ -1,0 +1,7 @@
+<div class="container" *ngIf="showSpinner">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div class="container" [ngClass]="{'hidden': showSpinner}">
+  <canvas #canvas>{{ chart }}</canvas>
+</div>

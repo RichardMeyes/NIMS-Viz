@@ -239,6 +239,8 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
 
+    print(net.h0.in_features)
+
     
     for i_layer, i_unit in zip(ko_layers, ko_units):
         if i_layer < len(topology["conv_layers"]):
@@ -251,7 +253,7 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
             i_layer = i_layer - len(topology["conv_layers"])
             print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
 
-            n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else topology["h0Shape0"]
+            n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else net.h0.in_features
             net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
             net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
 

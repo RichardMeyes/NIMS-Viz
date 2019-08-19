@@ -4,6 +4,7 @@ from flask_cors import CORS, cross_origin
 import json
 import uuid
 import os
+import pickle
 
 import static.backend.MLP as MLP
 
@@ -132,6 +133,12 @@ def testNetwork():
     }
 
     return json.dumps(result)
+
+@app.route("/getTSNECoordinate", methods=["GET"])
+@cross_origin()
+def getTSNECoordinate():
+    result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
+    return json.dumps(result.tolist())
 
 if __name__ == "__main__":
     app.run(debug=True)

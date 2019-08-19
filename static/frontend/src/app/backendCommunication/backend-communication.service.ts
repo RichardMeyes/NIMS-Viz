@@ -99,6 +99,14 @@ export class BackendCommunicationService {
     return this._http.get(`${this._backendURL}/getSavedNetworks`);
   }
 
+  /**
+   * Gets TSNE coordinate.
+   * @returns TSNE coordinate.
+   */
+  getTSNECoordinate(): Observable<any> {
+    return this._http.get(`${this._backendURL}/getTSNECoordinate`);
+  }
+
 
   /**
    * Creates a heatmap from file
@@ -127,12 +135,6 @@ export class BackendCommunicationService {
       .pipe(
         catchError(this.handleError)
       );
-  }
-  /**
-   * Returns t-SNE Coordinates
-   */
-  public getTSNECoordinate(): Observable<any> {
-    return this._http.get(`${this._backendURL}/getTSNECoordinate`);
   }
 
   /**

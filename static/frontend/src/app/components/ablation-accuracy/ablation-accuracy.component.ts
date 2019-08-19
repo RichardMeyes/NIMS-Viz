@@ -19,7 +19,7 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
   showSpinner: boolean;
 
   /**
-   * The last network results of correct data.
+   * Test results on full network.
    */
   networkResultsCorrectData: number[];
 
@@ -128,7 +128,6 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
    * @param isInit Status of the chart whether it is initializing or updating.
    */
   plotAccuracies(isInit) {
-
     if (isInit) {
       if (this.chart) {
         this.chart.destroy();
