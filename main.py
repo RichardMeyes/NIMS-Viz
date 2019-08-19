@@ -125,10 +125,10 @@ def testNetwork():
 
     result = {
         "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-        "class labels": class_labels.tolist(),
-        "averaged accuracy": acc,
-        "class specific accuracy": acc_class.tolist(),
-        "color labels": correct_labels.tolist()
+        "classLabels": class_labels.tolist(),
+        "averageAccuracy": acc,
+        "classSpecificAccuracy": acc_class.tolist(),
+        "colorLabels": correct_labels.tolist()
     }
 
     return json.dumps(result)

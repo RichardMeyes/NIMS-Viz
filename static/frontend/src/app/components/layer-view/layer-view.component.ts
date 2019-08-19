@@ -9,6 +9,7 @@ import { Subject } from 'rxjs';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
 import { ActiveSideMenu } from 'src/app/models/navigation.model';
+import { TestResult } from 'src/app/models/ablation.model';
 
 /**
  * Component for network graph visualization
@@ -1660,6 +1661,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Tests ablated network.
    */
   testNetwork() {
+    this.eventsService.testNetwork.next(true);
+
     const koLayers: number[] = [];
     const koUnits: number[] = [];
 
@@ -1672,7 +1675,12 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       this.dataService.selectedNetwork.fileName.split('.')[0],
       koLayers,
       koUnits
-    ).subscribe(result => { console.log(result); });
+    ).subscribe((ablationTestResult: TestResult) => {
+      if (koLayers.length === 0 && koUnits.length === 0) {
+        ablationTestResult.isInitChart = true;
+      }
+      this.eventsService.updateAblationCHarts.next(ablationTestResult);
+    });
   }
 
   /**
