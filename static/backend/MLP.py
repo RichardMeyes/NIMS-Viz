@@ -62,19 +62,25 @@ class Net(nn.Module):
                                 nn.Linear(self.layers[i_layer], self.layers[i_layer+1]))
 
     def forward(self, x):
+        self.nodes_dict = {}
+
         if len(self.conv_layers):
             x = x.view(-1, 1, 28, 28)
             for i_layer in range(len(self.conv_layers)):
                 x = F.relu(self.__getattr__("c{0}".format(i_layer))(x))
+                self.nodes_dict.update({"c{0}".format(i_layer): x.data.numpy().tolist()})
                 x = F.max_pool2d(x, kernel_size=2, stride=2)
             x = x.view(x.shape[0], -1)
 
-        self.h0 = nn.Linear(x.shape[1], self.layers[0])
-        self.topology_dict["h0Shape"] = x.shape[1]
         for i_layer in range(len(self.layers)-1):
             x = F.relu(self.__getattr__("h{0}".format(i_layer))(x))
+            if i_layer == 0:
+                self.nodes_dict.update({"input": x.data.numpy().tolist()})
+            else:
+                self.nodes_dict.update({"h{0}".format(i_layer): x.data.numpy().tolist()})
 
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
+        self.nodes_dict.update({"output": x.data.numpy().tolist()})
         return x
 
     def save_weights(self, filename):
@@ -101,6 +107,8 @@ class Net(nn.Module):
             json.dump(self.weights_dict, f)
 
     def train_net(self, filename, device, trainloader, criterion, optimizer):
+        self.weights_dict = dict()
+
         log_interval = 10
         newNodeStruct = True
         isDone = False
