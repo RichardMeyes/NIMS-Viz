@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { DataService } from 'src/app/services/data.service';
-import { take } from 'rxjs/operators';
+import { take, concatMap } from 'rxjs/operators';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
+import { TestDigitResult } from 'src/app/models/ablation.model';
 
 import 'fabric';
 declare const fabric: any;
@@ -44,29 +45,47 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
   classify() {
     this.canvas.getElement().toBlob(blob => {
       this.backend.saveDigit(blob)
-        .pipe(take(1))
-        .subscribe();
+        .pipe(
+          take(1),
+          concatMap(() => {
+            const koLayers: number[] = [];
+            const koUnits: number[] = [];
+
+            this.dataService.detachedNodes.forEach(element => {
+              koLayers.push(element.layer - 1);
+              koUnits.push(element.unit);
+            });
+
+            return this.backend.testDigit(this.dataService.selectedNetwork.nnSettings,
+              this.dataService.selectedNetwork.fileName.split('.')[0],
+              koLayers,
+              koUnits
+            );
+          })
+        )
+        .subscribe((testResult: TestDigitResult) => {
+          console.clear();
+          console.log(testResult);
+        });
     });
 
-    console.log(this.dataService.detachedNodes);
 
 
 
+    //   concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile)),
+    //     concatMap(val => {
+    //       const layers = [];
+    //       const units = [];
 
-    // concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile)),
-    // concatMap(val => {
-    //   const layers = [];
-    //   const units = [];
+    //       this.dataService.detachedNodes.forEach(element => {
+    //         layers.push(element.layer - 1);
+    //         units.push(element.unit);
+    //       });
 
-    //         this.dataService.detachedNodes.forEach(element => {
-    //           layers.push(element.layer - 1);
-    //           units.push(element.unit);
-    //         });
-
-    //         return this.ablationService.testDigit(val, this.dataService.selectedFile, layers, units);
-    //       })
-    //     )
-    //     .subscribe(val => {
+    //       return this.ablationService.testDigit(val, this.dataService.selectedFile, layers, units);
+    //     })
+    //       )
+    //       .subscribe(val => {
     //       Object.keys(val['nodes_dict']).forEach(key => {
     //         val['nodes_dict'][key] = val['nodes_dict'][key].flat();
     //       });

@@ -8,3 +8,10 @@ export class TestResult {
         public isInitChart: boolean = false
     ) { }
 }
+
+export class TestDigitResult {
+    constructor(
+        public netOut: number[],
+        public nodesDict: any
+    ) { }
+}

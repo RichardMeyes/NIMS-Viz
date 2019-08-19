@@ -1,6 +1,7 @@
 import torch
 import torchvision
 import json
+import cv2
 
 import torch.nn as nn
 import torch.optim as optim
@@ -202,6 +203,10 @@ class Net(nn.Module):
             acc_class[i_label] = correct_class[i_label] / num
         return acc, correct_labels, acc_class, class_labels
 
+    def test_net_digit(self, digit):
+        net_out = self(digit)
+        return net_out.tolist()
+
 
 # Create and train a new network
 def mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers):
@@ -226,6 +231,7 @@ def mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, 
     net.train_net(filename, device, trainloader, criterion, optimizer)
 
 
+# Test the ablated network.
 def mlp_ablation(topology, filename, ko_layers, ko_units):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -261,3 +267,42 @@ def mlp_ablation(topology, filename, ko_layers, ko_units):
     acc, correct_labels, acc_class, class_labels = net.test_net(criterion, testloader, device)
 
     return acc, correct_labels, acc_class, class_labels
+
+
+# Test the free-drawing drawing on the ablated network.
+def test_digit(topology, filename, ko_layers, ko_units):
+    digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
+    digit = cv2.resize(digit, (28, 28))
+
+    digit = digit / 255.0
+    digit[digit == 0] = -1
+    digit = torch.from_numpy(digit).float()
+    digit = digit.view(-1, 28 * 28)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"])
+    net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
+    net.eval()
+    criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
+
+
+    for i_layer, i_unit in zip(ko_layers, ko_units):
+        if i_layer < len(topology["conv_layers"]):
+            print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
+
+            n_inputs = net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit].shape
+            net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
+            net.__getattr__("c{0}".format(i_layer)).bias.data[i_unit] = 0
+        else:
+            i_layer = i_layer - len(topology["conv_layers"])
+            print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
+
+            n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else net.h0.in_features
+            net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
+            net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
+
+
+    net_out = net.test_net_digit(digit)
+
+    return net_out, net.nodes_dict

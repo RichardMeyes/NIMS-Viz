@@ -143,7 +143,7 @@ def getTSNECoordinate():
     result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
     return json.dumps(result.tolist())
 
-# Classify the free-drawing drawing.
+# Save the free-drawing drawing.
 @app.route("/saveDigit", methods=["POST", "OPTIONS"])
 @cross_origin()
 def saveDigit():
@@ -157,6 +157,39 @@ def saveDigit():
         digit.save(os.path.join(DIGIT_DIR, filename))
 
     return json.dumps("Digit saved.")
+
+# Save the free-drawing drawing.
+@app.route("/testDigit", methods=["POST", "OPTIONS"])
+@cross_origin()
+def testDigit():
+    params = request.get_json()
+
+    convLayers = params['nnSettings']["convLayers"]
+    conv_layers = list(map(lambda x: {
+        'kernelSize': x['kernelSize'],
+        'stride': x['stride'],
+        'padding': x['padding'],
+        'inChannel': x['inChannel']['value'],
+        'outChannel': x['outChannel']['value']
+        }, convLayers))
+    denseLayers = params['nnSettings']['denseLayers']
+    layers = list(map(lambda x: x['size'], denseLayers))
+
+    topology = {
+        'conv_layers': conv_layers,
+        'layers': layers
+    }
+    filename = params['filename']
+    ko_layers = params['koLayers']
+    ko_units = params['koUnits']
+
+    net_out, nodes_dict = MLP.test_digit(topology, filename, ko_layers, ko_units)
+    result = {
+        "netOut": net_out,
+        "nodesDict": nodes_dict
+    }
+    
+    return json.dumps(result)
 
 if __name__ == "__main__":
     app.run(debug=True)

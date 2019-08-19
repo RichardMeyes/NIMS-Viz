@@ -71,6 +71,13 @@ export class BackendCommunicationService {
     return this._http.post(`${this._backendURL}/loadNetwork`, body);
   }
 
+  /**
+   * Tests the ablated network.
+   * @param nnSettings The network settings.
+   * @param filename The selected filename.
+   * @param koLayers List of layers to be knocked out.
+   * @param koUnits List of units to be knocked out.
+   */
   testNetwork(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
     const body = {
       nnSettings,
@@ -81,11 +88,32 @@ export class BackendCommunicationService {
     return this._http.post(`${this._backendURL}/testNetwork`, body);
   }
 
+  /**
+   * Saves the free-drawing drawing.
+   * @param blob Image to be saved.
+   */
   saveDigit(blob) {
     const form = new FormData();
     form.append('digit', blob, 'digit.png');
 
     return this._http.post(`${this._backendURL}/saveDigit`, form);
+  }
+
+  /**
+   * Tests the ablated network.
+   * @param nnSettings The network settings.
+   * @param filename The selected filename.
+   * @param koLayers List of layers to be knocked out.
+   * @param koUnits List of units to be knocked out.
+   */
+  testDigit(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
+    const body = {
+      nnSettings,
+      filename,
+      koLayers,
+      koUnits
+    };
+    return this._http.post(`${this._backendURL}/testDigit`, body);
   }
 
   /**
