@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { NeuralNetworkSettings } from '../models/create-nn.model';
 import { SavedNetworks } from '../models/saved-networks.model';
 import { ActiveSideMenu } from '../models/navigation.model';
+import { WeightedTopology } from '../models/layer-view.model';
 
 /**
  * Service of shared data.
@@ -27,9 +28,15 @@ export class DataService {
    */
   activeSideMenu: ActiveSideMenu;
 
+  /**
+   * List of detached nodes.
+   */
+  detachedNodes: WeightedTopology[];
+
   constructor() {
     this.nnSettings = new NeuralNetworkSettings();
     this.selectedNetwork = undefined;
     this.activeSideMenu = ActiveSideMenu.None;
+    this.detachedNodes = [];
   }
 }

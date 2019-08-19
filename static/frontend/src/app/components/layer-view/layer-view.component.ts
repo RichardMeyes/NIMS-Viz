@@ -79,11 +79,6 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   classifyResult; //nanti check frontend lama, ambil dari subject
 
   /**
-   * Ablation configuration.
-   */
-  detachedNodes: WeightedTopology[];
-
-  /**
    * Flag to unsubscribe.
    */
   destroyed = new Subject<void>();
@@ -430,9 +425,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           const ablated = self.findAblated();
 
           if (ablated === -1) {
-            self.detachedNodes.push(self.selectedUnit);
+            self.dataService.detachedNodes.push(self.selectedUnit);
           } else {
-            self.detachedNodes.splice(ablated, 1);
+            self.dataService.detachedNodes.splice(ablated, 1);
           }
 
           d3.select(this)
@@ -480,9 +475,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           const ablated = self.findAblated();
 
           if (ablated === -1) {
-            self.detachedNodes.push(self.selectedUnit);
+            self.dataService.detachedNodes.push(self.selectedUnit);
           } else {
-            self.detachedNodes.splice(ablated, 1);
+            self.dataService.detachedNodes.splice(ablated, 1);
           }
 
           d3.select(this)
@@ -1486,7 +1481,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       this.defaultSettings = new LayerDefaultSettings();
       this.epochSlider = new EpochSlider();
       this.animationIntervals = [];
-      this.detachedNodes = [];
+      this.dataService.detachedNodes = [];
 
       this.svgWidth = this.container.nativeElement.offsetWidth;
       this.svgHeight = this.container.nativeElement.offsetHeight;
@@ -1645,9 +1640,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   findAblated() {
     let ablated = -1;
 
-    if (this.detachedNodes.length > 0) {
-      for (let i = 0; i < this.detachedNodes.length; i++) {
-        if (this.detachedNodes[i].layer === this.selectedUnit.layer && this.detachedNodes[i].unit === this.selectedUnit.unit) {
+    if (this.dataService.detachedNodes.length > 0) {
+      for (let i = 0; i < this.dataService.detachedNodes.length; i++) {
+        if (this.dataService.detachedNodes[i].layer === this.selectedUnit.layer &&
+          this.dataService.detachedNodes[i].unit === this.selectedUnit.unit) {
           ablated = i;
           break;
         }
@@ -1662,32 +1658,13 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   testNetwork() {
     this.eventsService.testNetwork.next(true);
-
-    const koLayers: number[] = [];
-    const koUnits: number[] = [];
-
-    this.detachedNodes.forEach(element => {
-      koLayers.push(element.layer - 1);
-      koUnits.push(element.unit);
-    });
-
-    this.backend.testNetwork(this.dataService.selectedNetwork.nnSettings,
-      this.dataService.selectedNetwork.fileName.split('.')[0],
-      koLayers,
-      koUnits
-    ).subscribe((ablationTestResult: TestResult) => {
-      if (koLayers.length === 0 && koUnits.length === 0) {
-        ablationTestResult.isInitChart = true;
-      }
-      this.eventsService.updateAblationCHarts.next(ablationTestResult);
-    });
   }
 
   /**
    * Resets ablated units.
    */
   resetNetwork() {
-    this.detachedNodes = [];
+    this.dataService.detachedNodes = [];
 
     d3.selectAll('.ablated')
       .classed('ablated', false);

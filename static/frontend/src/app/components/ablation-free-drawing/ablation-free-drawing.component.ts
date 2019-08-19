@@ -48,13 +48,15 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
         .subscribe();
     });
 
+    console.log(this.dataService.detachedNodes);
 
 
-    
-          // concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile)),
-          // concatMap(val => {
-          //   const layers = [];
-          //   const units = [];
+
+
+    // concatMap(() => this.playgroundService.getTopology(this.dataService.selectedFile)),
+    // concatMap(val => {
+    //   const layers = [];
+    //   const units = [];
 
     //         this.dataService.detachedNodes.forEach(element => {
     //           layers.push(element.layer - 1);

@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, concatMap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { TestResult } from 'src/app/models/ablation.model';
 import { Chart } from 'chart.js';
+import { DataService } from 'src/app/services/data.service';
+import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 
 @Component({
   selector: 'app-ablation-accuracy',
@@ -34,21 +36,44 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
   destroyed = new Subject<void>();
 
   constructor(
-    private eventService: EventsService
+    private eventsService: EventsService,
+    private dataService: DataService,
+    private backend: BackendCommunicationService
   ) { }
 
   ngOnInit() {
     this.showSpinner = false;
 
-    this.eventService.testNetwork
+    this.eventsService.testNetwork
       .pipe(
-        takeUntil(this.destroyed)
+        takeUntil(this.destroyed),
+        concatMap(() => {
+          this.showSpinner = true;
+
+          const koLayers: number[] = [];
+          const koUnits: number[] = [];
+
+          this.dataService.detachedNodes.forEach(element => {
+            koLayers.push(element.layer - 1);
+            koUnits.push(element.unit);
+          });
+
+          return this.backend.testNetwork(this.dataService.selectedNetwork.nnSettings,
+            this.dataService.selectedNetwork.fileName.split('.')[0],
+            koLayers,
+            koUnits
+          );
+        })
       )
-      .subscribe(() => {
-        this.showSpinner = true;
+      .subscribe((ablationTestResult: TestResult) => {
+        if (this.dataService.detachedNodes.length === 0) {
+          ablationTestResult.isInitChart = true;
+        }
+        this.eventsService.updateAblationCHarts.next(ablationTestResult);
       });
 
-    this.eventService.updateAblationCHarts
+
+    this.eventsService.updateAblationCHarts
       .pipe(
         takeUntil(this.destroyed)
       )
