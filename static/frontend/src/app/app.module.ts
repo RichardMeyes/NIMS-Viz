@@ -19,6 +19,7 @@ import { NetworkAblatorComponent } from './components/network-ablator/network-ab
 import { AblationAccuracyComponent } from './components/ablation-accuracy/ablation-accuracy.component';
 import { AblationMappingComponent } from './components/ablation-mapping/ablation-mapping.component';
 import { AblationFreeDrawingComponent } from './components/ablation-free-drawing/ablation-free-drawing.component';
+import { TrainingComponent } from './components/training/training.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,8 @@ import { AblationFreeDrawingComponent } from './components/ablation-free-drawing
     NetworkAblatorComponent,
     AblationAccuracyComponent,
     AblationMappingComponent,
-    AblationFreeDrawingComponent
+    AblationFreeDrawingComponent,
+    TrainingComponent
   ],
   imports: [
     BrowserModule,
