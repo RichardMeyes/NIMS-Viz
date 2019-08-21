@@ -81,6 +81,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
 
   toggleAblation() {
     this.dataService.detachedNodes = [];
+    this.dataService.classifyResult = undefined;
 
     if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
       this.dataService.activeSideMenu = ActiveSideMenu.None;
