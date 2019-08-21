@@ -55,10 +55,18 @@ export class NavigationComponent implements OnInit, OnDestroy {
   public selectNetwork(selectedNetwork: SavedNetworks) {
     this.dataService.selectedNetwork = selectedNetwork;
     this.dataService.detachedNodes = [];
-    this.eventService.updateLayerView.next(selectedNetwork);
+
+    if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkCreator) {
+      this.dataService.activeSideMenu = ActiveSideMenu.None;
+    } else {
+      this.eventService.updateLayerView.next(selectedNetwork);
+    }
   }
 
   public toggleAddNetwork() {
+    this.dataService.selectedNetwork = undefined;
+    this.dataService.detachedNodes = [];
+
     if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkCreator) {
       this.dataService.activeSideMenu = ActiveSideMenu.None;
     } else {
