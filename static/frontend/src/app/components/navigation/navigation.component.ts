@@ -61,6 +61,10 @@ export class NavigationComponent implements OnInit, OnDestroy {
     } else {
       this.eventService.updateLayerView.next(selectedNetwork);
     }
+
+    if (selectedNetwork === undefined) {
+      this.eventService.clearAblationCharts.next(true);
+    }
   }
 
   public toggleAddNetwork() {
@@ -71,11 +75,13 @@ export class NavigationComponent implements OnInit, OnDestroy {
       this.dataService.activeSideMenu = ActiveSideMenu.None;
     } else {
       this.dataService.activeSideMenu = ActiveSideMenu.NetworkCreator;
+      this.eventService.updateLayerView.next(this.dataService.selectedNetwork);
     }
   }
 
   toggleAblation() {
     this.dataService.detachedNodes = [];
+
     if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
       this.dataService.activeSideMenu = ActiveSideMenu.None;
     } else {

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { EventsService } from 'src/app/services/events.service';
-import { takeUntil, take } from 'rxjs/operators';
+import { takeUntil, take, filter } from 'rxjs/operators';
 import { TestResult } from 'src/app/models/ablation.model';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { Chart } from 'chart.js';
@@ -141,6 +141,15 @@ export class AblationMappingComponent implements OnInit, OnDestroy {
 
         this.plotMapping(ablationTestResult.isInitChart);
       });
+
+    this.eventService.clearAblationCharts
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(isClear => isClear)
+      )
+      .subscribe(() => {
+        this.clearChart();
+      });
   }
 
   /**
@@ -177,6 +186,16 @@ export class AblationMappingComponent implements OnInit, OnDestroy {
     }
 
     this.showSpinner = false;
+  }
+
+  /**
+   * Clears chart.
+   */
+  clearChart() {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
   }
 
   ngOnDestroy() {

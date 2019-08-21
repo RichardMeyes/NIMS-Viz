@@ -37,11 +37,17 @@ export class EventsService {
    */
   updateAblationCHarts: Subject<TestResult>;
 
+  /**
+   * Clear ablation charts.
+   */
+  clearAblationCharts: Subject<boolean>;
+
   constructor() {
     this.updateTopology = new Subject();
     this.updateWeights = new Subject();
     this.updateLayerView = new Subject();
     this.testNetwork = new Subject();
     this.updateAblationCHarts = new Subject();
+    this.clearAblationCharts = new Subject();
   }
 }

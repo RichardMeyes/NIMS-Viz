@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { EventsService } from 'src/app/services/events.service';
-import { takeUntil, concatMap } from 'rxjs/operators';
+import { takeUntil, concatMap, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { TestResult } from 'src/app/models/ablation.model';
 import { Chart } from 'chart.js';
@@ -146,6 +146,15 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
 
         this.plotAccuracies(ablationTestResult.isInitChart);
       });
+
+    this.eventsService.clearAblationCharts
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(isClear => isClear)
+      )
+      .subscribe(() => {
+        this.clearChart();
+      });
   }
 
   /**
@@ -201,6 +210,16 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
     }
 
     this.showSpinner = false;
+  }
+
+  /**
+   * Clears chart.
+   */
+  clearChart() {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
   }
 
   ngOnDestroy() {
