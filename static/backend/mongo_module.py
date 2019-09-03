@@ -16,5 +16,5 @@ class Mongo:
     '''
     def __init__(self, client, db_name, collection):
         self.__client = mongo.MongoClient(client)
-        self.__db = self.__client(db_name)
-        self.__collection = self.__db(collection)
+        self.__db = self.__client[db_name]
+        self.__collection = self.__db[collection]
