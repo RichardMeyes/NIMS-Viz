@@ -81,7 +81,9 @@ class Net(nn.Module):
 
         x = F.log_softmax(self.output(x), dim=1)  # needs NLLLos() loss
         self.nodes_dict.update({"output": x.data.numpy().tolist()})
+        
         return x
+
 
     def save_weights(self, filename):
         epoch = 0
@@ -237,6 +239,34 @@ def mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, 
     net.save_weights(filename)
 
     net.train_net(filename, device, trainloader, criterion, optimizer)
+    return get_weights(net)
+
+def get_weights(model):
+    '''
+    Returns a weights dictionary of the actual weights split in Layers from a given neural network model for saving in a json.
+
+    :Parameters: 
+        model: (Net) Neural network model from getting the weights and bias from.
+    '''
+    weights_dict = {}
+    layer_counter = 0
+    for param in model.parameters():
+        current_layer = "layer_" + str(layer_counter)
+        weights_dict.setdefault(current_layer, {})
+        # CNNs are 4dim tensors (out, in, kernelsize(x,y))
+        # MLPs are 2dim tensors (out, in)
+        # BIAS have the output size of the CNNs oder MLPs
+        if len(list(param.data.size())) is 4:
+            weights_dict[current_layer].update({"type": "cnn"})
+            weights_dict[current_layer].update({"weights": param.data.tolist()})
+        elif len(list(param.data.size())) is 2:
+            weights_dict[current_layer].update({"type": "mlp"})
+            weights_dict[current_layer].update({"weights": param.data.tolist()})
+        elif len(list(param.data.size())) is 1:
+            weights_dict[current_layer].update({"bias": param.data.tolist()})
+            layer_counter += 1
+
+    return weights_dict
 
 
 # Test the ablated network.

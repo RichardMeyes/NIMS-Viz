@@ -9,6 +9,10 @@ import pickle
 
 import static.backend.MLP as MLP
 
+import static.backend.mongo_module as mongo
+
+DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+
 TOPOLOGY_DIR = "static/data/topologies/"
 WEIGHTS_DIR = "static/data/weights/"
 DIGIT_DIR = "static/data/digit"
@@ -45,8 +49,9 @@ def createNetwork():
     denseLayers = nnSettings['denseLayers']
     layers = list(map(lambda x: x['size'], denseLayers))
 
-    MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
-
+    weights_dict = MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    DB_CONNECTION.post_item({"weights": weights_dict})
+    
     return json.dumps("MLP_" + filename + ".json")
 
 # Save network's settings
