@@ -47,7 +47,7 @@ class Mongo:
             a_content: (string) Content/Identifier of the attribute you are looking for.
         '''
         item_list = []
-        for item in self.__collection.find({a_name, a_content}):
+        for item in self.__collection.find({a_name: a_content}):
             item_list.append(item)
         
         return item_list
@@ -65,3 +65,23 @@ class Mongo:
     def count_all_items(self):
         '''Returns the number of all items in the collections'''
         return self.__collection.count_documents({})
+    
+    def post_item(self, item):
+        '''
+        Posts an item to the database if it fails returns false, otherwise true.
+        
+        :Parameters:
+            item: (Dictionary/JSON) Item you want to post in the database.
+        '''
+        result = self.__collection.insert_one(item)
+        return result.acknowledged
+
+    def post_many_items(self, items):
+        '''
+        Posts an item to the database if it fails returns false, otherwise true.
+        
+        :Parameters:
+            items: ([Dictionary/JSON]) List of items you want to post in the database.
+        '''
+        result = self.__collection.insert_many(items)
+        return result.acknowledged
