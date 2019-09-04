@@ -66,6 +66,40 @@ class Mongo:
         '''Returns the number of all items in the collections'''
         return self.__collection.count_documents({})
     
+    def get_all_attributes(self, a_list):
+        '''
+        Returns only the uuid and the wanted attributes from the collection.
+
+        :Parameters:
+            a_list: ([string]) List of attributes from which we want to have the information.
+        '''
+        attribues_dict = {}
+        for a in a_list:
+            attribues_dict.setdefault(a, 1)
+
+        item_list = []
+        for item in self.__collection.find({}, attribues_dict):
+            item_list.append(item)
+        return item_list
+    
+    def get_attributes_with_condition(self, a_list, condition):
+        '''
+        Returns all uuids and all wanted attributes from the collection with a given condition.
+
+        :Parameters:
+            a_list: ([string]) List of attributes from which we want to have the information.
+            condition: (Dictionary/JSON) Conditions that have to be fullfiled for an item
+        '''
+        attribues_dict = {}
+        for a in a_list:
+            attribues_dict.setdefault(a, 1)
+
+        item_list = []
+        for item in self.__collection.find(condition, attribues_dict):
+            item_list.append(item)
+        return item_list
+
+
     def post_item(self, item):
         '''
         Posts an item to the database if it fails returns false, otherwise true.
@@ -85,3 +119,17 @@ class Mongo:
         '''
         result = self.__collection.insert_many(items)
         return result.acknowledged
+    
+    def update_item(self, item_id, content):
+        '''
+        Updates the attributes of an item with given uuid. It Returns the number of the updated element.
+
+        :Parameters:
+            item_id: (string) The MongoDB uuid from the item you want to update.
+            content: (Dictionary/JSON) Content you want to update for the given item. Beware same attribute replace the old one.
+        '''
+        result = self.__collection.update_one({"_id": ObjectId(item_id)}, {"$set": content})
+        return result.modified_count
+    
+# only for testing the functions
+# m = Mongo("mongodb://localhost:27017/", "customersdb", "customers")
