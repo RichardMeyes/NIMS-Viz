@@ -114,6 +114,9 @@ class Net(nn.Module):
         log_interval = 10
         newNodeStruct = True
         isDone = False
+
+        # dict for storeing the weights after an epoch
+        epoch_weights_dict = {}
         for epoch in range(self.num_epochs):
             for batch_idx, (data, target) in enumerate(trainloader):
                 data, target = Variable(data), Variable(target)
@@ -133,27 +136,31 @@ class Net(nn.Module):
                                                                                        trainloader),
                                                                                    loss.data.item()))
 
+            #stores the weights into epoch_weights_dict
+            current_epoch = "epoch_" + str(epoch)
+            epoch_weights_dict.update({current_epoch: get_weights(self)})
+
             # store weights after each epoch
-            temp_epoch_dict = dict()
-            weights = self.h0.weight.data.numpy().tolist()
-            self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
-            temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            # temp_epoch_dict = dict()
+            # weights = self.h0.weight.data.numpy().tolist()
+            # self.weights_dict["epoch_{0}".format(epoch)] = {"input": weights}
+            # temp_epoch_dict["epoch_{0}".format(epoch)] = {"input": weights}
 
-            for i_layer in range(len(self.conv_layers)):
-                layer = self.__getattr__("c{0}".format(i_layer))
-                weights = layer.weight.data.numpy().tolist()
-                self.weights_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
-                temp_epoch_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
+            # for i_layer in range(len(self.conv_layers)):
+            #     layer = self.__getattr__("c{0}".format(i_layer))
+            #     weights = layer.weight.data.numpy().tolist()
+            #     self.weights_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
+            #     temp_epoch_dict["epoch_{0}".format(epoch)].update({"c{0}".format(i_layer): weights})
 
-            for i_layer in range(len(self.layers)-1):
-                if i_layer+1 == len(self.layers)-1:
-                    weights = self.output.weight.data.numpy().tolist()
-                    self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
-                else:
-                    layer = self.__getattr__("h{0}".format(i_layer+1))
-                    weights = layer.weight.data.numpy().tolist()
-                    self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
-                    temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+            # for i_layer in range(len(self.layers)-1):
+            #     if i_layer+1 == len(self.layers)-1:
+            #         weights = self.output.weight.data.numpy().tolist()
+            #         self.weights_dict["epoch_{0}".format(epoch)].update({"output": weights})
+            #     else:
+            #         layer = self.__getattr__("h{0}".format(i_layer+1))
+            #         weights = layer.weight.data.numpy().tolist()
+            #         self.weights_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
+            #         temp_epoch_dict["epoch_{0}".format(epoch)].update({"h{0}".format(i_layer+1): weights})
             
             
             # temp_epoch_dict["epoch_{0}".format(epoch)].update({"output": weights})
@@ -171,12 +178,14 @@ class Net(nn.Module):
             # eventlet.sleep(0)
             # print('emitted data')
 
-        #save weights
-        with open("static/data/weights/MLP_" + filename + ".json", "w") as f:
-            json.dump(self.weights_dict, f)
+        # #save weights
+        # with open("static/data/weights/MLP_" + filename + ".json", "w") as f:
+        #     json.dump(self.weights_dict, f)
 
-        # save trained net
-        torch.save(self.state_dict(), 'static/data/models/MLP_' + filename + '_trained.pt')
+        # # save trained net
+        # torch.save(self.state_dict(), 'static/data/models/MLP_' + filename + '_trained.pt')
+
+        return epoch_weights_dict
 
     def test_net(self, criterion, testloader, device):
         # test the net
@@ -238,8 +247,8 @@ def mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, 
 
     net.save_weights(filename)
 
-    net.train_net(filename, device, trainloader, criterion, optimizer)
-    return get_weights(net)
+    return net.train_net(filename, device, trainloader, criterion, optimizer)
+    
 
 def get_weights(model):
     '''

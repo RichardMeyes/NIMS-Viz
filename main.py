@@ -50,8 +50,8 @@ def createNetwork():
     layers = list(map(lambda x: x['size'], denseLayers))
 
     weights_dict = MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
-    DB_CONNECTION.post_item({"weights": weights_dict})
-    
+    DB_CONNECTION.post_item(weights_dict)
+
     return json.dumps("MLP_" + filename + ".json")
 
 # Save network's settings
