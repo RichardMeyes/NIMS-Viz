@@ -88,6 +88,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    */
   createNetwork() {
     const setup: NeuralNetworkSettingsJSON = {
+      name: JSON.parse(JSON.stringify(this._nnSettings.name)),
       configurations: JSON.parse(JSON.stringify(this._nnSettings.configurations)),
       inputSize: JSON.parse(JSON.stringify(this._nnSettings.inputSize)),
       convLayers: [...this._nnSettings.convLayers],

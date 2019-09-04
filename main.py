@@ -33,6 +33,8 @@ def createNetwork():
 
     filename = saveNetwork(nnSettings)
 
+    name = nnSettings['name']
+
     batch_size_train = nnSettings['configurations']['batchTrain']
     batch_size_test = nnSettings['configurations']['batchTest']
     num_epochs = nnSettings['configurations']['epoch']
@@ -50,6 +52,7 @@ def createNetwork():
     layers = list(map(lambda x: x['size'], denseLayers))
 
     weights_dict = MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    weights_dict.update({"name": name})
     DB_CONNECTION.post_item(weights_dict)
 
     return json.dumps("MLP_" + filename + ".json")

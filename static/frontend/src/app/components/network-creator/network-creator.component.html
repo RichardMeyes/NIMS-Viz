@@ -16,6 +16,9 @@
     </h3>
     <form *ngIf="!hideConfig" class="cnn-input-form">
       <mat-form-field class="config-input">
+      <input name="NetworkName" [(ngModel)]="_nnSettings.name" value={{_nnSettings.name}} matInput placeholder="Network name">
+    </mat-form-field>
+      <mat-form-field class="config-input">
         <input name="batchTrain" type="number" matInput min="0" placeholder="Batch Size Train"
           [(ngModel)]="_nnSettings.configurations.batchTrain" value={{_nnSettings.configurations.batchTrain}}>
       </mat-form-field>
