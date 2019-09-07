@@ -200,4 +200,11 @@ def testDigit():
     return json.dumps(result)
 
 if __name__ == "__main__":
+
+    # test_id = "5d7222102b29cb114e511bdc"
+    # item = DB_CONNECTION.get_item_by_id(test_id)
+    # weights_dict = MLP.get_weights(MLP.load_model_from_weights(item["epoch_0"]))
+    # weights_dict.update({"name": "testLoading"})
+    # DB_CONNECTION.post_item(weights_dict)
+
     app.run(debug=True)
