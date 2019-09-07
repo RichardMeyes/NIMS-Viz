@@ -19,7 +19,7 @@ class Net(nn.Module):
 
     :Parameters: 
         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
-        layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0 "activation": "relu"}
+        layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
     
     :Global attributes:
         activations: (Dictionary) Dictionary of activation function so it can be called with a string.
@@ -60,14 +60,14 @@ class Net(nn.Module):
 
                 new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
                 new_height = np.floor( ( ( (dim_list[layer_counter][1] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
-                dim_list.append([new_width, new_height, layer["outChannel"]])
+                dim_list.append([new_width, new_height, dim_list[layer_counter][2]])
 
                 self.layer_settings["layer_"+ str(layer_counter)] = layer
 
             elif layer["type"] is "linear":
-                self.__setattr__("linear{0}".format(layer_counter), nn.Linear(np.prod(dim_list[layer_counter]), layer["outChannel"]))
+                self.__setattr__("linear{0}".format(layer_counter), nn.Linear(int(np.prod(dim_list[layer_counter])), layer["outChannel"]))
 
-                dim_list.append(layer["outChannel"], 1, 1)
+                dim_list.append([layer["outChannel"], 1, 1])
 
                 self.layer_settings["layer_"+ str(layer_counter)] = layer
             
@@ -78,20 +78,20 @@ class Net(nn.Module):
         is_linear = False
         # x = x.view(-1, 1, 28, 28) is it necessary?
         for layer in self.layer_settings:
-            if layer["type"] is "linear" and not is_linear:
+            if self.layer_settings[layer]["type"] is "linear" and not is_linear:
                 x = x.view(x.shape[0], -1)
                 is_linear = True
-            if layer["activation"] is "none":
-                activation = Net.__activations[layer["activation"]]
-                x = activation(self.__getattr__(layer["type"] + str(layer_counter))(x))
+            if self.layer_settings[layer]["activation"] is not "none":
+                activation = Net.__activations[self.layer_settings[layer]["activation"]]
+                x = activation(self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x))
             else:
-                x = self.__getattr__(layer["type"] + str(layer_counter))(x)
+                x = self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x)
 
             layer_counter += 1
         
         return x
 
-    def training(self, num_epochs, trainloader, criterion, optimizer, device = "cpu"):
+    def train_start(self, num_epochs, trainloader, criterion, optimizer, device = "cpu"):
         '''
         Train the neural network and returns a list with a dictionary for each epoch with weights.
 
@@ -124,13 +124,10 @@ class Net(nn.Module):
                                                                                    100. * batch_idx / len(
                                                                                        trainloader),
                                                                                    loss.data.item()))
-
-            #stores the weights into epoch_weights_dict
             epoch_weights_list.append(get_weights(self))
-
         return epoch_weights_list
 
-    def testing(self, criterion, testloader, device = "cpu"):
+    def test_start(self, criterion, testloader, device = "cpu"):
         # test the net
         test_loss = 0
         correct = 0
@@ -199,7 +196,8 @@ def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, de
         device: (String) Divice that will be used for the training. Default is cpu.
     '''
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batchsize, shuffle=True, num_workers=2)
-    return model.training(num_epochs, trainloader, criterion, optimizer, device)
+    r = model.train_start(num_epochs, trainloader, criterion, optimizer, device)
+    return r
 
 def test_model(model, criterion, testset, batchsize, device = "cpu"):
     '''
@@ -213,7 +211,7 @@ def test_model(model, criterion, testset, batchsize, device = "cpu"):
         device: (String) Divice that will be used for the training. Default is cpu.
     '''
     testloader = torch.utils.data.DataLoader(testset, batch_size=batchsize, shuffle=False, num_workers=2)
-    return model.testing(criterion, testloader, device)
+    return model.test_start(criterion, testloader, device)
 
 def get_weights(model):
     '''
@@ -336,3 +334,30 @@ def load_model_from_weights(weights_dict, input_dim):
 #     net_out = net.test_net_digit(digit)
 
 #     return net_out, net.nodes_dict
+
+# for testing
+import mongo_module as mongo
+
+db_connection = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+
+if __name__ == "__main__":
+    example_layers = [
+        {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
+        {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
+        {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"},
+        {"type": "linear", "outChannel": 120, "activation": "none" },
+        {"type": "linear", "outChannel": 10, "activation": "softmax" }
+    ]
+
+    test_module = create_model([28, 28], example_layers)
+
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
+
+    criterion = nn.NLLLoss()
+    optimizer = optim.SGD(test_module.parameters(), lr=0.001, momentum=0.9)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    train_dict = train_model(test_module, 2, criterion, optimizer, trainset, 64, device)
+
+    print(train_dict)

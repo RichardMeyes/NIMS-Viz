@@ -7,7 +7,7 @@ import uuid
 import os
 import pickle
 
-import static.backend.MLP as MLP
+import static.backend.neural_network_module as neural_network
 
 import static.backend.mongo_module as mongo
 
