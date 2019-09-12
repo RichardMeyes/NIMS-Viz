@@ -7,11 +7,11 @@ import uuid
 import os
 import pickle
 
-import static.backend.MLP as MLP
+import MLP as MLP
 
-TOPOLOGY_DIR = "static/data/topologies/"
-WEIGHTS_DIR = "static/data/weights/"
-DIGIT_DIR = "static/data/digit"
+TOPOLOGY_DIR = "../data/topologies/"
+WEIGHTS_DIR = "../data/weights/"
+DIGIT_DIR = "../data/digit"
 
 app = Flask(__name__)
 CORS(app)
@@ -192,4 +192,4 @@ def testDigit():
     return json.dumps(result)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True, port=3000)

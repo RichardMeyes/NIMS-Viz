@@ -1,5 +1,4 @@
 FROM node:lts
-
 WORKDIR /frontend/
 COPY ./ ./
 RUN npm install -g @angular/cli@8.2.0

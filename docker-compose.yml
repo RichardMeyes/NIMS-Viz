@@ -11,19 +11,19 @@ services:
   #   ports:
   #     - 3306:3306
 
-  # backend:
-  #   depends_on:
-  #     - database
-  #   restart: on-failure
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - 3000:3000
+  backend:
+    # depends_on:
+    #   - database
+    restart: on-failure
+    build:
+      context: ./static/backend
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
 
   frontend:
-    # depends_on:
-    #   - backend
+    depends_on:
+      - backend
     restart: on-failure
     build:
       context: ./static/frontend
