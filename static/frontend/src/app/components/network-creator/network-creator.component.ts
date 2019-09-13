@@ -18,7 +18,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   /**
    * loads the possible settings for a neural network
    */
-  private _nnSettings: NeuralNetworkSettings;
+  public _nnSettings: NeuralNetworkSettings;
 
   /**
    * attributes to toogle the visibility of the input forms

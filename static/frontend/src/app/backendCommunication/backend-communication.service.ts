@@ -3,6 +3,8 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 
 import { throwError, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+
+import { environment } from 'src/environments/environment';
 import { NeuralNetworkSettingsJSON, NeuralNetworkSettings } from '../models/create-nn.model';
 
 /**
@@ -28,20 +30,21 @@ const httpOptions = {
 })
 export class BackendCommunicationService {
   /**
-   * Backend URL has to be changed if the Backend is somewhere else
+   * Backend url.
    */
-  private _backendURL = 'http://localhost/api/';
-
-  /**
-   * For development only
-   */
-  // private _backendURL = 'http://localhost:3000/';
+  private _backendURL;
 
   /**
    * Constructor of BackendCommunication-Service
    * @param _http HTTP Module that provides HTTP communication
    */
-  constructor(private _http: HttpClient) { }
+  constructor(private _http: HttpClient) {
+    if (environment.production) {
+      this._backendURL = 'http://localhost/api/';
+    } else {
+      this._backendURL = 'http://127.0.0.1:3000';
+    }
+  }
 
   /**
    * Tests the Communication with the Backend. If the Backend is listening it returns a "OK"
