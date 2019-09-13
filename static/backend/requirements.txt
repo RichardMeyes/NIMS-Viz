@@ -1,0 +1,8 @@
+Flask==1.0.2
+flask_socketio
+eventlet
+flask_cors
+werkzeug
+torch
+torchvision
+opencv-python

@@ -30,7 +30,12 @@ export class BackendCommunicationService {
   /**
    * Backend URL has to be changed if the Backend is somewhere else
    */
-  private _backendURL = "http://127.0.0.1:5000";
+  private _backendURL = 'http://localhost/api/';
+
+  /**
+   * For development only
+   */
+  // private _backendURL = 'http://localhost:3000/';
 
   /**
    * Constructor of BackendCommunication-Service

@@ -13,9 +13,9 @@ import static.backend.mongo_module as mongo
 
 DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 
-TOPOLOGY_DIR = "static/data/topologies/"
-WEIGHTS_DIR = "static/data/weights/"
-DIGIT_DIR = "static/data/digit"
+TOPOLOGY_DIR = "../data/topologies/"
+WEIGHTS_DIR = "../data/weights/"
+DIGIT_DIR = "../data/digit"
 
 app = Flask(__name__)
 CORS(app)
@@ -200,6 +200,7 @@ def testDigit():
     return json.dumps(result)
 
 if __name__ == "__main__":
+<<<<<<< HEAD:main.py
 
     # test_id = "5d7222102b29cb114e511bdc"
     # item = DB_CONNECTION.get_item_by_id(test_id)
@@ -208,3 +209,6 @@ if __name__ == "__main__":
     # DB_CONNECTION.post_item(weights_dict)
 
     app.run(debug=True)
+=======
+    app.run(host="0.0.0.0", debug=True, port=3000)
+>>>>>>> dev:static/backend/main.py
