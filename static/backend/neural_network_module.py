@@ -33,7 +33,6 @@ class Net(nn.Module):
     
     def __init__(self, input_dim = [], layers = []):
         super(Net, self).__init__()
-
         dim_list = []
         if len(input_dim) is 1:
             dim_list.append([input_dim[0], 1, 1])
@@ -46,7 +45,7 @@ class Net(nn.Module):
 
         layer_counter = 0
         for layer in layers:
-            if layer["type"] is "conv2d":
+            if layer["type"] == "conv2d":
                 self.__setattr__("conv2d{0}".format(layer_counter), nn.Conv2d(layer["inChannel"], layer["outChannel"], layer["kernelSize"], layer["stride"], layer["padding"]))
 
                 new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
@@ -55,7 +54,7 @@ class Net(nn.Module):
 
                 self.layer_settings["layer_"+ str(layer_counter)] = layer
             
-            elif layer["type"] is "maxPool2d":
+            elif layer["type"] == "maxPool2d":
                 self.__setattr__("maxPool2d{0}".format(layer_counter), nn.MaxPool2d(layer["kernelSize"], stride = layer["stride"]))
 
                 new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
@@ -64,7 +63,7 @@ class Net(nn.Module):
 
                 self.layer_settings["layer_"+ str(layer_counter)] = layer
 
-            elif layer["type"] is "linear":
+            elif layer["type"] == "linear":
                 self.__setattr__("linear{0}".format(layer_counter), nn.Linear(int(np.prod(dim_list[layer_counter])), layer["outChannel"]))
 
                 dim_list.append([layer["outChannel"], 1, 1])
@@ -78,10 +77,10 @@ class Net(nn.Module):
         is_linear = False
         # x = x.view(-1, 1, 28, 28) is it necessary?
         for layer in self.layer_settings:
-            if self.layer_settings[layer]["type"] is "linear" and not is_linear:
+            if self.layer_settings[layer]["type"] == "linear" and not is_linear:
                 x = x.view(x.shape[0], -1)
                 is_linear = True
-            if self.layer_settings[layer]["activation"] is not "none":
+            if self.layer_settings[layer]["activation"] != "none":
                 activation = Net.__activations[self.layer_settings[layer]["activation"]]
                 x = activation(self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x))
             else:
@@ -196,9 +195,8 @@ def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, de
         device: (String) Divice that will be used for the training. Default is cpu.
     '''
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batchsize, shuffle=True, num_workers=2)
-    r = model.train_start(num_epochs, trainloader, criterion, optimizer, device)
-    return r
-
+    return model.train_start(num_epochs, trainloader, criterion, optimizer, device)
+    
 def test_model(model, criterion, testset, batchsize, device = "cpu"):
     '''
     Test the model and returns usefull values (will be more concrete later)
@@ -225,7 +223,13 @@ def get_weights(model):
     for param in model.parameters():
         current_layer = "layer_" + str(layer_counter)
         weights_dict.setdefault(current_layer, {})
-        # BIAS have the output size of the CNNs or MLPs and len() is 1
+        # BIAS have the output size of the CNNs or MLPs and len() is 1,
+        # A Pooling layer as no weights so just save settings for reconstraction
+        if "Pool" in model.layer_settings[current_layer]["type"]:
+            weights_dict[current_layer].update({"settings": model.layer_settings[current_layer]})
+            layer_counter += 1
+            current_layer = "layer_" + str(layer_counter)
+            weights_dict.setdefault(current_layer, {})
         if len(list(param.data.size())) is 1:
             weights_dict[current_layer].update({"bias": param.data.tolist()})
             layer_counter += 1
@@ -235,25 +239,30 @@ def get_weights(model):
 
     return weights_dict
 
-def load_model_from_weights(weights_dict, input_dim):
+def load_model_from_weights(weights_dict, input_dim, epoch = -1):
     '''
     Returns a Pytorch model load from given weights dict
 
     :Parameters: 
         weights_dict: (Dictionary) Dictionary of layers with weights, bias and types
         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
+        epoch: (Integer) Wiche epoch the weights should be loaden from. Default = -1, it loads the leatest epoch.
     '''
     ordered_dict = collections.OrderedDict()
     layer_settings_list = []
-    # for every layer in the weights_dict it creates a weights and bias tensor and add it to the ordered_dict
-    for i in range(len(weights_dict)):
+    epoch_num = str(weights_dict["epochs"] - 1) if epoch is -1 else str(epoch)
+    last_epoch = "epoch_" + epoch_num
+    # for every layer in the last epoch of weights_dict it creates a weights and bias tensor and add it to the ordered_dict
+    for i in range(len(weights_dict[last_epoch])):
         layer = "layer_" + str(i)
-        attribute_name = weights_dict[layer]["settings"]["type"] + str(i)
-        ordered_dict[attribute_name + ".weight"] = torch.Tensor(weights_dict[layer]["weights"])
-        ordered_dict[attribute_name + ".bias"] = torch.Tensor(weights_dict[layer]["bias"])
-        layer_settings_list.append(weights_dict[layer]["settings"])
+        if not "Pool" in weights_dict[last_epoch][layer]["settings"]["type"]:
+            attribute_name = weights_dict[last_epoch][layer]["settings"]["type"] + str(i)
+            ordered_dict[attribute_name + ".weight"] = torch.Tensor(weights_dict[last_epoch][layer]["weights"])
+            ordered_dict[attribute_name + ".bias"] = torch.Tensor(weights_dict[last_epoch][layer]["bias"])
+        layer_settings_list.append(weights_dict[last_epoch][layer]["settings"])
     
-    model = Net(input_dim, layer_settings_list)
+    model = create_model(input_dim, layer_settings_list)
+
     model.load_state_dict(ordered_dict)
     model.eval()
     return model
@@ -336,28 +345,42 @@ def load_model_from_weights(weights_dict, input_dim):
 #     return net_out, net.nodes_dict
 
 # for testing
-import mongo_module as mongo
+# import mongo_module as mongo
 
-db_connection = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+# db_connection = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 
-if __name__ == "__main__":
-    example_layers = [
-        {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
-        {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
-        {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"},
-        {"type": "linear", "outChannel": 120, "activation": "none" },
-        {"type": "linear", "outChannel": 10, "activation": "softmax" }
-    ]
+# if __name__ == "__main__":
+    # example_layers = [
+    #     {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
+    #     {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
+    #     {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"},
+    #     {"type": "linear", "outChannel": 120, "activation": "none" },
+    #     {"type": "linear", "outChannel": 10, "activation": "none" }
+    # ]
 
-    test_module = create_model([28, 28], example_layers)
+    # test_model = create_model([28, 28], example_layers)
 
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
+    # for param_tensor in test_model.state_dict():
+    #     print(param_tensor, "\t", test_model.state_dict()[param_tensor].size())
 
-    criterion = nn.NLLLoss()
-    optimizer = optim.SGD(test_module.parameters(), lr=0.001, momentum=0.9)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+    # trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
 
-    train_dict = train_model(test_module, 2, criterion, optimizer, trainset, 64, device)
+    # criterion = nn.CrossEntropyLoss()
+    # optimizer = optim.SGD(test_model.parameters(), lr=0.001, momentum=0.9)
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    print(train_dict)
+    # train_dict = train_model(test_model, 2, criterion, optimizer, trainset, 64, device)
+    # counter = 0
+    # weights = {}
+    # for ep in train_dict:
+    #     weights["epoch_"+str(counter)] = ep
+    #     counter += 1
+    
+    # weights.update({"name": "myName2", "epochs": counter})
+    # weights = db_connection.get_item_by_id("5d7b8d79d3b961d459951f2a")
+    # model = load_model_from_weights(weights, [28,28])
+    # weights = get_weights(model)
+    # db_connection.post_item({"name": "copy", "epoch_0": weights})
+
+    # print(train_dict)
