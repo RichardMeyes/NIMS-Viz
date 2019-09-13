@@ -40,7 +40,7 @@ export class BackendCommunicationService {
    */
   constructor(private _http: HttpClient) {
     if (environment.production) {
-      this._backendURL = 'http://localhost/api/';
+      this._backendURL = 'http://localhost/api';
     } else {
       this._backendURL = 'http://127.0.0.1:3000';
     }
