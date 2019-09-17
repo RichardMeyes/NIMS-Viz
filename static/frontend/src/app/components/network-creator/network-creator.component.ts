@@ -1,10 +1,12 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { NeuralNetworkSettings, ConvLayer, DenseLayer, NeuralNetworkSettingsJSON } from '../../models/create-nn.model';
+import { NeuralNetworkSettings, ConvLayer, DenseLayer, NeuralNetworkSettingsJSON, TrainingSettings, TrainingSettingsJSON } from '../../models/neural-network.model';
 import { BackendCommunicationService } from '../../backendCommunication/backend-communication.service';
 import { EventsService } from 'src/app/services/events.service';
 import { DataService } from 'src/app/services/data.service';
 import { EpochSlider } from 'src/app/models/layer-view.model';
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
+
+import { map, tap } from 'rxjs/operators';
 
 /**
  * Component for Network creation
@@ -19,6 +21,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    * loads the possible settings for a neural network
    */
   public _nnSettings: NeuralNetworkSettings;
+  public _trainingSettings: TrainingSettings;
 
   /**
    * attributes to toogle the visibility of the input forms
@@ -38,6 +41,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this._nnSettings = this.dataService.nnSettings;
+    this._trainingSettings = this.dataService.trainingSettings;
   }
 
 
@@ -55,6 +59,14 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
   }
 
   /**
+   * Adds a MaxPoolingLayer to the networksettings
+   */
+  addMaxPooling() {
+    this._nnSettings.addMaxPooling();
+    this.updateTopology();
+  }
+
+  /**
    * Deletes a given ConvLayer
    * @param layer Layer that should be deleted
    */
@@ -68,7 +80,7 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
    * adds a Fully-Connected Layer to the networksettings
    */
   addMLP() {
-    this._nnSettings.addDenseLayer(new DenseLayer());
+    this._nnSettings.addDenseLayer(new DenseLayer("linear"));
     this.updateTopology();
   }
 
@@ -84,29 +96,45 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
 
   /**
    * creates a network based on the networksettings
-   * Not implemented yet
    */
   createNetwork() {
     const setup: NeuralNetworkSettingsJSON = {
-      configurations: JSON.parse(JSON.stringify(this._nnSettings.configurations)),
+      name: JSON.parse(JSON.stringify(this._nnSettings.name)),
       inputSize: JSON.parse(JSON.stringify(this._nnSettings.inputSize)),
       convLayers: [...this._nnSettings.convLayers],
       denseLayers: [...this._nnSettings.denseLayers]
     };
 
-    this.backend.createNetwork(setup).subscribe((filename: string) => {
-      const selectedNetwork: SavedNetworks = {
-        fileName: filename,
-        nnSettings: this._nnSettings,
-        viewName: ''
-      };
-      this.dataService.selectedNetwork = selectedNetwork;
+    const trainSetup: TrainingSettingsJSON = {
+      batchSize: JSON.parse(JSON.stringify(this._trainingSettings.batchSize)),
+      epochs: JSON.parse(JSON.stringify(this._trainingSettings.epochs)),
+      learningrate: JSON.parse(JSON.stringify(this._trainingSettings.learningRate)),
+      loss: JSON.parse(JSON.stringify(this._trainingSettings.loss)),
+      optimizer: JSON.parse(JSON.stringify(this._trainingSettings.optimizer)),
+    };
+    
+    this.backend.createNetwork(setup).toPromise()
+      .then(item => {
+        const uuid = item._id;
+        this.backend.trainNetwork(uuid, trainSetup).subscribe()
+      });
+    //   map(item => item["_id"]),
+    //   tap(uuid => this.backend.trainNetwork(uuid, trainSetup).subscribe())
+    // ).subscribe();
 
-      const epochSlider = new EpochSlider();
-      epochSlider.maxEpoch = this._nnSettings.configurations.epoch;
-      epochSlider.currEpoch = this._nnSettings.configurations.epoch;
-      this.eventsService.updateWeights.next(epochSlider);
-    });
+      // (filename: string) => {
+        // const selectedNetwork: SavedNetworks = {
+          //   fileName: filename,
+          //   nnSettings: this._nnSettings,
+      //   viewName: ''
+      // };
+      // this.dataService.selectedNetwork = selectedNetwork;
+      
+      // const epochSlider = new EpochSlider();
+      // epochSlider.maxEpoch = this._nnSettings.configurations.epoch;
+      // epochSlider.currEpoch = this._nnSettings.configurations.epoch;
+      // this.eventsService.updateWeights.next(epochSlider);
+      // }
   }
 
   /**

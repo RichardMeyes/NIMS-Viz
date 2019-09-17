@@ -5,7 +5,7 @@ import { throwError, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
-import { NeuralNetworkSettingsJSON, NeuralNetworkSettings } from '../models/create-nn.model';
+import { NeuralNetworkSettingsJSON, NeuralNetworkSettings, TrainingSettingsJSON } from '../models/neural-network.model';
 
 /**
  * httpOptions copied from old project file don't know if its realy necessary.
@@ -70,13 +70,21 @@ export class BackendCommunicationService {
   }
 
   /**
+   * Trainss a Neural Network with given parameters
+   * @param setup training settings
+   */
+  public trainNetwork(id: string, setup: TrainingSettingsJSON): Observable<any> {
+    const body = {id, setup}
+    return this._http.post(`${this._backendURL}/trainNetwork`, body);
+  }
+
+  /**
    * Loads network.
    * @param selectedNetwork the filename (static/data/topologies) of the network to be loaded.
    * @returns the network's settings
    */
-  public loadNetwork(selectedNetwork: string): Observable<any> {
-    const body = { filename: selectedNetwork };
-    return this._http.post(`${this._backendURL}/loadNetwork`, body);
+  public loadNetwork(uuid: string): Observable<any> {
+    return this._http.post(`${this._backendURL}/loadNetwork`, uuid);
   }
 
   /**

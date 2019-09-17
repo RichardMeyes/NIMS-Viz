@@ -4,6 +4,7 @@
     <!-- 2 buttons to create layers-->
     <div>
       <button mat-raised-button (click)="addCNN()">CNN <i class="fas fa-plus"></i></button>
+      <button mat-raised-button (click)="addMaxPooling()">Pooling <i class="fas fa-plus"></i></button>
       <button mat-raised-button (click)="addMLP()">MLP <i class="fas fa-plus"></i></button>
     </div>
 
@@ -15,21 +16,22 @@
       <i class="down-up-arrow" [ngClass]="hideConfig? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
     </h3>
     <form *ngIf="!hideConfig" class="cnn-input-form">
-      <mat-form-field class="config-input">
-        <input name="batchTrain" type="number" matInput min="0" placeholder="Batch Size Train"
-          [(ngModel)]="_nnSettings.configurations.batchTrain" value={{_nnSettings.configurations.batchTrain}}>
+      <mat-form-field class="name_input">
+        <input name="NetworkName" [(ngModel)]="_nnSettings.name" value={{_nnSettings.name}} matInput placeholder="Network name">
       </mat-form-field>
+    </form>
+    <form *ngIf="!hideConfig" class="cnn-input-form">
       <mat-form-field class="config-input">
-        <input name="batchTest" type="number" matInput min="0" placeholder="Batch Size Test"
-          [(ngModel)]="_nnSettings.configurations.batchTest" value={{_nnSettings.configurations.batchTest}}>
+        <input name="batchTrain" type="number" matInput min="1" placeholder="Batch Size Train"
+          [(ngModel)]="_trainingSettings.batchSize" value={{_trainingSettings.batchSize}}>
       </mat-form-field>
       <mat-form-field class="config-input">
         <input name="epoch" type="number" matInput min="0" placeholder="Epoch"
-          [(ngModel)]="_nnSettings.configurations.epoch" value={{_nnSettings.configurations.epoch}}>
+          [(ngModel)]="_trainingSettings.epochs" value={{_trainingSettings.epochs}}>
       </mat-form-field>
       <mat-form-field class="input-selector">
         <mat-label>Learning Rate</mat-label>
-        <mat-select [(value)]="_nnSettings.configurations.learningRate">
+        <mat-select [(value)]="_trainingSettings.learningRate">
           <mat-option [value]="0.000001">0.000001</mat-option>
           <mat-option [value]="0.00001">0.00001</mat-option>
           <mat-option [value]="0.0001">0.0001</mat-option>
@@ -41,6 +43,23 @@
           <mat-option [value]="1">1</mat-option>
           <mat-option [value]="3">3</mat-option>
           <mat-option [value]="10">10</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </form>
+    <form *ngIf="!hideConfig" class="cnn-input-form">
+      <mat-form-field class="input-selector">
+        <mat-label>Loss Function</mat-label>
+        <mat-select [(value)]="_trainingSettings.loss">
+          <mat-option value="crossEntropy">Cross Entropy Loss</mat-option>
+          <mat-option value="nLogLikelihood">Negativ Log-Likelihood</mat-option>
+          <mat-option value="mse">MSE</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="input-selector">
+        <mat-label>Loss Function</mat-label>
+        <mat-select [(value)]="_trainingSettings.optimizer">
+          <mat-option value="sgd">SGD</mat-option>
+          <mat-option value="adam">adam</mat-option>
         </mat-select>
       </mat-form-field>
     </form>
@@ -70,16 +89,22 @@
     <!-- every convlayer has 6 formas, there is a button to delete a layer-->
     <!-- on h3 click it toogles the visibility of the forms-->
     <h3 *ngIf="_nnSettings.convLayers.length > 0" class="settings-headline" (click)="hideCNN=!hideCNN">
-      Convolutiona Layer
+      Convolutiona Layer 
       <i class="down-up-arrow" [ngClass]="hideCNN? 'fas fa-caret-up' : 'fas fa-caret-down'"></i>
     </h3>
     <div *ngFor="let layer of _nnSettings.convLayers">
       <form *ngIf="!hideCNN" class="cnn-input-form">
-        <mat-form-field class="channel-inputs">
+          <mat-form-field *ngIf="layer.type !== 'conv2d'" class="input-selector">
+              <mat-label>Pooling</mat-label>
+              <mat-select [(value)]="layer.type">
+                <mat-option value="maxPool2d">Max</mat-option>
+              </mat-select>
+            </mat-form-field>
+        <mat-form-field *ngIf="layer.type === 'conv2d'" class="channel-inputs">
           <input name="inChannel" type="number" matInput min="0" placeholder="Input" [(ngModel)]="layer.inChannel.value"
             (ngModelChange)="updateTopology()" value={{layer.inChannel.value}}>
         </mat-form-field>
-        <mat-form-field class="channel-inputs">
+        <mat-form-field *ngIf="layer.type === 'conv2d'" class="channel-inputs">
           <input name="outChannel" type="number" matInput min="0" placeholder="Output"
             [(ngModel)]="layer.outChannel.value" (ngModelChange)="updateTopology()" value={{layer.outChannel.value}}>
         </mat-form-field>
@@ -88,32 +113,32 @@
             value={{layer.kernelSize}}>
         </mat-form-field>
         <mat-form-field class="channel-inputs">
-          <input name="stride" type="number" matInput min="0" placeholder="Stride" [(ngModel)]="layer.stride"
+          <input name="stride" type="number" matInput min="1" placeholder="Stride" [(ngModel)]="layer.stride"
             value={{layer.stride}}>
         </mat-form-field>
-        <mat-form-field class="channel-inputs">
+        <mat-form-field *ngIf="layer.type === 'conv2d'" class="channel-inputs">
           <input name="padding" type="number" matInput min="0" placeholder="Padding" [(ngModel)]="layer.padding"
             value={{layer.padding}}>
         </mat-form-field>
         <!-- selector options hard coded to improve use ngFor and a list of possibilities -->
-        <mat-form-field class="input-selector">
+        <mat-form-field *ngIf="layer.type === 'conv2d'" class="input-selector">
           <mat-label>Activation</mat-label>
           <mat-select [(value)]="layer.activation">
             <mat-option value="none">None</mat-option>
             <mat-option value="relu">Relu</mat-option>
-            <mat-option value="rrelu">RRELU</mat-option>
-            <mat-option value="hardtanh">Hardtanh</mat-option>
+            <!-- <mat-option value="rrelu">RRELU</mat-option> -->
+            <!-- <mat-option value="hardtanh">Hardtanh</mat-option> -->
             <mat-option value="sigmoid">Sigmoid</mat-option>
             <mat-option value="tanh">TanH</mat-option>
-            <mat-option value="elu">ELU</mat-option>
-            <mat-option value="celu">cELU</mat-option>
-            <mat-option value="selu">sELU</mat-option>
-            <mat-option value="glu">GLU</mat-option>
-            <mat-option value="leakyRelu">leakyRelu</mat-option>
-            <mat-option value="logSigmoid">logSigmoid</mat-option>
-            <mat-option value="softplus">softplus</mat-option>
+            <!-- <mat-option value="elu">ELU</mat-option> -->
+            <!-- <mat-option value="celu">cELU</mat-option> -->
+            <!-- <mat-option value="selu">sELU</mat-option> -->
+            <!-- <mat-option value="glu">GLU</mat-option> -->
+            <!-- <mat-option value="leakyRelu">leakyRelu</mat-option> -->
+            <!-- <mat-option value="logSigmoid">logSigmoid</mat-option> -->
+            <!-- <mat-option value="softplus">softplus</mat-option> -->
             <mat-option value="softmax">softmax</mat-option>
-            <mat-option value="logSoftmax">logSoftmax</mat-option>
+            <!-- <mat-option value="logSoftmax">logSoftmax</mat-option> -->
           </mat-select>
         </mat-form-field>
         <button mat-mini-fab (click)="deleteCNN(layer)"><i class="fas fa-trash-alt"></i></button>

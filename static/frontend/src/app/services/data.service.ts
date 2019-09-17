@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NeuralNetworkSettings } from '../models/create-nn.model';
+import { NeuralNetworkSettings, TrainingSettings } from '../models/neural-network.model';
 import { SavedNetworks } from '../models/saved-networks.model';
 import { ActiveSideMenu } from '../models/navigation.model';
 import { WeightedTopology } from '../models/layer-view.model';
@@ -17,6 +17,11 @@ export class DataService {
    * NN settings of network-creator form.
    */
   nnSettings: NeuralNetworkSettings;
+
+  /**
+   * trainingsettings
+   */
+  trainingSettings: TrainingSettings;
 
   /**
    * Selected network at the moment.
@@ -41,6 +46,7 @@ export class DataService {
 
   constructor() {
     this.nnSettings = new NeuralNetworkSettings();
+    this.trainingSettings = new TrainingSettings();
     this.selectedNetwork = undefined;
     this.activeSideMenu = ActiveSideMenu.None;
     this.detachedNodes = [];

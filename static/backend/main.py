@@ -7,11 +7,14 @@ import uuid
 import os
 import pickle
 
-import MLP as MLP
+import neural_network_module as neural_network
 
-TOPOLOGY_DIR = "../data/topologies/"
-WEIGHTS_DIR = "../data/weights/"
-DIGIT_DIR = "../data/digit"
+import mongo_module as mongo
+
+# creates a communication channel with mongoDB
+DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+# if gpu with cuda is available set it to it.
+DEVICE = neural_network.get_device()
 
 app = Flask(__name__)
 CORS(app)
@@ -27,169 +30,218 @@ def test():
 def createNetwork():
     nnSettings = request.get_json()
 
-    filename = saveNetwork(nnSettings)
+    network_name = nnSettings['name']
+    input_size = [
+        nnSettings['inputSize']["x"], 
+        nnSettings['inputSize']["y"], 
+        nnSettings['inputSize']["z"]["value"]
+        ]
+    layers = []
 
-    batch_size_train = nnSettings['configurations']['batchTrain']
-    batch_size_test = nnSettings['configurations']['batchTest']
-    num_epochs = nnSettings['configurations']['epoch']
-    learning_rate = nnSettings['configurations']['learningRate']
+    for convLayer in nnSettings["convLayers"]:
+        if "Pool" in convLayer["type"]:
+            layers.append({
+                "type": convLayer["type"],
+                "kernelSize": convLayer["kernelSize"],
+                "stride": convLayer["stride"],
+                "activation": convLayer["activation"]
+            })
+        else:
+            layers.append({
+                "type": convLayer["type"],
+                "inChannel": convLayer['inChannel']['value'],
+                "outChannel": convLayer['outChannel']['value'],
+                "kernelSize": convLayer["kernelSize"],
+                "stride": convLayer["stride"],
+                "padding": convLayer["padding"],
+                "activation": convLayer["activation"]
+            })
+    
+    for denseLayer in nnSettings["denseLayers"]:
+        layers.append({
+            "type": denseLayer["type"],
+            "outChannel": denseLayer["size"],
+            "activation": denseLayer["activation"]
+        })
+    
+    nn_model = neural_network.create_model(input_size, layers)
+    init_weights = neural_network.get_weights(nn_model)
 
-    convLayers = nnSettings["convLayers"]
-    conv_layers = list(map(lambda x: {
-        'kernelSize': x['kernelSize'],
-        'stride': x['stride'],
-        'padding': x['padding'],
-        'inChannel': x['inChannel']['value'],
-        'outChannel': x['outChannel']['value']
-        }, convLayers))
-    denseLayers = nnSettings['denseLayers']
-    layers = list(map(lambda x: x['size'], denseLayers))
+    model_dict = {
+        "name": network_name,
+        "epochs": 0,
+        "input_dim": input_size,
+        "epoch_0": init_weights
+    }
 
-    MLP.mlp(filename, batch_size_train, batch_size_test, num_epochs, learning_rate, conv_layers, layers)
+    item_id = DB_CONNECTION.post_item(model_dict)[0]
+    model_dict = DB_CONNECTION.get_item_by_id(str(item_id))
+    return json.dumps(model_dict)
 
-    return json.dumps("MLP_" + filename + ".json")
+@app.route("/trainNetwork", methods=["POST", "OPTIONS"])
+@cross_origin()
+def trainNetwork():
+    # have to be changed!!! trainset has to be variable
+    import torchvision
+    import torchvision.transforms as transforms
 
-# Save network's settings
-def saveNetwork(nnSettings):
-    filename = str(uuid.uuid4())
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
+    # #################################################
+    req = request.get_json()
+    trainSettings = req["setup"]
+    uuid = req["id"]
+    
+    #load modal with id
+    model_dict = DB_CONNECTION.get_item_by_id(uuid)
+    nn_model = neural_network.load_model_from_weights(model_dict, model_dict["input_dim"])
 
-    with open(TOPOLOGY_DIR + "MLP_" + filename + ".json", "w") as f:
-        json.dump(nnSettings, f)
+    train_history = neural_network.train_model(
+        nn_model,
+        trainSettings["epochs"],
+        trainSettings["loss"],
+        trainSettings["optimizer"],
+        trainset,
+        trainSettings["batchSize"],
+        trainSettings["learningrate"],
+        DEVICE
+    )
 
-    return filename
+    epoch_counter = model_dict["epochs"]
+    epoch_dict = {}
+    for ep in train_history:
+        epoch_counter += 1
+        epoch_dict["epoch_" + str(epoch_counter)] = ep
+        
+    
+    epoch_dict.update({"epochs": epoch_counter})
+    
+    DB_CONNECTION.update_item(uuid, epoch_dict)
+    MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
+    return json.dumps(str(MODEL_DICT))
 
-# Load network's settings
+
+# # Load network's settings
 @app.route("/loadNetwork", methods=["POST"])
 @cross_origin()
 def loadNetwork():
-    params = request.get_json()
-    filename = params['filename']
+    req = request.get_json()
+    uuid = req["uuid"]
 
-    nnSettings = json.load(open(TOPOLOGY_DIR + filename))
+    model_dict = DB_CONNECTION.get_item_by_id(uuid)
 
-    return json.dumps(nnSettings)
+    return json.dumps(model_dict)
 
-# Load network's weights.
-@app.route("/loadWeights", methods=["POST"])
-@cross_origin()
-def loadWeights():
-    params = request.get_json()
-    filename = params['filename']
+# # Load network's weights.
+# @app.route("/loadWeights", methods=["POST"])
+# @cross_origin()
+# def loadWeights():
+#     params = request.get_json()
+#     filename = params['filename']
 
-    nnWeights = json.load(open(WEIGHTS_DIR + filename))
+#     nnWeights = json.load(open(WEIGHTS_DIR + filename))
 
-    return json.dumps(nnWeights)
+#     return json.dumps(nnWeights)
 
 # Get list of saved networks.
 @app.route("/getSavedNetworks", methods=["GET", "OPTIONS"])
 @cross_origin()
 def getSavedNetworks():
-    validFiles = []
-
-    for subdir, dirs, files in os.walk(WEIGHTS_DIR):
-        for currFile in files:
-            untrainedFile = currFile.replace('.json', '_untrained.json')
-
-            if not 'untrained' in currFile and \
-            os.path.exists(WEIGHTS_DIR + untrainedFile) and \
-            os.path.exists(TOPOLOGY_DIR + currFile):
-                nnSettings = json.load(open(TOPOLOGY_DIR + currFile))
-                indexedObj = {'fileName': currFile, 'nnSettings': nnSettings}
-                validFiles.append(indexedObj)
+    item = DB_CONNECTION.get_all_attributes("name")
     
-    return json.dumps(validFiles)
+    return json.dumps(item)
 
-# Test trained network.
-@app.route("/testNetwork", methods=["POST", "OPTIONS"])
-@cross_origin()
-def testNetwork():
-    params = request.get_json()
+# # Test trained network.
+# @app.route("/testNetwork", methods=["POST", "OPTIONS"])
+# @cross_origin()
+# def testNetwork():
+#     params = request.get_json()
 
-    convLayers = params['nnSettings']["convLayers"]
-    conv_layers = list(map(lambda x: {
-        'kernelSize': x['kernelSize'],
-        'stride': x['stride'],
-        'padding': x['padding'],
-        'inChannel': x['inChannel']['value'],
-        'outChannel': x['outChannel']['value']
-        }, convLayers))
-    denseLayers = params['nnSettings']['denseLayers']
-    layers = list(map(lambda x: x['size'], denseLayers))
+#     convLayers = params['nnSettings']["convLayers"]
+#     conv_layers = list(map(lambda x: {
+#         'kernelSize': x['kernelSize'],
+#         'stride': x['stride'],
+#         'padding': x['padding'],
+#         'inChannel': x['inChannel']['value'],
+#         'outChannel': x['outChannel']['value']
+#         }, convLayers))
+#     denseLayers = params['nnSettings']['denseLayers']
+#     layers = list(map(lambda x: x['size'], denseLayers))
 
-    topology = {
-        'conv_layers': conv_layers,
-        'layers': layers
-    }
-    filename = params['filename']
-    ko_layers = params['koLayers']
-    ko_units = params['koUnits']
+#     topology = {
+#         'conv_layers': conv_layers,
+#         'layers': layers
+#     }
+#     filename = params['filename']
+#     ko_layers = params['koLayers']
+#     ko_units = params['koUnits']
 
-    acc, correct_labels, acc_class, class_labels = MLP.mlp_ablation(topology, filename, ko_layers, ko_units)
+#     acc, correct_labels, acc_class, class_labels = MLP.mlp_ablation(topology, filename, ko_layers, ko_units)
 
-    result = {
-        "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-        "classLabels": class_labels.tolist(),
-        "averageAccuracy": acc,
-        "classSpecificAccuracy": acc_class.tolist(),
-        "colorLabels": correct_labels.tolist()
-    }
+#     result = {
+#         "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+#         "classLabels": class_labels.tolist(),
+#         "averageAccuracy": acc,
+#         "classSpecificAccuracy": acc_class.tolist(),
+#         "colorLabels": correct_labels.tolist()
+#     }
 
-    return json.dumps(result)
+#     return json.dumps(result)
 
-# Get TSNE Coordinate
-@app.route("/getTSNECoordinate", methods=["GET"])
-@cross_origin()
-def getTSNECoordinate():
-    result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
-    return json.dumps(result.tolist())
+# # Get TSNE Coordinate
+# @app.route("/getTSNECoordinate", methods=["GET"])
+# @cross_origin()
+# def getTSNECoordinate():
+#     result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
+#     return json.dumps(result.tolist())
 
-# Save the free-drawing drawing.
-@app.route("/saveDigit", methods=["POST", "OPTIONS"])
-@cross_origin()
-def saveDigit():
-    digit = request.files['digit']
+# # Save the free-drawing drawing.
+# @app.route("/saveDigit", methods=["POST", "OPTIONS"])
+# @cross_origin()
+# def saveDigit():
+#     digit = request.files['digit']
 
-    if digit:
-        if not(os.path.exists(DIGIT_DIR)):
-            os.mkdir(DIGIT_DIR)
+#     if digit:
+#         if not(os.path.exists(DIGIT_DIR)):
+#             os.mkdir(DIGIT_DIR)
 
-        filename = secure_filename(digit.filename)
-        digit.save(os.path.join(DIGIT_DIR, filename))
+#         filename = secure_filename(digit.filename)
+#         digit.save(os.path.join(DIGIT_DIR, filename))
 
-    return json.dumps("Digit saved.")
+#     return json.dumps("Digit saved.")
 
-# Save the free-drawing drawing.
-@app.route("/testDigit", methods=["POST", "OPTIONS"])
-@cross_origin()
-def testDigit():
-    params = request.get_json()
+# # Save the free-drawing drawing.
+# @app.route("/testDigit", methods=["POST", "OPTIONS"])
+# @cross_origin()
+# def testDigit():
+#     params = request.get_json()
 
-    convLayers = params['nnSettings']["convLayers"]
-    conv_layers = list(map(lambda x: {
-        'kernelSize': x['kernelSize'],
-        'stride': x['stride'],
-        'padding': x['padding'],
-        'inChannel': x['inChannel']['value'],
-        'outChannel': x['outChannel']['value']
-        }, convLayers))
-    denseLayers = params['nnSettings']['denseLayers']
-    layers = list(map(lambda x: x['size'], denseLayers))
+#     convLayers = params['nnSettings']["convLayers"]
+#     conv_layers = list(map(lambda x: {
+#         'kernelSize': x['kernelSize'],
+#         'stride': x['stride'],
+#         'padding': x['padding'],
+#         'inChannel': x['inChannel']['value'],
+#         'outChannel': x['outChannel']['value']
+#         }, convLayers))
+#     denseLayers = params['nnSettings']['denseLayers']
+#     layers = list(map(lambda x: x['size'], denseLayers))
 
-    topology = {
-        'conv_layers': conv_layers,
-        'layers': layers
-    }
-    filename = params['filename']
-    ko_layers = params['koLayers']
-    ko_units = params['koUnits']
+#     topology = {
+#         'conv_layers': conv_layers,
+#         'layers': layers
+#     }
+#     filename = params['filename']
+#     ko_layers = params['koLayers']
+#     ko_units = params['koUnits']
 
-    net_out, nodes_dict = MLP.test_digit(topology, filename, ko_layers, ko_units)
-    result = {
-        "netOut": net_out,
-        "nodesDict": nodes_dict
-    }
+#     net_out, nodes_dict = MLP.test_digit(topology, filename, ko_layers, ko_units)
+#     result = {
+#         "netOut": net_out,
+#         "nodesDict": nodes_dict
+#     }
     
-    return json.dumps(result)
+#     return json.dumps(result)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=3000)
