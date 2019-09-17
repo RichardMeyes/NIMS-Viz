@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/co
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
 import { debounceTime, takeUntil, concatMap, filter } from 'rxjs/operators';
-import { NeuralNetworkSettings } from 'src/app/models/create-nn.model';
+import { NeuralNetworkSettings } from 'src/app/models/neural-network.model';
 import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider, WeightedEdges, WeightedTopology } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
@@ -145,9 +145,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
           this.epochSlider = {
-            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ?
-              selectedNetwork.nnSettings.configurations.epoch : 1,
-            maxEpoch: selectedNetwork.nnSettings.configurations.epoch,
+            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? 1 : 1, 
+            //   selectedNetwork.nnSettings.configurations.epoch : 1,
+            maxEpoch: 1, //selectedNetwork.nnSettings.configurations.epoch,
             isPlaying: false
           };
 

@@ -22,7 +22,9 @@ class Net(nn.Module):
         layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
     
     :Global attributes:
-        activations: (Dictionary) Dictionary of activation function so it can be called with a string.
+        __activations: (Dictionary) Dictionary of activation function so it can be called with a string.
+        __loss: (Dictionary) Dictionary of loss function so it can be called with a string.
+        __optimizer: (Dictionary) Dictionary of optimizer so it can be called with a string.
     '''
     __activations = {
     'relu': F.relu,
@@ -30,8 +32,19 @@ class Net(nn.Module):
     'tanh': F.tanh,
     'softmax': F.softmax
     }
+
+    __loss = {
+        'crossEntropy': nn.CrossEntropyLoss,
+        'nLogLikelihood': nn.NLLLoss,
+        'mse': nn.MSELoss
+    }
+
+    __optimizer = {
+        'sgd': optim.SGD,
+        'adam': optim.Adam
+    }
     
-    def __init__(self, input_dim = [], layers = []):
+    def __init__(self, input_dim = [1], layers = []):
         super(Net, self).__init__()
         dim_list = []
         if len(input_dim) is 1:
@@ -90,7 +103,7 @@ class Net(nn.Module):
         
         return x
 
-    def train_start(self, num_epochs, trainloader, criterion, optimizer, device = "cpu"):
+    def train_start(self, num_epochs, trainloader, loss, opti, l_rate, device = "cpu"):
         '''
         Train the neural network and returns a list with a dictionary for each epoch with weights.
 
@@ -98,10 +111,15 @@ class Net(nn.Module):
             num_epochs: (Integer) Number of epochs the network should be trained.
             device: (String) Divice that will be used for the training. Default is cpu.
             trainloader: (trainloader) Train data the model should be trained for.
-            criterion: (nn.Loss_Function) Loss Function for the training.
-            optimizer: (nn.optim.function) Function for the optimazation of the weights.
+            loss: (string) Loss Function for the training.
+            opti: (string) Function for the optimazation of the weights.
+            l_rate: (Float) learningrate for the training.
         '''
         log_interval = 10
+
+        criterion = Net.__loss[loss]()
+
+        optimizer = Net.__optimizer[opti](self.parameters(), lr=l_rate)
 
         # dict for storeing the weights after an epoch
         epoch_weights_list = []
@@ -126,8 +144,10 @@ class Net(nn.Module):
             epoch_weights_list.append(get_weights(self))
         return epoch_weights_list
 
-    def test_start(self, criterion, testloader, device = "cpu"):
+    def test_start(self, loss, testloader, device = "cpu"):
         # test the net
+        criterion = Net.__loss[loss]()
+
         test_loss = 0
         correct = 0
         correct_class = np.zeros(10)
@@ -181,21 +201,22 @@ def create_model(input_dim, layers):
     '''
     return Net(input_dim, layers)
 
-def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, device = "cpu"):
+def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, l_rate, device = "cpu"):
     '''
     Trains a given model and returns for each epochs a list of layer dictionary with weights.
 
     :Parameters:
         model: (Net) Neural network that should be trained.
         num_epochs: (Integer) Number of epochs the network should be trained.
-        criterion: (nn.Loss_Function) Loss Function for the training.
-        optimizer: (nn.optim.function) Function for the optimazation of the weights.
+        criterion: (string) Loss Function for the training.
+        optimizer: (string) Function for the optimazation of the weights.
         trainset: Trainset of input data.
         batchsize: (Integer) Number of the Batches it should be used while training.
+        l_rate: (Float) learningrate for the training.
         device: (String) Divice that will be used for the training. Default is cpu.
     '''
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batchsize, shuffle=True, num_workers=2)
-    return model.train_start(num_epochs, trainloader, criterion, optimizer, device)
+    return model.train_start(num_epochs, trainloader, criterion, optimizer, l_rate, device)
     
 def test_model(model, criterion, testset, batchsize, device = "cpu"):
     '''
@@ -203,7 +224,7 @@ def test_model(model, criterion, testset, batchsize, device = "cpu"):
 
     :Parameters:
         model: (Net) Neural network that should be trained.
-        criterion: (nn.Loss_Function) Loss Function for the training.
+        criterion: (loss) Loss Function for the training.
         testset: Testset of input data.
         batchsize: (Integer) Number of the Batches it should be used while training.
         device: (String) Divice that will be used for the training. Default is cpu.
@@ -250,7 +271,7 @@ def load_model_from_weights(weights_dict, input_dim, epoch = -1):
     '''
     ordered_dict = collections.OrderedDict()
     layer_settings_list = []
-    epoch_num = str(weights_dict["epochs"] - 1) if epoch is -1 else str(epoch)
+    epoch_num = str(weights_dict["epochs"]) if epoch is -1 else str(epoch)
     last_epoch = "epoch_" + epoch_num
     # for every layer in the last epoch of weights_dict it creates a weights and bias tensor and add it to the ordered_dict
     for i in range(len(weights_dict[last_epoch])):
@@ -266,6 +287,12 @@ def load_model_from_weights(weights_dict, input_dim, epoch = -1):
     model.load_state_dict(ordered_dict)
     model.eval()
     return model
+
+def get_device():
+    '''
+    Returns "cuda:0" if cuda is available else "cpu".
+    '''
+    return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Test the ablated network.
 # #refactoring later

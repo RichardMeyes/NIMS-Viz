@@ -1,4 +1,4 @@
-import { NeuralNetworkSettings } from './create-nn.model';
+import { NeuralNetworkSettings } from './neural-network.model';
 
 export class SavedNetworks {
     constructor(

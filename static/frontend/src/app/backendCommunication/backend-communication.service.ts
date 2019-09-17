@@ -3,7 +3,9 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 
 import { throwError, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NeuralNetworkSettingsJSON, NeuralNetworkSettings } from '../models/create-nn.model';
+
+import { environment } from 'src/environments/environment';
+import { NeuralNetworkSettingsJSON, NeuralNetworkSettings, TrainingSettingsJSON } from '../models/neural-network.model';
 
 /**
  * httpOptions copied from old project file don't know if its realy necessary.
@@ -28,20 +30,21 @@ const httpOptions = {
 })
 export class BackendCommunicationService {
   /**
-   * Backend URL has to be changed if the Backend is somewhere else
+   * Backend url.
    */
-  private _backendURL = 'http://localhost/api/';
-
-  /**
-   * For development only
-   */
-  // private _backendURL = 'http://localhost:3000/';
+  private _backendURL;
 
   /**
    * Constructor of BackendCommunication-Service
    * @param _http HTTP Module that provides HTTP communication
    */
-  constructor(private _http: HttpClient) { }
+  constructor(private _http: HttpClient) {
+    if (environment.production) {
+      this._backendURL = 'http://localhost/api';
+    } else {
+      this._backendURL = 'http://127.0.0.1:3000';
+    }
+  }
 
   /**
    * Tests the Communication with the Backend. If the Backend is listening it returns a "OK"
@@ -67,13 +70,21 @@ export class BackendCommunicationService {
   }
 
   /**
+   * Trainss a Neural Network with given parameters
+   * @param setup training settings
+   */
+  public trainNetwork(id: string, setup: TrainingSettingsJSON): Observable<any> {
+    const body = {id, setup}
+    return this._http.post(`${this._backendURL}/trainNetwork`, body);
+  }
+
+  /**
    * Loads network.
    * @param selectedNetwork the filename (static/data/topologies) of the network to be loaded.
    * @returns the network's settings
    */
-  public loadNetwork(selectedNetwork: string): Observable<any> {
-    const body = { filename: selectedNetwork };
-    return this._http.post(`${this._backendURL}/loadNetwork`, body);
+  public loadNetwork(uuid: string): Observable<any> {
+    return this._http.post(`${this._backendURL}/loadNetwork`, uuid);
   }
 
   /**

@@ -27,13 +27,16 @@ class Mongo:
         :Parameters:
             item_id: (string) The MongoDB uuid from the item you want to retrieve.
         '''
-        return self.__collection.find_one({"_id": ObjectId(item_id)})
+        item = self.__collection.find_one({"_id": ObjectId(item_id)})
+        item["_id"] = str(item["_id"])
+        return item
     
     def get_all_items(self):
         '''Returns a list of all items from the collaction'''
         
         item_list = []
         for item in self.__collection.find():
+            item["_id"] = str(item["_id"])
             item_list.append(item)
         
         return item_list
@@ -48,6 +51,7 @@ class Mongo:
         '''
         item_list = []
         for item in self.__collection.find({a_name: a_content}):
+            item["_id"] = str(item["_id"])
             item_list.append(item)
         
         return item_list
@@ -79,6 +83,7 @@ class Mongo:
 
         item_list = []
         for item in self.__collection.find({}, attribues_dict):
+            item["_id"] = str(item["_id"])
             item_list.append(item)
         return item_list
     
@@ -96,19 +101,21 @@ class Mongo:
 
         item_list = []
         for item in self.__collection.find(condition, attribues_dict):
+            item["_id"] = str(item["_id"])
             item_list.append(item)
         return item_list
 
 
     def post_item(self, item):
         '''
-        Posts an item to the database if it fails returns false, otherwise true.
+        Posts an item to the database if it fails returns false, otherwise true and returns the uuid.
+        Result is an array: first element is the uuid the sec. is the acknowledge.
         
         :Parameters:
             item: (Dictionary/JSON) Item you want to post in the database.
         '''
         result = self.__collection.insert_one(item)
-        return result.acknowledged
+        return [result.inserted_id, result.acknowledged]
 
     def post_many_items(self, items):
         '''

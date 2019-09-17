@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { NeuralNetworkSettings } from '../models/create-nn.model';
+import { NeuralNetworkSettings } from '../models/neural-network.model';
 import { EpochSlider } from '../models/layer-view.model';
 import { SavedNetworks } from '../models/saved-networks.model';
 import { TestResult } from '../models/ablation.model';
