@@ -140,7 +140,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         concatMap((selectedNetwork: SavedNetworks) => {
           return this.backend.loadNetwork(selectedNetwork.id);
         }),
-        concatMap((result: { nnSettings: NeuralNetworkSettings }) => {
+        concatMap((result: {
+          nnSettings: NeuralNetworkSettings,
+          maxEpoch: number
+        }) => {
           this.lastNNSettings = result.nnSettings;
 
           this.setupTopology();
@@ -148,9 +151,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
           this.epochSlider = {
-            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? 1 : 1,
-            //   selectedNetwork.nnSettings.configurations.epoch : 1,
-            maxEpoch: 1, //selectedNetwork.nnSettings.configurations.epoch,
+            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? result.maxEpoch : 1,
+            maxEpoch: result.maxEpoch,
             isPlaying: false
           };
 

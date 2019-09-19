@@ -128,7 +128,10 @@ export class BackendCommunicationService {
             }
           });
 
-          return { nnSettings };
+          return {
+            nnSettings,
+            maxEpoch: network.epochs
+          };
         })
       );
   }
