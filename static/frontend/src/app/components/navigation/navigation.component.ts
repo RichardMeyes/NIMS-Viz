@@ -41,8 +41,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
         this.savedNetworks = [];
 
         savedNetworks.forEach(savedNetwork => {
-          const viewName = 'MLP_';
-          const adjSavedNetwork: SavedNetworks = Object.assign({}, savedNetwork, { viewName });
+          const adjSavedNetwork: SavedNetworks = Object.assign({}, savedNetwork);
           this.savedNetworks.push(adjSavedNetwork);
         });
       });

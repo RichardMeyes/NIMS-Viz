@@ -148,7 +148,7 @@ def loadNetwork():
 @app.route("/getSavedNetworks", methods=["GET", "OPTIONS"])
 @cross_origin()
 def getSavedNetworks():
-    item = DB_CONNECTION.get_all_attributes("name")
+    item = DB_CONNECTION.get_all_attributes(["id", "name"])
     
     return json.dumps(item)
 
