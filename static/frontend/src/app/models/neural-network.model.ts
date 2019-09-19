@@ -1,5 +1,3 @@
-import { environment } from 'src/environments/environment';
-
 export enum Convolution {
     Conv2d = 'conv2d'
 }
@@ -9,10 +7,70 @@ export enum Pooling {
 }
 
 /**
+ * Enums of possible Activations
+ */
+export enum Activation {
+    none = 'none',
+    relu = 'relu',
+    rrelu = 'rrelu',
+    hardtanh = 'hardtanh',
+    sigmoid = 'sigmoid',
+    tanh = 'tanh',
+    elu = 'elu',
+    celu = 'celu',
+    selu = 'selu',
+    glu = 'glu',
+    leakyRelu = 'leakyRelu',
+    logSigmoid = 'logSigmoid',
+    softplus = 'softplus',
+    softmax = 'softmax',
+    logSoftmax = 'logSoftmax',
+}
+
+
+/**
  * Channel is a Helping Class that links the number of the channels for the ConvLayers
  */
 export class Channel {
     constructor(public value: number) { }
+}
+
+/**
+ * Parent Class of all Layers Contains all shared attributes
+ */
+export class Layer {
+    /**
+     *
+     * @param type Type of the Layer
+     * @param activation Activation function of the Layer
+     */
+    constructor(public type: string, public activation: Activation) {
+    }
+}
+
+/**
+ * ConvLayer Class extends from Layer
+ */
+export class ConvLayer extends Layer {
+    /**
+     *
+     * @param type Type of the Layer
+     * @param inChannel Type is Channel: Number of Incoming Channel size 
+     * @param outChannel Type is Channel: Number of Outgoing Channel size
+     * @param kernelSize Number of Kernel Size
+     * @param stride Number of stride
+     * @param padding Number of padding
+     * @param activation Activation Function
+     */
+    constructor(
+        public type: string,
+        public inChannel: Channel,
+        public outChannel: Channel,
+        public kernelSize: number = 0,
+        public stride: number = 1,
+        public padding: number = 0,
+        public activation: Activation = Activation.none
+    ) { super(type, activation); }
 }
 
 export class TrainingSettings {
@@ -136,65 +194,6 @@ export class NeuralNetworkSettings {
     public toJSON() {
         return;
     }
-}
-
-/**
- * Enums of possible Activations
- */
-export enum Activation {
-    none = 'none',
-    relu = 'relu',
-    rrelu = 'rrelu',
-    hardtanh = 'hardtanh',
-    sigmoid = 'sigmoid',
-    tanh = 'tanh',
-    elu = 'elu',
-    celu = 'celu',
-    selu = 'selu',
-    glu = 'glu',
-    leakyRelu = 'leakyRelu',
-    logSigmoid = 'logSigmoid',
-    softplus = 'softplus',
-    softmax = 'softmax',
-    logSoftmax = 'logSoftmax',
-}
-
-/**
- * Parent Class of all Layers Contains all shared attributes
- */
-export class Layer {
-    /**
-     *
-     * @param type Type of the Layer
-     * @param activation Activation function of the Layer
-     */
-    constructor(public type: string, public activation: Activation) {
-    }
-}
-
-/**
- * ConvLayer Class extends from Layer
- */
-export class ConvLayer extends Layer {
-    /**
-     *
-     * @param type Type of the Layer
-     * @param inChannel Type is Channel: Number of Incoming Channel size 
-     * @param outChannel Type is Channel: Number of Outgoing Channel size
-     * @param kernelSize Number of Kernel Size
-     * @param stride Number of stride
-     * @param padding Number of padding
-     * @param activation Activation Function
-     */
-    constructor(
-        public type: string,
-        public inChannel: Channel,
-        public outChannel: Channel,
-        public kernelSize: number = 0,
-        public stride: number = 1,
-        public padding: number = 0,
-        public activation: Activation = Activation.none
-    ) { super(type, activation); }
 }
 
 /**
