@@ -128,9 +128,18 @@ export class BackendCommunicationService {
             }
           });
 
+          const nnWeights = {};
+          Object.keys(network).forEach(key => {
+            if (key.startsWith('epoch_') && key !== 'epoch_0') {
+              nnWeights[key] = network[key];
+            }
+          });
+
           return {
             nnSettings,
-            maxEpoch: network.epochs
+            maxEpoch: network.epochs,
+            untrainedWeights: network.epoch_0,
+            nnWeights
           };
         })
       );

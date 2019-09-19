@@ -139,33 +139,27 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         }),
         concatMap((selectedNetwork: SavedNetworks) => {
           return this.backend.loadNetwork(selectedNetwork.id);
-        }),
-        concatMap((result: {
-          nnSettings: NeuralNetworkSettings,
-          maxEpoch: number
-        }) => {
-          this.lastNNSettings = result.nnSettings;
-
-          this.setupTopology();
-          this.bindTopology();
-
-
-          this.epochSlider = {
-            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? result.maxEpoch : 1,
-            maxEpoch: result.maxEpoch,
-            isPlaying: false
-          };
-
-
-          return this.backend.loadWeights(selectedNetwork.fileName.replace('.json', '_untrained.json'));
-        }),
-        // concatMap(untrainedWeights => {
-        //   this.untrainedWeights = untrainedWeights;
-        //   return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
-        // })
+        })
       )
-      .subscribe(nnWeights => {
-        // this.lastNNWeights = nnWeights;
+      .subscribe((result: {
+        nnSettings: NeuralNetworkSettings,
+        maxEpoch: number,
+        untrainedWeights,
+        nnWeights
+      }) => {
+        this.lastNNSettings = result.nnSettings;
+        this.setupTopology();
+        this.bindTopology();
+
+        this.epochSlider = {
+          currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? result.maxEpoch : 1,
+          maxEpoch: result.maxEpoch,
+          isPlaying: false
+        };
+
+        this.untrainedWeights = result.untrainedWeights;
+
+        this.lastNNWeights = result.nnWeights;
         // if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {
         //   this.updateWeights(true);
         // }
