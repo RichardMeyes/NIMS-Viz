@@ -1,5 +1,13 @@
 import { environment } from 'src/environments/environment';
 
+export enum Convolution {
+    Conv2d = 'conv2d'
+}
+
+export enum Pooling {
+    MaxPool2d = 'maxPool2d'
+}
+
 /**
  * Channel is a Helping Class that links the number of the channels for the ConvLayers
  */
@@ -8,12 +16,12 @@ class Channel {
 }
 
 export class TrainingSettings {
-    constructor (
+    constructor(
         public batchSize: number = 64,
         public epochs: number = 1,
         public learningRate: number = 0.001,
-        public loss: string = "crossEntropy",
-        public optimizer: string = "sgd"
+        public loss: string = 'crossEntropy',
+        public optimizer: string = 'sgd'
     ) { }
 }
 
@@ -61,7 +69,7 @@ export class NeuralNetworkSettings {
      */
     constructor() {
         this.inputSize = { x: 28, y: 28, z: new Channel(1) };
-        this.name = "Network Name"
+        this.name = 'Network Name';
     }
 
     /**
@@ -71,14 +79,14 @@ export class NeuralNetworkSettings {
         if (this._convLayers.length > 0) {
             let i = 1;
             // gets the leatest convlayer and ignores the pooling layer
-            while (this._convLayers[this._convLayers.length - i].type !== "conv2d") {
+            while (this._convLayers[this._convLayers.length - i].type !== Convolution.Conv2d) {
                 i++;
             }
             const chainChannel = this._convLayers[this._convLayers.length - i].outChannel;
-            const layer = new ConvLayer("conv2d", chainChannel, new Channel(0));
+            const layer = new ConvLayer(Convolution.Conv2d, chainChannel, new Channel(0));
             this._convLayers.push(layer);
         } else {
-            const layer = new ConvLayer("conv2d", this.inputSize.z, new Channel(0));
+            const layer = new ConvLayer(Convolution.Conv2d, this.inputSize.z, new Channel(0));
             this._convLayers.push(layer);
         }
     }
@@ -90,7 +98,7 @@ export class NeuralNetworkSettings {
         if (this._convLayers.length > 0) {
             const inChain = this._convLayers[this._convLayers.length - 1].inChannel;
             const outChain = this._convLayers[this._convLayers.length - 1].outChannel;
-            const poolLayer = new ConvLayer("maxPool2d", inChain, outChain, 2, 2);
+            const poolLayer = new ConvLayer(Pooling.MaxPool2d, inChain, outChain, 2, 2);
             this._convLayers.push(poolLayer);
         }
     }
@@ -104,7 +112,7 @@ export class NeuralNetworkSettings {
         if (id !== this._convLayers.length - 1) {
             const chainChannel = id > 0 ? this._convLayers[id - 1].outChannel : this.inputSize.z;
             let i = 1;
-            while (id + i <= this._convLayers.length - 1 && this._convLayers[id + i].type !== "conv2d") {
+            while (id + i <= this._convLayers.length - 1 && this._convLayers[id + i].type !== Convolution.Conv2d) {
                 i++;
             }
             this._convLayers[id + i].inChannel = chainChannel;
@@ -130,7 +138,7 @@ export class NeuralNetworkSettings {
 
     /**
      * Convert all setting Information of the Neural Network to a JSON string
-     * !!! Not implemented yet!!!! 
+     * !!! Not implemented yet!!!!
      */
     public toJSON() {
         return;
@@ -163,7 +171,7 @@ export enum Activation {
  */
 export class Layer {
     /**
-     * 
+     *
      * @param type Type of the Layer
      * @param activation Activation function of the Layer
      */
@@ -176,7 +184,7 @@ export class Layer {
  */
 export class ConvLayer extends Layer {
     /**
-     * 
+     *
      * @param type Type of the Layer
      * @param inChannel Type is Channel: Number of Incoming Channel size 
      * @param outChannel Type is Channel: Number of Outgoing Channel size
@@ -193,7 +201,7 @@ export class ConvLayer extends Layer {
         public stride: number = 1,
         public padding: number = 0,
         public activation: Activation = Activation.none
-    ) { super(type, activation) }
+    ) { super(type, activation); }
 }
 
 /**
@@ -201,7 +209,7 @@ export class ConvLayer extends Layer {
  */
 export class DenseLayer extends Layer {
     /**
-     * 
+     *
      * @param type Type of the Layer
      * @param size Number of Nodes in the fully Connected Layer
      * @param activation Activation function
@@ -210,7 +218,7 @@ export class DenseLayer extends Layer {
         public type: string,
         public size: number = 0,
         public activation: Activation = Activation.none
-    ) { super(type, activation) }
+    ) { super(type, activation); }
 }
 
 export interface NeuralNetworkSettingsJSON {
