@@ -54,22 +54,15 @@ export class NeuralNetworkSettings {
 
 
     /**
-     * Object Attribute that gets x, y and z axis for the Input.
-     * The z axis is also the Channel output for the first ConvLayer
-     */
-    public inputSize: { x: number, y: number, z: Channel }
-
-    /**
-     * Name of the Network that will be saved in the database
-     */
-    public name: string;
-
-    /**
      * Sets the inputSize to Default x = 0, y = 0, z = Channel.value = 0
+     * @param [inputSize] Object Attribute that gets x, y and z axis for the Input.
+     * The z axis is also the Channel output for the first ConvLayer
+     * @param [name] Name of the Network that will be saved in the database
      */
-    constructor() {
-        this.inputSize = { x: 28, y: 28, z: new Channel(1) };
-        this.name = 'Network Name';
+    constructor(
+        public inputSize = { x: 28, y: 28, z: new Channel(1) },
+        public name = 'Network Name'
+    ) {
     }
 
     /**
