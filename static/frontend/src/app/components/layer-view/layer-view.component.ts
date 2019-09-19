@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/co
 import { EventsService } from 'src/app/services/events.service';
 import * as d3 from 'd3';
 import { debounceTime, takeUntil, concatMap, filter } from 'rxjs/operators';
-import { NeuralNetworkSettings } from 'src/app/models/neural-network.model';
+import { NeuralNetworkSettings, Pooling } from 'src/app/models/neural-network.model';
 import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider, WeightedEdges, WeightedTopology } from 'src/app/models/layer-view.model';
 import { DataService } from 'src/app/services/data.service';
 import { Subject } from 'rxjs';
@@ -145,7 +145,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
           this.epochSlider = {
-            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? 1 : 1, 
+            currEpoch: (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) ? 1 : 1,
             //   selectedNetwork.nnSettings.configurations.epoch : 1,
             maxEpoch: 1, //selectedNetwork.nnSettings.configurations.epoch,
             isPlaying: false
@@ -182,7 +182,12 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
     if (this.lastNNSettings.convLayers.length > 0) {
       convLayers.push(this.lastNNSettings.convLayers[0].inChannel.value);
-      convLayers.push(...this.lastNNSettings.convLayers.map(convLayer => +convLayer.outChannel.value));
+
+      this.lastNNSettings.convLayers.forEach(convLayer => {
+        if (convLayer.type !== Pooling.MaxPool2d) {
+          convLayers.push(+convLayer.outChannel.value);
+        }
+      });
     }
     if (this.lastNNSettings.denseLayers.length > 0) {
       layers.push(...this.lastNNSettings.denseLayers.map(layer => +layer.size));
