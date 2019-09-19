@@ -1,27 +1,27 @@
 version: "3.5"
 
 services:
-  # database:
-  #   image: mysql:5.6
-  #   hostname: database
-  #   environment:
-  #     - MYSQL_ROOT_HOST=%
-  #     - MYSQL_ROOT_PASSWORD=root
-  #     - MYSQL_DATABASE=platform-finder
-  #   ports:
-  #     - 3306:3306
+  database:
+    container_name: database
+    image: mongo:4.2
+    ports:
+      - 27017:27017
 
   backend:
-    # depends_on:
-    #   - database
+    container_name: backend
+    depends_on:
+      - database
     restart: on-failure
     build:
       context: ./static/backend
       dockerfile: Dockerfile
     ports:
       - 3000:3000
+    links:
+      - database
 
   frontend:
+    container_name: frontend
     depends_on:
       - backend
     restart: on-failure

@@ -6,3 +6,4 @@ werkzeug
 torch
 torchvision
 opencv-python
+pymongo

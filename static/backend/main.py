@@ -12,7 +12,8 @@ import neural_network_module as neural_network
 import mongo_module as mongo
 
 # creates a communication channel with mongoDB
-DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
+# DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 # if gpu with cuda is available set it to it.
 DEVICE = neural_network.get_device()
 
