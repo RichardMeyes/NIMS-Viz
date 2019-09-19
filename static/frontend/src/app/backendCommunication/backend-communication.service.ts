@@ -2,10 +2,19 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 
 import { throwError, Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, take, map } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
-import { NeuralNetworkSettingsJSON, NeuralNetworkSettings, TrainingSettingsJSON } from '../models/neural-network.model';
+import {
+  NeuralNetworkSettingsJSON,
+  NeuralNetworkSettings,
+  TrainingSettingsJSON,
+  Channel,
+  Convolution,
+  Pooling,
+  ConvLayer,
+  DenseLayer
+} from '../models/neural-network.model';
 
 /**
  * httpOptions copied from old project file don't know if its realy necessary.
@@ -74,7 +83,7 @@ export class BackendCommunicationService {
    * @param setup training settings
    */
   public trainNetwork(id: string, setup: TrainingSettingsJSON): Observable<any> {
-    const body = {id, setup}
+    const body = { id, setup }
     return this._http.post(`${this._backendURL}/trainNetwork`, body);
   }
 
@@ -84,7 +93,49 @@ export class BackendCommunicationService {
    * @returns the network's settings
    */
   public loadNetwork(uuid: string): Observable<any> {
-    return this._http.post(`${this._backendURL}/loadNetwork`, uuid);
+    const body = { uuid };
+    return this._http.post(`${this._backendURL}/loadNetwork`, body)
+      .pipe(
+        take(1),
+        map((network: { [key: string]: any }) => {
+          const inputSize = {
+            x: network.input_dim[0],
+            y: network.input_dim[1],
+            z: new Channel(network.input_dim[2])
+          };
+
+          const nnSettings = new NeuralNetworkSettings(
+            inputSize,
+            network.name
+          );
+
+          Object.keys(network.epoch_0).forEach(layer => {
+            if (Object.values(Convolution).includes(network.epoch_0[layer].settings.type) ||
+              Object.values(Pooling).includes(network.epoch_0[layer].settings.type)
+            ) {
+              const convLayer = new ConvLayer(
+                network.epoch_0[layer].settings.type,
+                network.epoch_0[layer].settings.inChannel,
+                network.epoch_0[layer].settings.outChannel,
+                network.epoch_0[layer].settings.kernelSize,
+                network.epoch_0[layer].settings.stride,
+                network.epoch_0[layer].settings.padding,
+                network.epoch_0[layer].settings.activation
+              );
+              nnSettings.convLayers.push(convLayer);
+            } else {
+              const denseLayer = new DenseLayer(
+                network.epoch_0[layer].settings.type,
+                network.epoch_0[layer].settings.outChannel,
+                network.epoch_0[layer].settings.activation
+              );
+              nnSettings.denseLayers.push(denseLayer);
+            }
+          });
+
+          return nnSettings;
+        })
+      );
   }
 
   /**

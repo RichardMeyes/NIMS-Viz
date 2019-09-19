@@ -11,7 +11,7 @@ export enum Pooling {
 /**
  * Channel is a Helping Class that links the number of the channels for the ConvLayers
  */
-class Channel {
+export class Channel {
     constructor(public value: number) { }
 }
 
