@@ -115,8 +115,8 @@ export class BackendCommunicationService {
             ) {
               const convLayer = new ConvLayer(
                 network.epoch_0[layer].settings.type,
-                network.epoch_0[layer].settings.inChannel,
-                network.epoch_0[layer].settings.outChannel,
+                new Channel(network.epoch_0[layer].settings.inChannel),
+                new Channel(network.epoch_0[layer].settings.outChannel),
                 network.epoch_0[layer].settings.kernelSize,
                 network.epoch_0[layer].settings.stride,
                 network.epoch_0[layer].settings.padding,

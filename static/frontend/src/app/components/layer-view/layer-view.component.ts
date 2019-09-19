@@ -138,7 +138,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           }
         }),
         concatMap((selectedNetwork: SavedNetworks) => {
-          this.lastNNSettings = selectedNetwork.nnSettings;
+          return this.backend.loadNetwork(selectedNetwork.id);
+        }),
+        concatMap((nnSettings: NeuralNetworkSettings) => {
+          this.lastNNSettings = nnSettings;
 
           this.setupTopology();
           this.bindTopology();
@@ -154,16 +157,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
           return this.backend.loadWeights(selectedNetwork.fileName.replace('.json', '_untrained.json'));
         }),
-        concatMap(untrainedWeights => {
-          this.untrainedWeights = untrainedWeights;
-          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
-        })
+        // concatMap(untrainedWeights => {
+        //   this.untrainedWeights = untrainedWeights;
+        //   return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
+        // })
       )
       .subscribe(nnWeights => {
-        this.lastNNWeights = nnWeights;
-        if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {
-          this.updateWeights(true);
-        }
+        // this.lastNNWeights = nnWeights;
+        // if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {
+        //   this.updateWeights(true);
+        // }
       });
   }
 
