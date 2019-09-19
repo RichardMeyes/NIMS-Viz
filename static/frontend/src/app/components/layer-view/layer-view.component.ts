@@ -140,8 +140,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         concatMap((selectedNetwork: SavedNetworks) => {
           return this.backend.loadNetwork(selectedNetwork.id);
         }),
-        concatMap((nnSettings: NeuralNetworkSettings) => {
-          this.lastNNSettings = nnSettings;
+        concatMap((result: { nnSettings: NeuralNetworkSettings }) => {
+          this.lastNNSettings = result.nnSettings;
 
           this.setupTopology();
           this.bindTopology();

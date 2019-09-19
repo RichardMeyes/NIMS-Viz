@@ -92,28 +92,25 @@ export class BackendCommunicationService {
    * @param selectedNetwork the filename (static/data/topologies) of the network to be loaded.
    * @returns the network's settings
    */
-  public loadNetwork(uuid: string): Observable<any> {
+  loadNetwork(uuid: string): Observable<any> {
     const body = { uuid };
     return this._http.post(`${this._backendURL}/loadNetwork`, body)
       .pipe(
         take(1),
         map((network: { [key: string]: any }) => {
-          const inputSize = {
-            x: network.input_dim[0],
-            y: network.input_dim[1],
-            z: new Channel(network.input_dim[2])
-          };
-
           const nnSettings = new NeuralNetworkSettings(
-            inputSize,
+            {
+              x: network.input_dim[0],
+              y: network.input_dim[1],
+              z: new Channel(network.input_dim[2])
+            },
             network.name
           );
-
           Object.keys(network.epoch_0).forEach(layer => {
             if (Object.values(Convolution).includes(network.epoch_0[layer].settings.type) ||
               Object.values(Pooling).includes(network.epoch_0[layer].settings.type)
             ) {
-              const convLayer = new ConvLayer(
+              nnSettings.convLayers.push(new ConvLayer(
                 network.epoch_0[layer].settings.type,
                 new Channel(network.epoch_0[layer].settings.inChannel),
                 new Channel(network.epoch_0[layer].settings.outChannel),
@@ -121,19 +118,17 @@ export class BackendCommunicationService {
                 network.epoch_0[layer].settings.stride,
                 network.epoch_0[layer].settings.padding,
                 network.epoch_0[layer].settings.activation
-              );
-              nnSettings.convLayers.push(convLayer);
+              ));
             } else {
-              const denseLayer = new DenseLayer(
+              nnSettings.denseLayers.push(new DenseLayer(
                 network.epoch_0[layer].settings.type,
                 network.epoch_0[layer].settings.outChannel,
                 network.epoch_0[layer].settings.activation
-              );
-              nnSettings.denseLayers.push(denseLayer);
+              ));
             }
           });
 
-          return nnSettings;
+          return { nnSettings };
         })
       );
   }
@@ -181,16 +176,6 @@ export class BackendCommunicationService {
       koUnits
     };
     return this._http.post(`${this._backendURL}/testDigit`, body);
-  }
-
-  /**
-   * Loads weights.
-   * @param filename the filename (static/data/topologies) of the network to be loaded.
-   * @returns the network's weights.
-   */
-  loadWeights(filename: string): Observable<any> {
-    const body = { filename };
-    return this._http.post(`${this._backendURL}/loadWeights`, body);
   }
 
   /**
