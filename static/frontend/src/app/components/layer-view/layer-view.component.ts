@@ -120,17 +120,19 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         takeUntil(this.destroyed),
         concatMap((epochSlider: EpochSlider) => {
           this.epochSlider = epochSlider;
-          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName);
-        }),
-        concatMap(nnWeights => {
-          this.lastNNWeights = nnWeights;
-          this.updateWeights(true);
-
-          return this.backend.loadWeights(this.dataService.selectedNetwork.fileName.replace('.json', '_untrained.json'));
+          return this.backend.loadNetwork(this.dataService.selectedNetwork.id);
         })
       )
-      .subscribe(untrainedWeights => {
-        this.untrainedWeights = untrainedWeights;
+      .subscribe((result: {
+        nnSettings: NeuralNetworkSettings,
+        maxEpoch: number,
+        untrainedWeights,
+        nnWeights
+      }) => {
+        this.untrainedWeights = result.untrainedWeights;
+
+        this.lastNNWeights = result.nnWeights;
+        this.updateWeights(true);
       });
 
     this.eventsService.updateLayerView
