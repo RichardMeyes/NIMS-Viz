@@ -126,10 +126,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .subscribe((result: {
         nnSettings: NeuralNetworkSettings,
         maxEpoch: number,
-        untrainedWeights,
         nnWeights
       }) => {
-        this.untrainedWeights = result.untrainedWeights;
+        this.untrainedWeights = result.nnWeights.epoch_0;
 
         this.lastNNWeights = result.nnWeights;
         this.updateWeights(true);
@@ -157,7 +156,6 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .subscribe((result: {
         nnSettings: NeuralNetworkSettings,
         maxEpoch: number,
-        untrainedWeights,
         nnWeights
       }) => {
         this.lastNNSettings = result.nnSettings;
@@ -170,7 +168,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           isPlaying: false
         };
 
-        this.untrainedWeights = result.untrainedWeights;
+        this.untrainedWeights = result.nnWeights.epoch_0;
 
         this.lastNNWeights = result.nnWeights;
         if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {

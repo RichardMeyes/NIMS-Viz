@@ -13,7 +13,8 @@ import {
   Convolution,
   ConvLayer,
   DenseLayer,
-  Dense
+  Dense,
+  Pooling
 } from '../models/neural-network.model';
 
 /**
@@ -132,15 +133,22 @@ export class BackendCommunicationService {
 
           const nnWeights = {};
           Object.keys(network).forEach(key => {
-            if (key.startsWith('epoch_') && key !== 'epoch_0') {
-              nnWeights[key] = network[key];
+            if (key.startsWith('epoch_')) {
+              nnWeights[key] = {};
+
+              let layerIndex = 0;
+              Object.keys(network[key]).forEach(layer => {
+                if (!Object.values(Pooling).includes(network[key][layer].settings.type)) {
+                  nnWeights[key][`layer_${layerIndex}`] = network[key][layer];
+                  layerIndex++;
+                }
+              });
             }
           });
 
           return {
             nnSettings,
             maxEpoch: network.epochs,
-            untrainedWeights: network.epoch_0,
             nnWeights
           };
         })
