@@ -6,6 +6,10 @@ export enum Pooling {
     MaxPool2d = 'maxPool2d'
 }
 
+export enum Dense {
+    Linear = 'linear'
+}
+
 /**
  * Enums of possible Activations
  */

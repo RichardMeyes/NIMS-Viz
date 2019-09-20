@@ -1,15 +1,26 @@
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { EventsService } from 'src/app/services/events.service';
-import * as d3 from 'd3';
-import { debounceTime, takeUntil, concatMap, filter } from 'rxjs/operators';
-import { NeuralNetworkSettings, Pooling } from 'src/app/models/neural-network.model';
-import { LayerDefaultSettings, LayerTopology, LayerEdge, EpochSlider, WeightedEdges, WeightedTopology } from 'src/app/models/layer-view.model';
-import { DataService } from 'src/app/services/data.service';
+
 import { Subject } from 'rxjs';
+import { debounceTime, takeUntil, concatMap, filter } from 'rxjs/operators';
+
+import * as d3 from 'd3';
+
+import { DataService } from 'src/app/services/data.service';
+import { EventsService } from 'src/app/services/events.service';
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
+
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
 import { ActiveSideMenu } from 'src/app/models/navigation.model';
 import { TestDigitResult } from 'src/app/models/ablation.model';
+import { NeuralNetworkSettings, Pooling, Dense } from 'src/app/models/neural-network.model';
+import {
+  LayerDefaultSettings,
+  LayerTopology,
+  LayerEdge,
+  EpochSlider,
+  WeightedEdges,
+  WeightedTopology
+} from 'src/app/models/layer-view.model';
 
 /**
  * Component for network graph visualization
@@ -160,9 +171,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         this.untrainedWeights = result.untrainedWeights;
 
         this.lastNNWeights = result.nnWeights;
-        // if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {
-        //   this.updateWeights(true);
-        // }
+        if (this.dataService.activeSideMenu !== ActiveSideMenu.NetworkAblator) {
+          this.updateWeights(true);
+        }
       });
   }
 
@@ -533,7 +544,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   setupWeights() {
     const filteredData: WeightedEdges[] = [];
-    const currEpoch = `epoch_${this.epochSlider.currEpoch - 1}`;
+    const currEpoch = `epoch_${this.epochSlider.currEpoch}`;
     let diffsPerEpoch;
 
     const unitsPerColumn = Math.floor((this.minWidthHeight + this.defaultSettings.unitGutter) /
@@ -541,72 +552,81 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     const unitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
     const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
 
+    let isFirstDense = true;
+    let totalPoolingLayers = 0;
     Object.keys(this.lastNNWeights[currEpoch]).forEach((layer, layerIndex) => {
-      if (!layer.startsWith('c') && layer !== 'input') {
-        if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
-
-        const totalColumns = { layer: 1, nextLayer: 1 };
-        const column = { layer: -1, nextLayer: -1 };
-        if (this.lastNNWeights[currEpoch][layer][0].length > unitsPerColumn) {
-          totalColumns.layer = Math.ceil(this.lastNNWeights[currEpoch][layer][0].length / unitsPerColumn);
-        }
-        if (this.lastNNWeights[currEpoch][layer].length > unitsPerColumn) {
-          totalColumns.nextLayer = Math.ceil(this.lastNNWeights[currEpoch][layer].length / unitsPerColumn);
-        }
-
-        if (totalColumns.nextLayer % 2 === 1) {
-          column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
+      if (Object.values(Pooling).includes(this.lastNNWeights[currEpoch][layer].settings.type)) {
+        totalPoolingLayers++;
+      } else if (Object.values(Dense).includes(this.lastNNWeights[currEpoch][layer].settings.type)) {
+        if (isFirstDense) {
+          isFirstDense = !isFirstDense;
         } else {
-          column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
-        }
+          if (!diffsPerEpoch) { diffsPerEpoch = { min: 0, max: 0 }; }
 
-        targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
-        if (this.lastNNWeights[currEpoch][layer].length % unitsPerColumn !== 0) {
-          targetUnitSpacing.lastColumn = this.minWidthHeight / (this.lastNNWeights[currEpoch][layer].length % unitsPerColumn);
-        }
-
-        this.lastNNWeights[currEpoch][layer].forEach((destination, destinationIndex) => {
-          let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
-          if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
-          if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
-            targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
+          const currLayerWeights = this.lastNNWeights[currEpoch][layer].weights;
+          const totalColumns = { layer: 1, nextLayer: 1 };
+          const column = { layer: -1, nextLayer: -1 };
+          if (currLayerWeights[0].length > unitsPerColumn) {
+            totalColumns.layer = Math.ceil(currLayerWeights[0].length / unitsPerColumn);
+          }
+          if (currLayerWeights.length > unitsPerColumn) {
+            totalColumns.nextLayer = Math.ceil(currLayerWeights.length / unitsPerColumn);
           }
 
-          if (totalColumns.layer % 2 === 1) {
-            column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+          if (totalColumns.nextLayer % 2 === 1) {
+            column.nextLayer = Math.floor(totalColumns.nextLayer / 2) * -1 - 1;
           } else {
-            column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+            column.nextLayer = (totalColumns.nextLayer - 1) / 2 * -1 - 1;
           }
 
-          unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
-          if (destination.length % unitsPerColumn !== 0) {
-            unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
+          targetUnitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+          if (currLayerWeights.length % unitsPerColumn !== 0) {
+            targetUnitSpacing.lastColumn = this.minWidthHeight / (currLayerWeights.length % unitsPerColumn);
           }
 
-          destination.forEach((source, sourceIndex) => {
-            let currUnitSpacing = unitSpacing.otherColumns;
-            if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
-            if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+          currLayerWeights.forEach((destination, destinationIndex) => {
+            let targetCurrUnitSpacing = targetUnitSpacing.otherColumns;
+            if (destinationIndex % unitsPerColumn === 0) { column.nextLayer++; }
+            if (Math.floor(destinationIndex / unitsPerColumn) + 1 === totalColumns.nextLayer) {
+              targetCurrUnitSpacing = targetUnitSpacing.lastColumn;
+            }
 
-            if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
-            if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
+            if (totalColumns.layer % 2 === 1) {
+              column.layer = Math.floor(totalColumns.layer / 2) * -1 - 1;
+            } else {
+              column.layer = (totalColumns.layer - 1) / 2 * -1 - 1;
+            }
 
-            filteredData.push({
-              layer: layerIndex,
-              source: sourceIndex,
-              target: destinationIndex,
-              column: column.layer,
-              targetColumn: column.nextLayer,
-              // unitSpacing: (this.minWidthHeight / +destination.length),
-              // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
-              unitSpacing: currUnitSpacing,
-              targetUnitSpacing: targetCurrUnitSpacing,
-              unitsPerColumn,
-              value: source,
-              stroke: this.defaultSettings.color
+            unitSpacing.lastColumn = this.minWidthHeight / unitsPerColumn;
+            if (destination.length % unitsPerColumn !== 0) {
+              unitSpacing.lastColumn = this.minWidthHeight / (destination.length % unitsPerColumn);
+            }
+
+            destination.forEach((source, sourceIndex) => {
+              let currUnitSpacing = unitSpacing.otherColumns;
+              if (sourceIndex % unitsPerColumn === 0) { column.layer++; }
+              if (Math.floor(sourceIndex / unitsPerColumn) + 1 === totalColumns.layer) { currUnitSpacing = unitSpacing.lastColumn; }
+
+              if (source < diffsPerEpoch.min) { diffsPerEpoch.min = source; }
+              if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
+
+              filteredData.push({
+                layer: layerIndex - totalPoolingLayers,
+                source: sourceIndex,
+                target: destinationIndex,
+                column: column.layer,
+                targetColumn: column.nextLayer,
+                // unitSpacing: (this.minWidthHeight / +destination.length),
+                // targetUnitSpacing: (this.minWidthHeight / +this.inputWeights[currEpoch][layer].length),
+                unitSpacing: currUnitSpacing,
+                targetUnitSpacing: targetCurrUnitSpacing,
+                unitsPerColumn,
+                value: source,
+                stroke: this.defaultSettings.color
+              });
             });
           });
-        });
+        }
       }
     });
 
