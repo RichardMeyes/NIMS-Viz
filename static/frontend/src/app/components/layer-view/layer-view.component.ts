@@ -128,6 +128,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         maxEpoch: number,
         nnWeights
       }) => {
+        this.lastNNSettings = result.nnSettings;
         this.untrainedWeights = result.nnWeights.epoch_0;
 
         this.lastNNWeights = result.nnWeights;
