@@ -11,9 +11,9 @@ import {
   TrainingSettingsJSON,
   Channel,
   Convolution,
-  Pooling,
   ConvLayer,
-  DenseLayer
+  DenseLayer,
+  Dense
 } from '../models/neural-network.model';
 
 /**
@@ -85,9 +85,10 @@ export class BackendCommunicationService {
    * Trainss a Neural Network with given parameters
    * @param setup training settings
    */
-  public trainNetwork(id: string, setup: TrainingSettingsJSON): Observable<any> {
+  trainNetwork(id: string, setup: TrainingSettingsJSON): Observable<any> {
     const body = { id, setup }
-    return this._http.post(`${this._backendURL}/trainNetwork`, body);
+    return this._http.post(`${this._backendURL}/trainNetwork`, body)
+      .pipe(take(1));
   }
 
   /**
@@ -110,9 +111,7 @@ export class BackendCommunicationService {
             network.name
           );
           Object.keys(network.epoch_0).forEach(layer => {
-            if (Object.values(Convolution).includes(network.epoch_0[layer].settings.type) ||
-              Object.values(Pooling).includes(network.epoch_0[layer].settings.type)
-            ) {
+            if (Object.values(Convolution).includes(network.epoch_0[layer].settings.type)) {
               nnSettings.convLayers.push(new ConvLayer(
                 network.epoch_0[layer].settings.type,
                 new Channel(network.epoch_0[layer].settings.inChannel),
@@ -122,7 +121,7 @@ export class BackendCommunicationService {
                 network.epoch_0[layer].settings.padding,
                 network.epoch_0[layer].settings.activation
               ));
-            } else {
+            } else if (Object.values(Dense).includes(network.epoch_0[layer].settings.type)) {
               nnSettings.denseLayers.push(new DenseLayer(
                 network.epoch_0[layer].settings.type,
                 network.epoch_0[layer].settings.outChannel,

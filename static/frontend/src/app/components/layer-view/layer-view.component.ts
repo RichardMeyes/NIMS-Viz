@@ -196,9 +196,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       convLayers.push(this.lastNNSettings.convLayers[0].inChannel.value);
 
       this.lastNNSettings.convLayers.forEach(convLayer => {
-        if (convLayer.type !== Pooling.MaxPool2d) {
-          convLayers.push(+convLayer.outChannel.value);
-        }
+        convLayers.push(+convLayer.outChannel.value);
       });
     }
     if (this.lastNNSettings.denseLayers.length > 0) {
