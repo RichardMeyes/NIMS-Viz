@@ -119,7 +119,7 @@ def trainNetwork():
     
     DB_CONNECTION.update_item(uuid, epoch_dict)
     MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
-    return json.dumps(str(MODEL_DICT))
+    return json.dumps(MODEL_DICT)
 
 
 # # Load network's settings
