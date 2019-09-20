@@ -1,12 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { SavedNetworks } from 'src/app/models/saved-networks.model';
+import { takeUntil, filter, concatMap } from 'rxjs/operators';
+
+import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
 import { DataService } from 'src/app/services/data.service';
 import { EventsService } from 'src/app/services/events.service';
+
+import { SavedNetworks } from 'src/app/models/saved-networks.model';
 import { ActiveSideMenu } from 'src/app/models/navigation.model';
 
 @Component({
@@ -37,6 +39,21 @@ export class NavigationComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.backend.getSavedNetworks()
       .pipe(takeUntil(this.destroyed))
+      .subscribe(savedNetworks => {
+        this.savedNetworks = [];
+
+        savedNetworks.forEach(savedNetwork => {
+          const adjSavedNetwork = new SavedNetworks(savedNetwork._id, savedNetwork.name);
+          this.savedNetworks.push(adjSavedNetwork);
+        });
+      });
+
+    this.eventService.updateSavedNetworksList
+      .pipe(
+        takeUntil(this.destroyed),
+        filter(updateSavedNetworksList => updateSavedNetworksList),
+        concatMap(() => this.backend.getSavedNetworks())
+      )
       .subscribe(savedNetworks => {
         this.savedNetworks = [];
 

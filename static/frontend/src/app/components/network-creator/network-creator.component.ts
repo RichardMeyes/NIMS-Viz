@@ -125,6 +125,8 @@ export class NetworkCreatorComponent implements OnInit {
         })
       )
       .subscribe(trainedNetwork => {
+        this.eventsService.updateSavedNetworksList.next(true);
+
         const selectedNetwork: SavedNetworks = {
           id: trainedNetwork._id,
           fileName: trainedNetwork.name

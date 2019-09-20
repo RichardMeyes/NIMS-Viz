@@ -12,6 +12,12 @@ import { TestResult } from '../models/ablation.model';
   providedIn: 'root'
 })
 export class EventsService {
+
+  /**
+   * Update saved networks list.
+   */
+  updateSavedNetworksList: Subject<boolean>;
+
   /**
    * Update the topology of layer view.
    */
@@ -43,6 +49,7 @@ export class EventsService {
   clearAblationCharts: Subject<boolean>;
 
   constructor() {
+    this.updateSavedNetworksList = new Subject();
     this.updateTopology = new Subject();
     this.updateWeights = new Subject();
     this.updateLayerView = new Subject();
