@@ -194,7 +194,9 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       convLayers.push(this.lastNNSettings.convLayers[0].inChannel.value);
 
       this.lastNNSettings.convLayers.forEach(convLayer => {
-        convLayers.push(+convLayer.outChannel.value);
+        if (convLayer.type !== Pooling.MaxPool2d) {
+          convLayers.push(+convLayer.outChannel.value);
+        }
       });
     }
     if (this.lastNNSettings.denseLayers.length > 0) {
@@ -551,11 +553,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     const targetUnitSpacing = { otherColumns: this.minWidthHeight / unitsPerColumn, lastColumn: 0 };
 
     let isFirstDense = true;
-    let totalPoolingLayers = 0;
     Object.keys(this.lastNNWeights[currEpoch]).forEach((layer, layerIndex) => {
-      if (Object.values(Pooling).includes(this.lastNNWeights[currEpoch][layer].settings.type)) {
-        totalPoolingLayers++;
-      } else if (Object.values(Dense).includes(this.lastNNWeights[currEpoch][layer].settings.type)) {
+      if (Object.values(Dense).includes(this.lastNNWeights[currEpoch][layer].settings.type)) {
         if (isFirstDense) {
           isFirstDense = !isFirstDense;
         } else {
@@ -609,7 +608,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
               if (source > diffsPerEpoch.max) { diffsPerEpoch.max = source; }
 
               filteredData.push({
-                layer: layerIndex - totalPoolingLayers,
+                layer: layerIndex,
                 source: sourceIndex,
                 target: destinationIndex,
                 column: column.layer,
@@ -620,8 +619,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
                 targetUnitSpacing: targetCurrUnitSpacing,
                 unitsPerColumn,
                 value: source,
-                stroke: this.defaultSettings.color,
-                totalPoolingLayers
+                stroke: this.defaultSettings.color
               });
             });
           });
@@ -636,7 +634,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     this.wEdges.forEach(el => { el.stroke = this.generateWeightsColor(el); });
     this.topology.forEach(el => {
       const nodeColor = this.generateNodesColor(el);
-      this.wTopology.push(Object.assign({}, el, { fill: nodeColor.color, opacity: nodeColor.opacity, totalPoolingLayers }));
+      this.wTopology.push(Object.assign({}, el, { fill: nodeColor.color, opacity: nodeColor.opacity }));
     });
 
     this.wEdges = this.wEdges.filter(weight => weight.stroke !== this.defaultSettings.color);
@@ -692,10 +690,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         .delay(function (d) {
           const nodesDelay =
             self.defaultSettings.animationDuration *
-            (d.layer + 1 - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+            (d.layer + 1 - (self.lastNNSettings.convLayers.length + 1));
           const weightsDelay = 2.5 *
             self.defaultSettings.animationDuration *
-            (d.layer - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+            (d.layer - (self.lastNNSettings.convLayers.length + 1));
 
           return nodesDelay + weightsDelay;
         });
@@ -751,10 +749,10 @@ export class LayerViewComponent implements OnInit, OnDestroy {
         .duration(this.defaultSettings.animationDuration)
         .delay(function (d) {
           const nodesDelay = self.defaultSettings.animationDuration *
-            (d.layer - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+            (d.layer - (self.lastNNSettings.convLayers.length + 1));
           const weightsDelay = 2.5 *
             self.defaultSettings.animationDuration *
-            (d.layer - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+            (d.layer - (self.lastNNSettings.convLayers.length + 1));
 
           return nodesDelay + weightsDelay;
         });
