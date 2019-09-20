@@ -43,7 +43,8 @@ export class WeightedTopology extends LayerTopology {
         public isOutput: boolean,
         public isConv: boolean,
         public fill: string,
-        public opacity: number
+        public opacity: number,
+        public totalPoolingLayers: number
     ) {
         super(
             layer,
@@ -87,7 +88,8 @@ export class WeightedEdges extends LayerEdge {
         public targetUnitSpacing: number,
         public unitsPerColumn: number,
         public value: number,
-        public stroke: string
+        public stroke: string,
+        public totalPoolingLayers: number
     ) {
         super(
             layer,

@@ -622,7 +622,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
                 targetUnitSpacing: targetCurrUnitSpacing,
                 unitsPerColumn,
                 value: source,
-                stroke: this.defaultSettings.color
+                stroke: this.defaultSettings.color,
+                totalPoolingLayers
               });
             });
           });
@@ -637,7 +638,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     this.wEdges.forEach(el => { el.stroke = this.generateWeightsColor(el); });
     this.topology.forEach(el => {
       const nodeColor = this.generateNodesColor(el);
-      this.wTopology.push(Object.assign({}, el, { fill: nodeColor.color, opacity: nodeColor.opacity }));
+      this.wTopology.push(Object.assign({}, el, { fill: nodeColor.color, opacity: nodeColor.opacity, totalPoolingLayers }));
     });
 
     this.wEdges = this.wEdges.filter(weight => weight.stroke !== this.defaultSettings.color);
@@ -691,10 +692,13 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       enterWeights = enterWeights.transition()
         .duration(2.5 * this.defaultSettings.animationDuration)
         .delay(function (d) {
-          // const nodesDelay = self.defaultSettings.duration * (d.layer + 1);
-          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-          const nodesDelay = self.defaultSettings.animationDuration * (d.layer + 1 - self.lastNNSettings.convLayers.length - 1);
-          const weightsDelay = 2.5 * self.defaultSettings.animationDuration * (d.layer - self.lastNNSettings.convLayers.length - 1);
+          const nodesDelay =
+            self.defaultSettings.animationDuration *
+            (d.layer + 1 - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+          const weightsDelay = 2.5 *
+            self.defaultSettings.animationDuration *
+            (d.layer - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+
           return nodesDelay + weightsDelay;
         });
     }
@@ -748,10 +752,12 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       enterCircles = enterCircles.transition()
         .duration(this.defaultSettings.animationDuration)
         .delay(function (d) {
-          // const nodesDelay = self.defaultSettings.duration * d.layer;
-          // const weightsDelay = 2.5 * self.defaultSettings.duration * d.layer;
-          const nodesDelay = self.defaultSettings.animationDuration * (d.layer - self.lastNNSettings.convLayers.length - 1);
-          const weightsDelay = 2.5 * self.defaultSettings.animationDuration * (d.layer - self.lastNNSettings.convLayers.length - 1);
+          const nodesDelay = self.defaultSettings.animationDuration *
+            (d.layer - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+          const weightsDelay = 2.5 *
+            self.defaultSettings.animationDuration *
+            (d.layer - (self.lastNNSettings.convLayers.length + 1 - d.totalPoolingLayers));
+
           return nodesDelay + weightsDelay;
         });
     }
