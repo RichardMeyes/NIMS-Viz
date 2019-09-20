@@ -1,9 +1,13 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+
+import { concatMap } from 'rxjs/operators';
 
 import { BackendCommunicationService } from '../../backendCommunication/backend-communication.service';
 import { EventsService } from 'src/app/services/events.service';
 import { DataService } from 'src/app/services/data.service';
 
+import { SavedNetworks } from 'src/app/models/saved-networks.model';
+import { EpochSlider } from 'src/app/models/layer-view.model';
 import {
   NeuralNetworkSettings,
   ConvLayer,
@@ -22,7 +26,7 @@ import {
   templateUrl: './network-creator.component.html',
   styleUrls: ['./network-creator.component.scss']
 })
-export class NetworkCreatorComponent implements OnInit, AfterViewInit {
+export class NetworkCreatorComponent implements OnInit {
   /**
    * loads the possible settings for a neural network
    */
@@ -49,12 +53,6 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
     this._nnSettings = this.dataService.nnSettings;
     this._trainingSettings = this.dataService.trainingSettings;
   }
-
-
-  ngAfterViewInit() {
-  }
-
-
 
   /**
    * Adds a ConvLayer to the networksettings
@@ -119,28 +117,25 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
       optimizer: JSON.parse(JSON.stringify(this._trainingSettings.optimizer)),
     };
 
-    this.backend.createNetwork(setup).toPromise()
-      .then(item => {
-        const uuid = item._id;
-        this.backend.trainNetwork(uuid, trainSetup).subscribe()
+    this.backend.createNetwork(setup)
+      .pipe(
+        concatMap(newNetwork => {
+          const uuid = newNetwork._id;
+          return this.backend.trainNetwork(uuid, trainSetup);
+        })
+      )
+      .subscribe(trainedNetwork => {
+        const selectedNetwork: SavedNetworks = {
+          id: trainedNetwork._id,
+          fileName: trainedNetwork.name
+        };
+        this.dataService.selectedNetwork = selectedNetwork;
+
+        const epochSlider = new EpochSlider();
+        epochSlider.maxEpoch = trainedNetwork.epochs;
+        epochSlider.currEpoch = trainedNetwork.epochs;
+        this.eventsService.updateWeights.next(epochSlider);
       });
-    //   map(item => item["_id"]),
-    //   tap(uuid => this.backend.trainNetwork(uuid, trainSetup).subscribe())
-    // ).subscribe();
-
-    // (filename: string) => {
-    // const selectedNetwork: SavedNetworks = {
-    //   fileName: filename,
-    //   nnSettings: this._nnSettings,
-    //   viewName: ''
-    // };
-    // this.dataService.selectedNetwork = selectedNetwork;
-
-    // const epochSlider = new EpochSlider();
-    // epochSlider.maxEpoch = this._nnSettings.configurations.epoch;
-    // epochSlider.currEpoch = this._nnSettings.configurations.epoch;
-    // this.eventsService.updateWeights.next(epochSlider);
-    // }
   }
 
   /**
@@ -150,7 +145,6 @@ export class NetworkCreatorComponent implements OnInit, AfterViewInit {
     this.dataService.nnSettings = new NeuralNetworkSettings();
     this._nnSettings = this.dataService.nnSettings;
   }
-
 
   /**
    * Emits update-layer-view event

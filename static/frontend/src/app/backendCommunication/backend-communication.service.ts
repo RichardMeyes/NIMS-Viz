@@ -74,8 +74,11 @@ export class BackendCommunicationService {
    * Creats a Neural Network with given parameters
    * @param setup NN settings
    */
-  public createNetwork(setup: NeuralNetworkSettingsJSON): Observable<any> {
-    return this._http.post(`${this._backendURL}/createNetwork`, setup);
+  createNetwork(setup: NeuralNetworkSettingsJSON): Observable<any> {
+    return this._http.post(`${this._backendURL}/createNetwork`, setup)
+      .pipe(
+        take(1)
+      );
   }
 
   /**
