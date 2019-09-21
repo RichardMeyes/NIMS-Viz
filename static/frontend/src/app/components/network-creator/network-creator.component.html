@@ -26,22 +26,20 @@
     <ng-container *ngIf="!hideConfig">
       <div class="row center">
         <mat-form-field>
-          <input name="NetworkName" [(ngModel)]="_nnSettings.name" value={{_nnSettings.name}} matInput
-            placeholder="Network name">
+          <input name="NetworkName" [(ngModel)]="_nnSettings.name" matInput placeholder="Network name">
         </mat-form-field>
       </div>
       <div class="row center">
         <mat-form-field class="input-number">
           <input name="batchTrain" type="number" matInput min="1" placeholder="Batch Size Train"
-            [(ngModel)]="_trainingSettings.batchSize" value={{_trainingSettings.batchSize}}>
+            [(ngModel)]="_trainingSettings.batchSize">
         </mat-form-field>
         <mat-form-field class="input-number">
-          <input name="epoch" type="number" matInput min="0" placeholder="Epoch" [(ngModel)]="_trainingSettings.epochs"
-            value={{_trainingSettings.epochs}}>
+          <input name="epoch" type="number" matInput min="0" placeholder="Epoch" [(ngModel)]="_trainingSettings.epochs">
         </mat-form-field>
         <mat-form-field class="input-select">
           <mat-label>Learning Rate</mat-label>
-          <mat-select [(value)]="_trainingSettings.learningRate">
+          <mat-select [(ngModel)]="_trainingSettings.learningRate">
             <mat-option [value]="0.000001">0.000001</mat-option>
             <mat-option [value]="0.00001">0.00001</mat-option>
             <mat-option [value]="0.0001">0.0001</mat-option>
@@ -59,7 +57,7 @@
       <div class="row center">
         <mat-form-field class="input-select">
           <mat-label>Loss Function</mat-label>
-          <mat-select [(value)]="_trainingSettings.loss">
+          <mat-select [(ngModel)]="_trainingSettings.loss">
             <mat-option value="crossEntropy">Cross Entropy Loss</mat-option>
             <mat-option value="nLogLikelihood">Negativ Log-Likelihood</mat-option>
             <mat-option value="mse">MSE</mat-option>
@@ -67,7 +65,7 @@
         </mat-form-field>
         <mat-form-field class="input-select">
           <mat-label>Loss Function</mat-label>
-          <mat-select [(value)]="_trainingSettings.optimizer">
+          <mat-select [(ngModel)]="_trainingSettings.optimizer">
             <mat-option value="sgd">SGD</mat-option>
             <mat-option value="adam">adam</mat-option>
           </mat-select>
@@ -90,16 +88,14 @@
     <ng-container *ngIf="!hideInput">
       <div class="row center">
         <mat-form-field class="input-number">
-          <input name="xAxis" type="number" matInput min="0" placeholder="x axis" [(ngModel)]="_nnSettings.inputSize.x"
-            value={{_nnSettings.inputSize.x}}>
+          <input name="xAxis" type="number" matInput min="0" placeholder="x axis" [(ngModel)]="_nnSettings.inputSize.x">
         </mat-form-field>
         <mat-form-field class="input-number">
-          <input name="yAxis" type="number" matInput min="0" placeholder="y axis" [(ngModel)]="_nnSettings.inputSize.y"
-            value={{_nnSettings.inputSize.y}}>
+          <input name="yAxis" type="number" matInput min="0" placeholder="y axis" [(ngModel)]="_nnSettings.inputSize.y">
         </mat-form-field>
         <mat-form-field class="input-number">
           <input name="zAxis" type="number" matInput min="0" placeholder="z axis (Out Channel)"
-            [(ngModel)]="_nnSettings.inputSize.z.value" value={{_nnSettings.inputSize.z.value}}>
+            [(ngModel)]="_nnSettings.inputSize.z.value">
         </mat-form-field>
       </div>
     </ng-container>
@@ -121,41 +117,38 @@
         <ng-container *ngIf="layer.type === 'conv2d'">
           <mat-form-field class="input-number">
             <input name="inChannel" type="number" matInput min="0" placeholder="Input"
-              [(ngModel)]="layer.inChannel.value" (ngModelChange)="updateTopology()" value={{layer.inChannel.value}}>
+              [(ngModel)]="layer.inChannel.value" (ngModelChange)="updateTopology()">
           </mat-form-field>
           <mat-form-field class="input-number">
             <input name="outChannel" type="number" matInput min="0" placeholder="Output"
-              [(ngModel)]="layer.outChannel.value" (ngModelChange)="updateTopology()" value={{layer.outChannel.value}}>
+              [(ngModel)]="layer.outChannel.value" (ngModelChange)="updateTopology()">
           </mat-form-field>
         </ng-container>
 
         <ng-container *ngIf="layer.type !== 'conv2d'">
           <mat-form-field class="input-select">
             <mat-label>Pooling</mat-label>
-            <mat-select [(value)]="layer.type">
+            <mat-select [(ngModel)]="layer.type">
               <mat-option value="maxPool2d">Max</mat-option>
             </mat-select>
           </mat-form-field>
         </ng-container>
 
         <mat-form-field class="input-number">
-          <input name="kernel" type="number" matInput min="0" placeholder="Kernel" [(ngModel)]="layer.kernelSize"
-            value={{layer.kernelSize}}>
+          <input name="kernel" type="number" matInput min="0" placeholder="Kernel" [(ngModel)]="layer.kernelSize">
         </mat-form-field>
         <mat-form-field class="input-number">
-          <input name="stride" type="number" matInput min="1" placeholder="Stride" [(ngModel)]="layer.stride"
-            value={{layer.stride}}>
+          <input name="stride" type="number" matInput min="1" placeholder="Stride" [(ngModel)]="layer.stride">
         </mat-form-field>
 
         <ng-container *ngIf="layer.type === 'conv2d'">
           <mat-form-field class="input-number">
-            <input name="padding" type="number" matInput min="0" placeholder="Padding" [(ngModel)]="layer.padding"
-              value={{layer.padding}}>
+            <input name="padding" type="number" matInput min="0" placeholder="Padding" [(ngModel)]="layer.padding">
           </mat-form-field>
           <!-- selector options hard coded to improve use ngFor and a list of possibilities -->
           <mat-form-field class="input-select">
             <mat-label>Activation</mat-label>
-            <mat-select [(value)]="layer.activation">
+            <mat-select [(ngModel)]="layer.activation">
               <mat-option value="none">None</mat-option>
               <mat-option value="relu">Relu</mat-option>
               <!-- <mat-option value="rrelu">RRELU</mat-option> -->
@@ -195,12 +188,12 @@
       <div class="row center" *ngFor="let layer of _nnSettings.denseLayers">
         <mat-form-field class="input-number">
           <input name="inChannel" type="number" matInput min="0" placeholder="Input" [(ngModel)]="layer.size"
-            (ngModelChange)="updateTopology()" value={{layer.size}}>
+            (ngModelChange)="updateTopology()">
         </mat-form-field>
         <!-- selector options hard coded to improve use ngFor and a list of possibilities -->
         <mat-form-field class="input-select">
           <mat-label>Activation</mat-label>
-          <mat-select [(value)]="layer.activation">
+          <mat-select [(ngModel)]="layer.activation">
             <mat-option value="none">None</mat-option>
             <mat-option value="relu">Relu</mat-option>
             <mat-option value="rrelu">RRELU</mat-option>
