@@ -1309,18 +1309,16 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     const self = this;
 
 
-    const currEpoch = `epoch_${this.epochSlider.currEpoch - 1}`;
-    const incomingWeights = (this.selectedUnit.layer === 0) ?
-      'input' : `h${this.selectedUnit.layer}`;
-    const outgoingWeights = (this.selectedUnit.layer + 1 === this.lastNNSettings.denseLayers.length - 1) ?
-      'output' : `h${this.selectedUnit.layer + 1}`;
+    const currEpoch = `epoch_${this.epochSlider.currEpoch}`;
+    const incomingWeights = `layer_${this.selectedUnit.layer}`;
+    const outgoingWeights = `layer_${this.selectedUnit.layer + 1}`;
 
     const outgoingWeightsBefore = [];
     const outgoingWeightsAfter = [];
-    this.untrainedWeights.epoch_0[outgoingWeights].forEach(element => {
+    this.untrainedWeights[outgoingWeights].weights.forEach(element => {
       outgoingWeightsBefore.push(element[this.selectedUnit.unit]);
     });
-    this.lastNNWeights[currEpoch][outgoingWeights].forEach(element => {
+    this.lastNNWeights[currEpoch][outgoingWeights].weights.forEach(element => {
       outgoingWeightsAfter.push(element[this.selectedUnit.unit]);
     });
 
@@ -1407,8 +1405,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
 
     this.tooltipConfig.data = [];
-    this.tooltipConfig.data.push([...this.untrainedWeights.epoch_0[incomingWeights][this.selectedUnit.unit]]);
-    this.tooltipConfig.data.push([...this.lastNNWeights[currEpoch][incomingWeights][this.selectedUnit.unit]]);
+    this.tooltipConfig.data.push([...this.untrainedWeights[incomingWeights].weights[this.selectedUnit.unit]]);
+    this.tooltipConfig.data.push([...this.lastNNWeights[currEpoch][incomingWeights].weights[this.selectedUnit.unit]]);
     this.tooltipConfig.data.push([...outgoingWeightsBefore]);
     this.tooltipConfig.data.push([...outgoingWeightsAfter]);
 
@@ -1586,7 +1584,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    */
   showMLPTooltip(d, self, currCircle) {
     self.selectedUnit = Object.assign({}, d);
-    self.selectedUnit.layer -= (self.lastNNSettings.convLayers.length + 1);
+    self.selectedUnit.layer -= 1;
 
     if (!d.isOutput) {
       self.setupMLPTooltip();
