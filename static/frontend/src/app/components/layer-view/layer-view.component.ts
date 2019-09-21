@@ -940,8 +940,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
   bindConvTooltip(mouseX, mouseY) {
     const self = this;
 
-    const currEpoch = `epoch_${this.epochSlider.maxEpoch - 1}`;
-    const incomingFilters = `c${this.selectedUnit.layer}`;
+    const currEpoch = `epoch_${this.epochSlider.currEpoch}`;
+    const incomingFilters = `layer_${this.selectedUnit.layer}`;
 
 
     this.tooltipConfig.quadrantAdjustment = {
@@ -1032,8 +1032,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     this.tooltipConfig.data = [];
     const untrainedWeightsCloned = JSON.parse(JSON.stringify(this.untrainedWeights));
     const inputWeightsCloned = JSON.parse(JSON.stringify(this.lastNNWeights));
-    this.tooltipConfig.data.push(untrainedWeightsCloned.epoch_0[incomingFilters][this.selectedUnit.unit]);
-    this.tooltipConfig.data.push(inputWeightsCloned[currEpoch][incomingFilters][this.selectedUnit.unit]);
+    this.tooltipConfig.data.push(untrainedWeightsCloned[incomingFilters].weights[this.selectedUnit.unit]);
+    this.tooltipConfig.data.push(inputWeightsCloned[currEpoch][incomingFilters].weights[this.selectedUnit.unit]);
 
     // this.tooltipConfig.filtersFrame = {
     //   width: this.tooltipConfig.weightsFrame.width / Math.ceil(Math.sqrt(this.tooltipConfig.data[0].length)),
