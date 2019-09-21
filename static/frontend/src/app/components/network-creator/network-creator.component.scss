@@ -1,115 +1,79 @@
 .main {
     height: calc(100vh - 55px);
-    margin-left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     border-left: 3px solid rgba(27, 27, 27, 0.25);
-
-    font-size: 18px;
 }
 
 .content {
-    height: 95%;
-    margin: 20px;
-    padding: 20px;
-    border-radius: 20px 20px 20px 20px;
+    margin: 0 1rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    box-sizing: border-box;
+    height: 100%;
+    
     background-color: rgba(255, 255, 255, 0.603);
+
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-flow: column nowrap;
 
     overflow-y:auto;
 }
 
-.create-button {
-    width: 70%;
-    border-top: 2px solid rgba(27, 27, 27, 0.25);
-    margin-top: 3vh;
-    margin-bottom: 2vh;
-    padding-top: 1vh;
-    text-align: center;
-}
+.row {
+    width: 100%;
 
-h3 {
-    cursor: pointer;
-    -ms-user-select: None; 
-    -moz-user-select: None; 
-    -webkit-user-select: None; 
-}
-
-.down-up-arrow {
-    margin-left: 5px;
-}
-
-.settings-headline {
     display: flex;
-    flex: row;
-    text-align: center;
-    align-items: center;
+    flex-flow: row wrap;
+
+    mat-form-field { margin: 0 .5rem; }
+    .input-number { width: 3rem; }
+    .input-select { width: 5rem; }
+}
+
+.center {
     justify-content: center;
 }
 
-.cnn-input-form {
-    display: flex;
-    flex: row;
-    align-items: center;
-    justify-content: center;
-}
-.channel-inputs {
-    width:3vw;
-    margin-right: 0.5vw;
-}
-.name_input {
-    width: 90%;
-}
-
-.input-selector {
-    width:5vw;
-    margin-right: 1vw;
+.vertical-spacing {
+    height: 1rem;
 }
 
 button {
-    text-align: center;
-    margin-left: 20px;
-    margin-right: 20px;
-    margin-bottom: 10px;
+    margin: 0 .5rem;
+
     background-color: rgba(20, 20, 20, 0.603);
     color: rgb(221, 175, 23);
 }
+
 .mat-mini-fab {
+    background-color: rgba(20, 20, 20, 0.603);
+    color: rgb(221, 175, 23);
+
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 0px;
-    margin-right: 0px;
-    background-color: rgba(20, 20, 20, 0.603);
-    color: rgb(221, 175, 23);
 }
+
+h3 { cursor: pointer; }
+.down-up-arrow { margin-left: 5px; }
 
 /* width */
 ::-webkit-scrollbar {
     width: 20px;
 }
-  
+
 /* Track */
 ::-webkit-scrollbar-track {
-    box-shadow: inset 0 0 5px grey; 
+    box-shadow: inset 0 0 5px grey;
     border-radius: 0 20px 20px 0;
-  }
+}
    
 /* Handle */
 ::-webkit-scrollbar-thumb {
-    background: rgb(120, 120, 120); 
+    background: rgb(120, 120, 120);
     border-radius: 0 21px 21px 0;
 }
-  
+
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(221, 175, 23, 0.486); 
-}
-
-.config-input {
-    width: 3vw;
-    margin-right: 0.5vw;
+    background: rgba(221, 175, 23, 0.486);
 }
