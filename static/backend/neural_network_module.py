@@ -14,7 +14,7 @@ from torch.autograd import Variable
 
 
 class Net(nn.Module):
-    '''
+    """
     Neural Network that can be user definable.
 
     :Parameters: 
@@ -25,7 +25,7 @@ class Net(nn.Module):
         __activations: (Dictionary) Dictionary of activation function so it can be called with a string.
         __loss: (Dictionary) Dictionary of loss function so it can be called with a string.
         __optimizer: (Dictionary) Dictionary of optimizer so it can be called with a string.
-    '''
+    """
     __activations = {
     'relu': F.relu,
     'sigmoid': F.sigmoid,
@@ -104,7 +104,7 @@ class Net(nn.Module):
         return x
 
     def train_start(self, num_epochs, trainloader, loss, opti, l_rate, device = "cpu"):
-        '''
+        """
         Train the neural network and returns a list with a dictionary for each epoch with weights.
 
         :Parameters:
@@ -114,7 +114,7 @@ class Net(nn.Module):
             loss: (string) Loss Function for the training.
             opti: (string) Function for the optimazation of the weights.
             l_rate: (Float) learningrate for the training.
-        '''
+        """
         log_interval = 10
 
         criterion = Net.__loss[loss]()
@@ -183,26 +183,28 @@ class Net(nn.Module):
         return acc, correct_labels, acc_class, class_labels
 
     def predict(self, _input):
-        '''
+        """
         Returns the prediction of the model
 
         :Parameters:
             _input: Input that should give a predictions.
-        '''
+        """
         return self(_input).tolist()
 
+
 def create_model(input_dim, layers):
-    '''
+    """
     Creates and Return a neural network model for given input.
 
     :Parameters:
          input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
         layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0 "activation": "relu"}
-    '''
+    """
     return Net(input_dim, layers)
 
+
 def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, l_rate, device = "cpu"):
-    '''
+    """
     Trains a given model and returns for each epochs a list of layer dictionary with weights.
 
     :Parameters:
@@ -214,12 +216,13 @@ def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, l_
         batchsize: (Integer) Number of the Batches it should be used while training.
         l_rate: (Float) learningrate for the training.
         device: (String) Divice that will be used for the training. Default is cpu.
-    '''
+    """
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batchsize, shuffle=True, num_workers=2)
     return model.train_start(num_epochs, trainloader, criterion, optimizer, l_rate, device)
-    
+
+
 def test_model(model, criterion, testset, batchsize, device = "cpu"):
-    '''
+    """
     Test the model and returns usefull values (will be more concrete later)
 
     :Parameters:
@@ -228,17 +231,18 @@ def test_model(model, criterion, testset, batchsize, device = "cpu"):
         testset: Testset of input data.
         batchsize: (Integer) Number of the Batches it should be used while training.
         device: (String) Divice that will be used for the training. Default is cpu.
-    '''
+    """
     testloader = torch.utils.data.DataLoader(testset, batch_size=batchsize, shuffle=False, num_workers=2)
     return model.test_start(criterion, testloader, device)
 
+
 def get_weights(model):
-    '''
+    """
     Returns a weights dictionary of the actual weights split in Layers from a given neural network model for saving in a json.
 
     :Parameters: 
         model: (Net) Neural network model from getting the weights and bias from.
-    '''
+    """
     weights_dict = collections.OrderedDict()
     layer_counter = 0
     for param in model.parameters():
@@ -260,15 +264,16 @@ def get_weights(model):
 
     return weights_dict
 
+
 def load_model_from_weights(weights_dict, input_dim, epoch = -1):
-    '''
+    """
     Returns a Pytorch model load from given weights dict
 
     :Parameters: 
         weights_dict: (Dictionary) Dictionary of layers with weights, bias and types
         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
         epoch: (Integer) Wiche epoch the weights should be loaden from. Default = -1, it loads the leatest epoch.
-    '''
+    """
     ordered_dict = collections.OrderedDict()
     layer_settings_list = []
     epoch_num = str(weights_dict["epochs"]) if epoch is -1 else str(epoch)
@@ -288,10 +293,11 @@ def load_model_from_weights(weights_dict, input_dim, epoch = -1):
     model.eval()
     return model
 
+
 def get_device():
-    '''
+    """
     Returns "cuda:0" if cuda is available else "cpu".
-    '''
+    """
     return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Test the ablated network.
