@@ -73,7 +73,7 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
           });
 
           return this.backend.testNetwork(
-            this.dataService.selectedNetwork,
+            this.dataService.selectedNetwork.id,
             nodes
           );
         })
