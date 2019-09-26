@@ -241,7 +241,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           unitSpacing: currUnitSpacing,
           unitsPerColumn,
           isOutput: false,
-          isConv: true
+          isConv: true,
+          backendKey: (convLayerIndex > 0) ? this.lastNNSettings.convLayers[convLayerIndex - 1].backendKey : ''
         });
 
 
@@ -307,7 +308,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
           unitSpacing: currUnitSpacing,
           unitsPerColumn,
           isOutput,
-          isConv: false
+          isConv: false,
+          backendKey: this.lastNNSettings.denseLayers[layerIndex].backendKey
         });
 
         if (!isOutput) {

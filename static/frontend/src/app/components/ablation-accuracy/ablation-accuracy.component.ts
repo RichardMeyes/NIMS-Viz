@@ -50,18 +50,31 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
         concatMap(() => {
           this.showSpinner = true;
 
-          const koLayers: number[] = [];
-          const koUnits: number[] = [];
+          const nodes = [];
+          this.dataService.detachedNodes.forEach(detachedNode => {
+            let availableIndex = -1;
 
-          this.dataService.detachedNodes.forEach(element => {
-            koLayers.push(element.layer - 1);
-            koUnits.push(element.unit);
+            nodes.some((node, nodeIndex) => {
+              if (node.layerNumber === +detachedNode.backendKey.split('_')[1]) {
+                availableIndex = nodeIndex;
+                return true;
+              }
+            });
+
+            if (availableIndex === -1) {
+              nodes.push({
+                layerNumber: +detachedNode.backendKey.split('_')[1],
+                alblatedWeights: [detachedNode.unit]
+              });
+            } else {
+              nodes[availableIndex].alblatedWeights.push(detachedNode.unit);
+            }
+
           });
 
-          return this.backend.testNetwork(this.dataService.selectedNetwork.nnSettings,
-            this.dataService.selectedNetwork.fileName.split('.')[0],
-            koLayers,
-            koUnits
+          return this.backend.testNetwork(
+            this.dataService.selectedNetwork,
+            nodes
           );
         })
       )
