@@ -68,7 +68,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
    * Shows in the dropdown the selected Network
    * @param name then Name of the selected Network
    */
-  public selectNetwork(selectedNetwork: SavedNetworks) {
+  selectNetwork(selectedNetwork: SavedNetworks) {
     this.dataService.selectedNetwork = selectedNetwork;
     this.dataService.detachedNodes = [];
 
@@ -83,7 +83,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
     }
   }
 
-  public toggleAddNetwork() {
+  toggleAddNetwork() {
     this.dataService.selectedNetwork = undefined;
     this.dataService.detachedNodes = [];
 

@@ -5,6 +5,8 @@ import { throwError, Observable } from 'rxjs';
 import { catchError, take, map } from 'rxjs/operators';
 
 import { environment } from 'src/environments/environment';
+
+import { SavedNetworks } from '../models/saved-networks.model';
 import {
   NeuralNetworkSettingsJSON,
   NeuralNetworkSettings,
@@ -120,13 +122,15 @@ export class BackendCommunicationService {
                 network.epoch_0[layer].settings.kernelSize,
                 network.epoch_0[layer].settings.stride,
                 network.epoch_0[layer].settings.padding,
-                network.epoch_0[layer].settings.activation
+                network.epoch_0[layer].settings.activation,
+                layer
               ));
             } else if (Object.values(Dense).includes(network.epoch_0[layer].settings.type)) {
               nnSettings.denseLayers.push(new DenseLayer(
                 network.epoch_0[layer].settings.type,
                 network.epoch_0[layer].settings.outChannel,
-                network.epoch_0[layer].settings.activation
+                network.epoch_0[layer].settings.activation,
+                layer
               ));
             }
           });
@@ -157,17 +161,14 @@ export class BackendCommunicationService {
 
   /**
    * Tests the ablated network.
-   * @param nnSettings The network settings.
-   * @param filename The selected filename.
-   * @param koLayers List of layers to be knocked out.
-   * @param koUnits List of units to be knocked out.
+   * @param fileID The selected file's ID.
+   * @param nodes List of layers and their units to be knocked out.
+   * @returns The test results.
    */
-  testNetwork(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
+  testNetwork(fileID: string, nodes: { layerNumber: number, alblatedWeights: number[] }[]): Observable<any> {
     const body = {
-      nnSettings,
-      filename,
-      koLayers,
-      koUnits
+      networkID: fileID,
+      nodes
     };
     return this._http.post(`${this._backendURL}/testNetwork`, body);
   }

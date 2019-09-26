@@ -47,9 +47,13 @@ export class Layer {
      *
      * @param type Type of the Layer
      * @param activation Activation function of the Layer
+     * @param backendKey The backend-object's key of the layer.
      */
-    constructor(public type: string, public activation: Activation) {
-    }
+    constructor(
+        public type: string,
+        public activation: Activation,
+        public backendKey: string
+    ) { }
 }
 
 /**
@@ -73,8 +77,9 @@ export class ConvLayer extends Layer {
         public kernelSize: number = 0,
         public stride: number = 1,
         public padding: number = 0,
-        public activation: Activation = Activation.none
-    ) { super(type, activation); }
+        public activation: Activation = Activation.none,
+        public backendKey: string = ''
+    ) { super(type, activation, backendKey); }
 }
 
 export class TrainingSettings {
@@ -213,8 +218,9 @@ export class DenseLayer extends Layer {
     constructor(
         public type: string,
         public size: number = 0,
-        public activation: Activation = Activation.none
-    ) { super(type, activation); }
+        public activation: Activation = Activation.none,
+        public backendKey: string = ''
+    ) { super(type, activation, backendKey); }
 }
 
 export interface NeuralNetworkSettingsJSON {
