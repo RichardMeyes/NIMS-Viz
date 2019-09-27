@@ -1711,7 +1711,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Tests ablated network.
    */
   testNetwork() {
-    this.eventsService.testNetwork.next(true);
+    // this.eventsService.testNetwork.next(true);
   }
 
   /**
