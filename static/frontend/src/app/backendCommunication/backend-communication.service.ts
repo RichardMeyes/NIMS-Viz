@@ -174,6 +174,20 @@ export class BackendCommunicationService {
   }
 
   /**
+   * Tests the network.
+   * @param fileID The selected file's ID.
+   * @param testSet Empty string for now.
+   * @returns The test results.
+   */
+  testNetwork(fileID: string, testSet: string): Observable<any> {
+    const body = {
+      networkID: fileID,
+      testSet
+    };
+    return this._http.post(`${this._backendURL}/testNetwork`, body);
+  }
+
+  /**
    * Saves the free-drawing drawing.
    * @param blob Image to be saved.
    */
