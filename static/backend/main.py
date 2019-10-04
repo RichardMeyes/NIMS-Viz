@@ -35,10 +35,15 @@ def change_model(uuid):
     :Parameters:
         uuid: (String) id of the network.
     '''
+    global MODEL
+    global MODEL_DICT
     if len(MODEL_DICT) > 0:
         if uuid != MODEL_DICT["_id"]:
             MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
             MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
+    else:
+        MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
+        MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
 
 
 app = Flask(__name__)
@@ -53,6 +58,8 @@ def test():
 @app.route("/createNetwork", methods=["POST", "OPTIONS"])
 @cross_origin()
 def createNetwork():
+    global MODEL
+    global MODEL_DICT
     nnSettings = request.get_json()
 
     network_name = nnSettings['name']
@@ -106,6 +113,8 @@ def createNetwork():
 @app.route("/trainNetwork", methods=["POST", "OPTIONS"])
 @cross_origin()
 def trainNetwork():
+    global MODEL
+    global MODEL_DICT
     # have to be changed!!! trainset has to be variable
     import torchvision
     import torchvision.transforms as transforms
@@ -151,6 +160,8 @@ def trainNetwork():
 @app.route("/loadNetwork", methods=["POST"])
 @cross_origin()
 def loadNetwork():
+    global MODEL
+    global MODEL_DICT
     req = request.get_json()
     uuid = req["uuid"]
 
@@ -171,15 +182,49 @@ def getSavedNetworks():
 @app.route("/testNetwork", methods=["POST", "OPTIONS"])
 @cross_origin()
 def testNetwork():
+    global MODEL
+    global MODEL_DICT
+    global ABLATED_MODEL 
+    global TEST_ABLATED_MODEL 
+
+    # have to be changed!!! trainset has to be variable
+    import torchvision
+    import torchvision.transforms as transforms
+
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+    testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
+    # #################################################
     
-    params = request.get_json()
-    print(params)
-    return json.dumps("OK")
+    req = request.get_json()
+    uuid = req["networkID"]
+
+    #load model with id if its necessary
+    change_model(uuid)
+
+    nn_model = MODEL
+
+    if TEST_ABLATED_MODEL:
+        nn_model = ABLATED_MODEL
+        TEST_ABLATED_MODEL = False
+    
+    test_results = neural_network.test_model(nn_model, MODEL_DICT["loss_function"], testset, 64, DEVICE) 
+
+    results = {
+        "accuracy": test_results[0],
+        "correct_labels": test_results[1],
+        "accuracy_class": test_results[2],
+        "class_labels": test_results[3] }
+
+    return json.dumps(results)
 
 # Ablates layers from a network
 @app.route("/ablateNetwork", methods=["POST", "OPTIONS"])
 @cross_origin()
 def ablateNetwork():
+    global MODEL
+    global MODEL_DICT
+    global ABLATED_MODEL 
+    global TEST_ABLATED_MODEL 
     
     req = request.get_json()
 
@@ -191,7 +236,7 @@ def ablateNetwork():
     ABLATED_MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
 
     for node in nodes:
-        layer_number = "layer_" + node['layerNumber']
+        layer_number = "layer_" + str(node['layerNumber'])
         layer_type = MODEL_DICT["epoch_0"][layer_number]["settings"]["type"]
         for unit in node['ablatedWeights']:
             ablation.ablate_unit(ABLATED_MODEL, layer_type, unit)
