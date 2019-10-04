@@ -189,12 +189,12 @@ def getSavedNetworks():
 
 #     return json.dumps(result)
 
-# # Get TSNE Coordinate
-# @app.route("/getTSNECoordinate", methods=["GET"])
-# @cross_origin()
-# def getTSNECoordinate():
-#     result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
-#     return json.dumps(result.tolist())
+# Get TSNE Coordinate
+@app.route("/getTSNECoordinate", methods=["GET"])
+@cross_origin()
+def getTSNECoordinate():
+    result = pickle.load(open("../data/tSNE/X_tSNE_10000.p", "rb"))
+    return json.dumps(result.tolist())
 
 # # Save the free-drawing drawing.
 # @app.route("/saveDigit", methods=["POST", "OPTIONS"])
