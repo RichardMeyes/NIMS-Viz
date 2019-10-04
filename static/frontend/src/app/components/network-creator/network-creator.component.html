@@ -58,13 +58,13 @@
         <mat-form-field class="input-select">
           <mat-label>Loss Function</mat-label>
           <mat-select [(ngModel)]="_trainingSettings.loss">
-            <mat-option value="crossEntropy">Cross Entropy Loss</mat-option>
-            <mat-option value="nLogLikelihood">Negativ Log-Likelihood</mat-option>
-            <mat-option value="mse">MSE</mat-option>
+            <mat-option *ngFor="let lossFunction of lossFunctions" [value]="lossFunction">
+              {{ LossFunctionMapping[lossFunction] }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field class="input-select">
-          <mat-label>Loss Function</mat-label>
+          <mat-label>Optimizer</mat-label>
           <mat-select [(ngModel)]="_trainingSettings.optimizer">
             <mat-option value="sgd">SGD</mat-option>
             <mat-option value="adam">adam</mat-option>

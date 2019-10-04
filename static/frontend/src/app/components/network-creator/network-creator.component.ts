@@ -8,6 +8,7 @@ import { DataService } from 'src/app/services/data.service';
 
 import { SavedNetworks } from 'src/app/models/saved-networks.model';
 import { EpochSlider } from 'src/app/models/layer-view.model';
+import { LossFunction, LossFunctionMapping } from 'src/app/models/dropdown.model';
 import {
   NeuralNetworkSettings,
   ConvLayer,
@@ -40,6 +41,12 @@ export class NetworkCreatorComponent implements OnInit {
   public hideInput = false;
   public hideCNN = false;
   public hideMLP = false;
+
+  get lossFunctions() {
+    return Object.values(LossFunction);
+  }
+
+  public LossFunctionMapping = LossFunctionMapping;
 
   constructor(
     private backend: BackendCommunicationService,
