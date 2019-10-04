@@ -11,11 +11,35 @@ import neural_network_module as neural_network
 
 import mongo_module as mongo
 
+import ablation
+
+
 # creates a communication channel with mongoDB
-DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
-# DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+# DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
+DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 # if gpu with cuda is available set it to it.
 DEVICE = neural_network.get_device()
+
+# Model and information about it for not loading everytime the weights from db
+################################################################################
+MODEL = neural_network.Net()
+MODEL_DICT = {}
+ABLATED_MODEL = neural_network.Net()
+TEST_ABLATED_MODEL = False
+################################################################################
+
+def change_model(uuid):
+    '''
+    Changes the Model if the id isn't the same.
+
+    :Parameters:
+        uuid: (String) id of the network.
+    '''
+    if len(MODEL_DICT) > 0:
+        if uuid != MODEL_DICT["_id"]:
+            MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
+            MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
+
 
 app = Flask(__name__)
 CORS(app)
@@ -65,8 +89,8 @@ def createNetwork():
             "activation": denseLayer["activation"]
         })
     
-    nn_model = neural_network.create_model(input_size, layers)
-    init_weights = neural_network.get_weights(nn_model)
+    MODEL = neural_network.create_model(input_size, layers)
+    init_weights = neural_network.get_weights(MODEL)
 
     model_dict = {
         "name": network_name,
@@ -76,8 +100,8 @@ def createNetwork():
     }
 
     item_id = DB_CONNECTION.post_item(model_dict)[0]
-    model_dict = DB_CONNECTION.get_item_by_id(str(item_id))
-    return json.dumps(model_dict)
+    MODEL_DICT = DB_CONNECTION.get_item_by_id(str(item_id))
+    return json.dumps(MODEL_DICT)
 
 @app.route("/trainNetwork", methods=["POST", "OPTIONS"])
 @cross_origin()
@@ -93,12 +117,11 @@ def trainNetwork():
     trainSettings = req["setup"]
     uuid = req["id"]
     
-    #load modal with id
-    model_dict = DB_CONNECTION.get_item_by_id(uuid)
-    nn_model = neural_network.load_model_from_weights(model_dict, model_dict["input_dim"])
+    #load model with id if its necessary
+    change_model(uuid)
 
     train_history = neural_network.train_model(
-        nn_model,
+        MODEL,
         trainSettings["epochs"],
         trainSettings["loss"],
         trainSettings["optimizer"],
@@ -108,7 +131,7 @@ def trainNetwork():
         DEVICE
     )
 
-    epoch_counter = model_dict["epochs"]
+    epoch_counter = MODEL_DICT["epochs"]
     epoch_dict = {}
     for ep in train_history:
         epoch_counter += 1
@@ -116,6 +139,8 @@ def trainNetwork():
         
     
     epoch_dict.update({"epochs": epoch_counter})
+
+    epoch_dict.update({"loss_function": trainSettings["loss"]})
     
     DB_CONNECTION.update_item(uuid, epoch_dict)
     MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
@@ -129,20 +154,10 @@ def loadNetwork():
     req = request.get_json()
     uuid = req["uuid"]
 
-    model_dict = DB_CONNECTION.get_item_by_id(uuid)
+    #load model with id if its necessary
+    change_model(uuid)
 
-    return json.dumps(model_dict)
-
-# # Load network's weights.
-# @app.route("/loadWeights", methods=["POST"])
-# @cross_origin()
-# def loadWeights():
-#     params = request.get_json()
-#     filename = params['filename']
-
-#     nnWeights = json.load(open(WEIGHTS_DIR + filename))
-
-#     return json.dumps(nnWeights)
+    return json.dumps(MODEL_DICT)
 
 # Get list of saved networks.
 @app.route("/getSavedNetworks", methods=["GET", "OPTIONS"])
@@ -152,11 +167,38 @@ def getSavedNetworks():
     
     return json.dumps(item)
 
-# # Test trained network.
-# @app.route("/testNetwork", methods=["POST", "OPTIONS"])
-# @cross_origin()
-# def testNetwork():
-#     params = request.get_json()
+# Test trained network.
+@app.route("/testNetwork", methods=["POST", "OPTIONS"])
+@cross_origin()
+def testNetwork():
+    
+    params = request.get_json()
+    print(params)
+    return json.dumps("OK")
+
+# Ablates layers from a network
+@app.route("/ablateNetwork", methods=["POST", "OPTIONS"])
+@cross_origin()
+def ablateNetwork():
+    
+    req = request.get_json()
+
+    uuid = req["networkID"]
+    nodes = req["nodes"]
+    
+    #load model with id if its necessary
+    change_model(uuid)
+    ABLATED_MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
+
+    for node in nodes:
+        layer_number = "layer_" + node['layerNumber']
+        layer_type = MODEL_DICT["epoch_0"][layer_number]["settings"]["type"]
+        for unit in node['ablatedWeights']:
+            ablation.ablate_unit(ABLATED_MODEL, layer_type, unit)
+    
+    TEST_ABLATED_MODEL = True
+
+    return json.dumps("OK")
 
 #     convLayers = params['nnSettings']["convLayers"]
 #     conv_layers = list(map(lambda x: {
