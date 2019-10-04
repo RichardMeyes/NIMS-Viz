@@ -143,7 +143,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
           if (selectedNetwork) {
             if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
-              this.testNetwork();
+              this.eventsService.testNetwork.next(true);
             }
             return true;
           } else {
@@ -1711,7 +1711,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Tests ablated network.
    */
   testNetwork() {
-    // this.eventsService.testNetwork.next(true);
+    this.eventsService.ablateNetwork.next(true);
   }
 
   /**

@@ -44,7 +44,7 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.showSpinner = false;
 
-    this.eventsService.testNetwork
+    this.eventsService.ablateNetwork
       .pipe(
         takeUntil(this.destroyed),
         concatMap(() => {
@@ -72,7 +72,7 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
 
           });
 
-          return this.backend.testNetwork(
+          return this.backend.ablateNetwork(
             this.dataService.selectedNetwork.id,
             nodes
           );

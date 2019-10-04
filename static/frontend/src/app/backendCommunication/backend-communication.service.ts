@@ -160,17 +160,17 @@ export class BackendCommunicationService {
   }
 
   /**
-   * Tests the ablated network.
+   * Ablates the network.
    * @param fileID The selected file's ID.
-   * @param nodes List of layers and their units to be knocked out.
-   * @returns The test results.
+   * @param nodes List of layers and their units to be ablated.
+   * @returns The selected file's ID and the list of layers and their units to be ablated.
    */
-  testNetwork(fileID: string, nodes: { layerNumber: number, alblatedWeights: number[] }[]): Observable<any> {
+  ablateNetwork(fileID: string, nodes: { layerNumber: number, alblatedWeights: number[] }[]): Observable<any> {
     const body = {
       networkID: fileID,
       nodes
     };
-    return this._http.post(`${this._backendURL}/testNetwork`, body);
+    return this._http.post(`${this._backendURL}/ablateNetwork`, body);
   }
 
   /**

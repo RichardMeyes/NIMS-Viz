@@ -34,7 +34,12 @@ export class EventsService {
   updateLayerView: Subject<SavedNetworks>;
 
   /**
-   * Test network.
+   * Ablate the network.
+   */
+  ablateNetwork: Subject<boolean>;
+
+  /**
+   * Test the network.
    */
   testNetwork: Subject<boolean>;
 
@@ -53,6 +58,7 @@ export class EventsService {
     this.updateTopology = new Subject();
     this.updateWeights = new Subject();
     this.updateLayerView = new Subject();
+    this.ablateNetwork = new Subject();
     this.testNetwork = new Subject();
     this.updateAblationCHarts = new Subject();
     this.clearAblationCharts = new Subject();
