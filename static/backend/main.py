@@ -12,8 +12,8 @@ import neural_network_module as neural_network
 import mongo_module as mongo
 
 # creates a communication channel with mongoDB
-DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
-# DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
+# DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
+DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 # if gpu with cuda is available set it to it.
 DEVICE = neural_network.get_device()
 
@@ -152,11 +152,13 @@ def getSavedNetworks():
     
     return json.dumps(item)
 
-# # Test trained network.
-# @app.route("/testNetwork", methods=["POST", "OPTIONS"])
-# @cross_origin()
-# def testNetwork():
-#     params = request.get_json()
+# Test trained network.
+@app.route("/testNetwork", methods=["POST", "OPTIONS"])
+@cross_origin()
+def testNetwork():
+    
+    params = request.get_json()
+    print(params)
 
 #     convLayers = params['nnSettings']["convLayers"]
 #     conv_layers = list(map(lambda x: {
@@ -189,12 +191,12 @@ def getSavedNetworks():
 
 #     return json.dumps(result)
 
-# # Get TSNE Coordinate
-# @app.route("/getTSNECoordinate", methods=["GET"])
-# @cross_origin()
-# def getTSNECoordinate():
-#     result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
-#     return json.dumps(result.tolist())
+# Get TSNE Coordinate
+@app.route("/getTSNECoordinate", methods=["GET"])
+@cross_origin()
+def getTSNECoordinate():
+    result = pickle.load(open("static/data/tSNE/X_tSNE_10000.p", "rb"))
+    return json.dumps(result.tolist())
 
 # # Save the free-drawing drawing.
 # @app.route("/saveDigit", methods=["POST", "OPTIONS"])

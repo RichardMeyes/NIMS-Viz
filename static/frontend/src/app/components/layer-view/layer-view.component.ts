@@ -111,7 +111,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
         this.resetViz();
 
-        this.setupTopology();
+        // this.setupTopology();
         this.bindTopology();
       });
 
@@ -1711,7 +1711,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
    * Tests ablated network.
    */
   testNetwork() {
-    // this.eventsService.testNetwork.next(true);
+    this.eventsService.testNetwork.next(true);
+    console.log("clicked")
   }
 
   /**
