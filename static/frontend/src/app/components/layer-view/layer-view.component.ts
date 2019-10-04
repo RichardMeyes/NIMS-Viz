@@ -111,7 +111,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
         this.resetViz();
 
-        // this.setupTopology();
+        this.setupTopology();
         this.bindTopology();
       });
 
@@ -143,7 +143,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
           if (selectedNetwork) {
             if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkAblator) {
-              this.testNetwork();
+              // this.testNetwork();
             }
             return true;
           } else {
