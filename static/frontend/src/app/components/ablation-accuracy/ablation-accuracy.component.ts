@@ -79,10 +79,10 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
             if (availableIndex === -1) {
               nodes.push({
                 layerNumber: +detachedNode.backendKey.split('_')[1],
-                alblatedWeights: [detachedNode.unit]
+                ablatedWeights: [detachedNode.unit]
               });
             } else {
-              nodes[availableIndex].alblatedWeights.push(detachedNode.unit);
+              nodes[availableIndex].ablatedWeights.push(detachedNode.unit);
             }
 
           });

@@ -165,7 +165,7 @@ export class BackendCommunicationService {
    * @param nodes List of layers and their units to be ablated.
    * @returns The selected file's ID and the list of layers and their units to be ablated.
    */
-  ablateNetwork(fileID: string, nodes: { layerNumber: number, alblatedWeights: number[] }[]): Observable<any> {
+  ablateNetwork(fileID: string, nodes: { layerNumber: number, ablatedWeights: number[] }[]): Observable<any> {
     const body = {
       networkID: fileID,
       nodes
