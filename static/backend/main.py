@@ -15,7 +15,6 @@ import ablation
 
 
 # creates a communication channel with mongoDB
-# DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
 DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 # if gpu with cuda is available set it to it.
 DEVICE = neural_network.get_device()
@@ -45,6 +44,13 @@ def change_model(uuid):
         MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
         MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
 
+# Updates the mongoDB communication channel if production.
+def create_db_connection():
+    global DB_CONNECTION
+
+    if "env" in os.environ and os.environ["env"] == "prod":
+        DB_CONNECTION = mongo.Mongo("mongodb://database:27017/", "networkDB", "networks")
+
 
 app = Flask(__name__)
 CORS(app)
@@ -52,6 +58,7 @@ CORS(app)
 @app.route("/", methods=["GET"])
 @cross_origin()
 def test():
+    create_db_connection()
     return json.dumps("OK")
 
 # Create a new network.
