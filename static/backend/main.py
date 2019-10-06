@@ -284,6 +284,8 @@ def saveDigit():
 @app.route("/testDigit", methods=["POST", "OPTIONS"])
 @cross_origin()
 def testDigit():
+    is_network_ablated = request.get_json()['isNetworkAblated']
+
     digit = cv2.imread("../data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
     digit = cv2.resize(digit, (28, 28))
 
@@ -292,8 +294,13 @@ def testDigit():
     digit = torch.from_numpy(digit).float()
     digit = digit.view(-1, 1, 28, 28)
 
-    prediction = MODEL.predict(digit)
-    feature_dict = MODEL.visualize_input(digit)
+    model = MODEL
+
+    if is_network_ablated:
+        model = ABLATED_MODEL
+        
+    prediction = model.predict(digit)
+    feature_dict = model.visualize_input(digit)
     result = {
         "netOut": prediction,
         "nodesDict": feature_dict
