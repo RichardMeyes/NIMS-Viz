@@ -245,9 +245,9 @@ def ablateNetwork():
 
     for node in nodes:
         layer_number = "layer_" + str(node['layerNumber'])
-        layer_type = MODEL_DICT["epoch_0"][layer_number]["settings"]["type"]
+        layer_name = MODEL_DICT["epoch_0"][layer_number]["settings"]["type"] + str(node['layerNumber'])
         for unit in node['ablatedWeights']:
-            ablation.ablate_unit(ABLATED_MODEL, layer_type, unit)
+            ablation.ablate_unit(ABLATED_MODEL, layer_name, unit)
     
     TEST_ABLATED_MODEL = True
 
