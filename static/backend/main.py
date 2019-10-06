@@ -288,7 +288,7 @@ def testDigit():
     digit = digit / 255.0
     digit[digit == 0] = -1
     digit = torch.from_numpy(digit).float()
-    digit = digit.view(-1, 28 * 28)
+    digit = digit.view(-1, 28, 28)
 
     result = MODEL.predict(digit)
     
