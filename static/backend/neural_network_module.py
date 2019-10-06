@@ -211,7 +211,7 @@ class Net(nn.Module):
             else:
                 x = self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x)
             
-            feature_dict[self.layer_settings[layer]["type"] + str(layer_counter)] = x.data.numpy().tolist()
+            feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
 
             layer_counter += 1
         
