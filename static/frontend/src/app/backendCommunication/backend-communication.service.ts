@@ -219,14 +219,9 @@ export class BackendCommunicationService {
    * @param koLayers List of layers to be knocked out.
    * @param koUnits List of units to be knocked out.
    */
-  testDigit(nnSettings: NeuralNetworkSettings, filename: string, koLayers: number[], koUnits: number[]): Observable<any> {
-    const body = {
-      nnSettings,
-      filename,
-      koLayers,
-      koUnits
-    };
-    return this._http.post(`${this._backendURL}/testDigit`, body);
+  testDigit(): Observable<any> {
+    return this._http.post(`${this._backendURL}/testDigit`, null)
+      .pipe(take(1));
   }
 
   /**
