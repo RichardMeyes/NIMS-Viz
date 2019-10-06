@@ -45,37 +45,34 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
    * Classify the free-drawing drawing.
    */
   classify() {
-    // this.canvas.getElement().toBlob(blob => {
-    //   this.backend.saveDigit(blob)
-    //     .pipe(
-    //       take(1),
-    //       concatMap(() => {
-    //         const koLayers: number[] = [];
-    //         const koUnits: number[] = [];
+    this.canvas.getElement().toBlob(blob => {
+      this.backend.saveDigit(blob)
+        .pipe(
+          take(1),
+          concatMap(() => {
+            const koLayers: number[] = [];
+            const koUnits: number[] = [];
 
-    //         this.dataService.detachedNodes.forEach(element => {
-    //           koLayers.push(element.layer - 1);
-    //           koUnits.push(element.unit);
-    //         });
+            this.dataService.detachedNodes.forEach(element => {
+              koLayers.push(element.layer - 1);
+              koUnits.push(element.unit);
+            });
 
-    //         return this.backend.testDigit(this.dataService.selectedNetwork.nnSettings,
-    //           this.dataService.selectedNetwork.fileName.split('.')[0],
-    //           koLayers,
-    //           koUnits
-    //         );
-    //       })
-    //     )
-    //     .subscribe(testResult => {
-    //       testResult.netOut = testResult.netOut.flat();
-    //       Object.keys(testResult.nodesDict).forEach(layer => {
-    //         testResult.nodesDict[layer] = testResult.nodesDict[layer].flat();
-    //       });
+            return this.backend.testDigit();
+          })
+        )
+        .subscribe(testResult => {
+          console.log(testResult);
+          testResult.netOut = testResult.netOut.flat();
+          Object.keys(testResult.nodesDict).forEach(layer => {
+            testResult.nodesDict[layer] = testResult.nodesDict[layer].flat();
+          });
 
 
-    //       this.dataService.classifyResult = testResult;
-    //       this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
-    //     });
-    // });
+          this.dataService.classifyResult = testResult;
+          // this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
+        });
+    });
   }
 
   /**
@@ -94,9 +91,9 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
     this.canvas.setWidth(28 * multiplier);
 
     this.dataService.classifyResult = undefined;
-    // if (this.dataService.selectedNetwork) {
-    //   this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
-    // }
+    if (this.dataService.selectedNetwork) {
+      // this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
+    }
   }
 
 }
