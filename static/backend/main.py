@@ -292,7 +292,12 @@ def testDigit():
     digit = torch.from_numpy(digit).float()
     digit = digit.view(-1, 1, 28, 28)
 
-    result = MODEL.predict(digit)
+    prediction = MODEL.predict(digit)
+    feature_dict = MODEL.visualize_input(digit)
+    result = {
+        "netOut": prediction,
+        "nodesDict": feature_dict
+    }
     return json.dumps(result)
 
 if __name__ == "__main__":

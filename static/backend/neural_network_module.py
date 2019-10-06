@@ -189,6 +189,34 @@ class Net(nn.Module):
             _input: Input that should give a predictions.
         """
         return self(_input).tolist()
+    
+    def visualize_input(self, x):
+        """
+        Returns a Dictionary of input visualization.
+
+        :Parameters:
+            x: Input that should be vizualize.
+        """
+        feature_dict = collections.OrderedDict()
+
+        layer_counter = 0
+        is_linear = False
+        for layer in self.layer_settings:
+            if self.layer_settings[layer]["type"] == "linear" and not is_linear:
+                x = x.view(x.shape[0], -1)
+                is_linear = True
+            if self.layer_settings[layer]["activation"] != "none":
+                activation = Net.__activations[self.layer_settings[layer]["activation"]]
+                x = activation(self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x))
+            else:
+                x = self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x)
+            
+            feature_dict[self.layer_settings[layer]["type"] + str(layer_counter)] = x.data.numpy().tolist()
+
+            layer_counter += 1
+        
+        return feature_dict
+
 
 
 def create_model(input_dim, layers):
