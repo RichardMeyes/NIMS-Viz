@@ -30,6 +30,8 @@ ABLATED_MODEL = neural_network.Net()
 TEST_ABLATED_MODEL = False
 ################################################################################
 
+DIGIT_DIR = "../data/digit/"
+
 def change_model(uuid):
     '''
     Changes the Model if the id isn't the same.
@@ -282,7 +284,7 @@ def saveDigit():
 @app.route("/testDigit", methods=["POST", "OPTIONS"])
 @cross_origin()
 def testDigit():
-    digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
+    digit = cv2.imread("../data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
     digit = cv2.resize(digit, (28, 28))
 
     digit = digit / 255.0
