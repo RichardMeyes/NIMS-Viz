@@ -61,6 +61,14 @@ export class AblationMappingComponent implements OnInit, OnDestroy {
         this.showSpinner = true;
       });
 
+    this.eventService.ablateNetwork
+      .pipe(
+        takeUntil(this.destroyed)
+      )
+      .subscribe(() => {
+        this.showSpinner = true;
+      });
+
     this.eventService.updateAblationCHarts
       .pipe(
         takeUntil(this.destroyed)
