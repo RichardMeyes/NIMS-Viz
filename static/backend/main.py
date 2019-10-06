@@ -217,10 +217,11 @@ def testNetwork():
     test_results = neural_network.test_model(nn_model, MODEL_DICT["loss_function"], testset, 64, DEVICE) 
 
     results = {
+        "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
         "accuracy": test_results[0],
-        "correct_labels": test_results[1],
-        "accuracy_class": test_results[2],
-        "class_labels": test_results[3] }
+        "correct_labels": test_results[1].tolist(),
+        "accuracy_class": test_results[2].tolist(),
+        "class_labels": test_results[3].tolist() }
 
     return json.dumps(results)
 
