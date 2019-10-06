@@ -7,6 +7,7 @@ import { catchError, take, map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 import { SavedNetworks } from '../models/saved-networks.model';
+import { TestResult } from '../models/ablation.model';
 import {
   NeuralNetworkSettingsJSON,
   NeuralNetworkSettings,
@@ -184,7 +185,20 @@ export class BackendCommunicationService {
       networkID: fileID,
       testSet
     };
-    return this._http.post(`${this._backendURL}/testNetwork`, body);
+    return this._http.post(`${this._backendURL}/testNetwork`, body)
+      .pipe(
+        take(1),
+        map((testResult: { [key: string]: any }) => {
+          const adjTestResult: TestResult = new TestResult(
+            testResult.labels,
+            testResult.class_labels,
+            testResult.accuracy,
+            testResult.accuracy_class,
+            testResult.correct_labels
+          );
+          return adjTestResult;
+        })
+      );
   }
 
   /**

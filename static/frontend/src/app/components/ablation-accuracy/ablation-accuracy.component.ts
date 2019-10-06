@@ -48,6 +48,8 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroyed),
         concatMap(() => {
+          this.showSpinner = true;
+
           return this.backend.testNetwork(
             this.dataService.selectedNetwork.id,
             ''
