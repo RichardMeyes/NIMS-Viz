@@ -7,6 +7,9 @@ import uuid
 import os
 import pickle
 
+import cv2
+import torch
+
 import neural_network_module as neural_network
 
 import mongo_module as mongo
@@ -260,53 +263,36 @@ def getTSNECoordinate():
     result = pickle.load(open("../data/tSNE/X_tSNE_10000.p", "rb"))
     return json.dumps(result.tolist())
 
-# # Save the free-drawing drawing.
-# @app.route("/saveDigit", methods=["POST", "OPTIONS"])
-# @cross_origin()
-# def saveDigit():
-#     digit = request.files['digit']
+# Save the free-drawing drawing.
+@app.route("/saveDigit", methods=["POST", "OPTIONS"])
+@cross_origin()
+def saveDigit():
+    digit = request.files['digit']
 
-#     if digit:
-#         if not(os.path.exists(DIGIT_DIR)):
-#             os.mkdir(DIGIT_DIR)
+    if digit:
+        if not(os.path.exists(DIGIT_DIR)):
+            os.mkdir(DIGIT_DIR)
 
-#         filename = secure_filename(digit.filename)
-#         digit.save(os.path.join(DIGIT_DIR, filename))
+        filename = secure_filename(digit.filename)
+        digit.save(os.path.join(DIGIT_DIR, filename))
 
-#     return json.dumps("Digit saved.")
+    return json.dumps("Digit saved.")
 
-# # Save the free-drawing drawing.
-# @app.route("/testDigit", methods=["POST", "OPTIONS"])
-# @cross_origin()
-# def testDigit():
-#     params = request.get_json()
+# Save the free-drawing drawing.
+@app.route("/testDigit", methods=["POST", "OPTIONS"])
+@cross_origin()
+def testDigit():
+    digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
+    digit = cv2.resize(digit, (28, 28))
 
-#     convLayers = params['nnSettings']["convLayers"]
-#     conv_layers = list(map(lambda x: {
-#         'kernelSize': x['kernelSize'],
-#         'stride': x['stride'],
-#         'padding': x['padding'],
-#         'inChannel': x['inChannel']['value'],
-#         'outChannel': x['outChannel']['value']
-#         }, convLayers))
-#     denseLayers = params['nnSettings']['denseLayers']
-#     layers = list(map(lambda x: x['size'], denseLayers))
+    digit = digit / 255.0
+    digit[digit == 0] = -1
+    digit = torch.from_numpy(digit).float()
+    digit = digit.view(-1, 28 * 28)
 
-#     topology = {
-#         'conv_layers': conv_layers,
-#         'layers': layers
-#     }
-#     filename = params['filename']
-#     ko_layers = params['koLayers']
-#     ko_units = params['koUnits']
-
-#     net_out, nodes_dict = MLP.test_digit(topology, filename, ko_layers, ko_units)
-#     result = {
-#         "netOut": net_out,
-#         "nodesDict": nodes_dict
-#     }
+    result = MODEL.predict(digit)
     
-#     return json.dumps(result)
+    return json.dumps(result)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=3000)

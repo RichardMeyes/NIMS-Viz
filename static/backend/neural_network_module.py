@@ -1,7 +1,6 @@
 import torch
 import torchvision
 import json
-import cv2
 
 import torch.nn as nn
 import torch.optim as optim
@@ -300,54 +299,15 @@ def get_device():
     """
     return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# Test the ablated network.
-# #refactoring later
-# def mlp_ablation(topology, filename, ko_layers, ko_units):
-#     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-#     net = Net(num_epochs=0, conv_layers=topology["conv_layers"], layers=topology["layers"])
-#     # net.to(device)
-#     net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
-#     net.eval()
-#     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
-
-#     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-#     testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
-#     testloader = torch.utils.data.DataLoader(testset, batch_size=16, shuffle=False, num_workers=2)
-
-#     print(net.h0.in_features)
-
-    
-#     for i_layer, i_unit in zip(ko_layers, ko_units):
-#         if i_layer < len(topology["conv_layers"]):
-#             print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
-
-#             n_inputs = net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit].shape
-#             net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-#             net.__getattr__("c{0}".format(i_layer)).bias.data[i_unit] = 0
-#         else:
-#             i_layer = i_layer - len(topology["conv_layers"])
-#             print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
-
-#             n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else net.h0.in_features
-#             net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-#             net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
-
-
-#     acc, correct_labels, acc_class, class_labels = net.test_net(criterion, testloader, device)
-
-#     return acc, correct_labels, acc_class, class_labels
-
-
 # # Test the free-drawing drawing on the ablated network.
 # def test_digit(topology, filename, ko_layers, ko_units):
-#     digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
-#     digit = cv2.resize(digit, (28, 28))
+    # digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
+    # digit = cv2.resize(digit, (28, 28))
 
-#     digit = digit / 255.0
-#     digit[digit == 0] = -1
-#     digit = torch.from_numpy(digit).float()
-#     digit = digit.view(-1, 28 * 28)
+    # digit = digit / 255.0
+    # digit[digit == 0] = -1
+    # digit = torch.from_numpy(digit).float()
+    # digit = digit.view(-1, 28 * 28)
 
 #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
