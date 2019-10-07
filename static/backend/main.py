@@ -6,6 +6,7 @@ import json
 import uuid
 import os
 import pickle
+import datetime
 
 import cv2
 import torch
@@ -115,7 +116,8 @@ def createNetwork():
         "name": network_name,
         "epochs": 0,
         "input_dim": input_size,
-        "epoch_0": init_weights
+        "epoch_0": init_weights,
+        "last_modified": datetime.datetime.utcnow()
     }
 
     item_id = DB_CONNECTION.post_item(model_dict)[0]
@@ -159,9 +161,11 @@ def trainNetwork():
         epoch_dict["epoch_" + str(epoch_counter)] = ep
         
     
-    epoch_dict.update({"epochs": epoch_counter})
-
-    epoch_dict.update({"loss_function": trainSettings["loss"]})
+    epoch_dict.update({
+        "epochs": epoch_counter,
+        "loss_function": trainSettings["loss"],
+        "last_modified": datetime.datetime.utcnow()
+    })
     
     DB_CONNECTION.update_item(uuid, epoch_dict)
     MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
@@ -217,7 +221,6 @@ def testNetwork():
 
     if TEST_ABLATED_MODEL:
         nn_model = ABLATED_MODEL
-        TEST_ABLATED_MODEL = False
     
     test_results = neural_network.test_model(nn_model, MODEL_DICT["loss_function"], testset, 64, DEVICE) 
 
@@ -258,6 +261,14 @@ def ablateNetwork():
 
     return json.dumps("OK")
 
+# Ablates layers from a network
+@app.route("/resetAblation", methods=["POST", "OPTIONS"])
+@cross_origin()
+def resetAblation():
+    global TEST_ABLATED_MODEL
+    TEST_ABLATED_MODEL = False
+    return json.dumps("OK")
+
 # Get TSNE Coordinate
 @app.route("/getTSNECoordinate", methods=["GET"])
 @cross_origin()
@@ -284,8 +295,6 @@ def saveDigit():
 @app.route("/testDigit", methods=["POST", "OPTIONS"])
 @cross_origin()
 def testDigit():
-    is_network_ablated = request.get_json()['isNetworkAblated']
-
     digit = cv2.imread("../data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
     digit = cv2.resize(digit, (28, 28))
 
@@ -296,7 +305,7 @@ def testDigit():
 
     model = MODEL
 
-    if is_network_ablated:
+    if TEST_ABLATED_MODEL:
         model = ABLATED_MODEL
         
     prediction = model.predict(digit)
