@@ -202,6 +202,15 @@ export class BackendCommunicationService {
   }
 
   /**
+   * Resets the ablated units.
+   * @returns Done-message.
+   */
+  resetAblation() {
+    return this._http.post(`${this._backendURL}/resetAblation`, null)
+      .pipe(take(1));
+  }
+
+  /**
    * Saves the free-drawing drawing.
    * @param blob Image to be saved.
    */

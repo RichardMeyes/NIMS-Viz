@@ -1722,6 +1722,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
 
     d3.selectAll('.ablated')
       .classed('ablated', false);
+
+    this.backend.resetAblation().subscribe();
   }
 
   ngOnDestroy() {
