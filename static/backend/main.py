@@ -117,7 +117,7 @@ def createNetwork():
         "epochs": 0,
         "input_dim": input_size,
         "epoch_0": init_weights,
-        "last_modified": datetime.datetime.utcnow()
+        "last_modified": datetime.datetime.utcnow().strftime("%Y/%m/%d, %H:%M:%S")
     }
 
     item_id = DB_CONNECTION.post_item(model_dict)[0]
@@ -164,7 +164,7 @@ def trainNetwork():
     epoch_dict.update({
         "epochs": epoch_counter,
         "loss_function": trainSettings["loss"],
-        "last_modified": datetime.datetime.utcnow()
+        "last_modified": datetime.datetime.utcnow().strftime("%Y/%m/%d, %H:%M:%S")
     })
     
     DB_CONNECTION.update_item(uuid, epoch_dict)
@@ -267,6 +267,7 @@ def ablateNetwork():
 def resetAblation():
     global TEST_ABLATED_MODEL
     TEST_ABLATED_MODEL = False
+    print("blub")
     return json.dumps("OK")
 
 # Get TSNE Coordinate
