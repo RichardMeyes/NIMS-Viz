@@ -1,9 +1,12 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import { DataService } from 'src/app/services/data.service';
+
 import { take, concatMap } from 'rxjs/operators';
+
 import { BackendCommunicationService } from 'src/app/backendCommunication/backend-communication.service';
-import { TestDigitResult } from 'src/app/models/ablation.model';
 import { EventsService } from 'src/app/services/events.service';
+import { DataService } from 'src/app/services/data.service';
+
+import { NeuralNetworkSettings } from 'src/app/models/neural-network.model';
 
 import 'fabric';
 declare const fabric: any;
@@ -59,18 +62,24 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
             });
 
             return this.backend.testDigit();
+          }),
+          concatMap(testResult => {
+            testResult.netOut = testResult.netOut.flat();
+            Object.keys(testResult.nodesDict).forEach(layer => {
+              testResult.nodesDict[layer] = testResult.nodesDict[layer].flat();
+            });
+
+
+            this.dataService.classifyResult = testResult;
+            return this.backend.loadNetwork(this.dataService.selectedNetwork.id);
           })
         )
-        .subscribe(testResult => {
-          console.log(testResult);
-          testResult.netOut = testResult.netOut.flat();
-          Object.keys(testResult.nodesDict).forEach(layer => {
-            testResult.nodesDict[layer] = testResult.nodesDict[layer].flat();
-          });
-
-
-          this.dataService.classifyResult = testResult;
-          // this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
+        .subscribe((result: {
+          nnSettings: NeuralNetworkSettings,
+          maxEpoch: number,
+          nnWeights
+        }) => {
+          this.eventService.updateTopology.next(result.nnSettings);
         });
     });
   }
@@ -92,7 +101,14 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
 
     this.dataService.classifyResult = undefined;
     if (this.dataService.selectedNetwork) {
-      // this.eventService.updateTopology.next(this.dataService.selectedNetwork.nnSettings);
+      this.backend.loadNetwork(this.dataService.selectedNetwork.id)
+        .subscribe((result: {
+          nnSettings: NeuralNetworkSettings,
+          maxEpoch: number,
+          nnWeights
+        }) => {
+          this.eventService.updateTopology.next(result.nnSettings);
+        });
     }
   }
 
