@@ -18,18 +18,22 @@ class Net(nn.Module):
 
     :Parameters: 
         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
-        layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
+        layers: (collections.OrderdDict) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
     
+    :Attributes:
+        layer_settings: (collections.OrderedDict) Holds an orderd Dictionary thats hold the settings of a layer.
+        model: (nn.Sequential) Stores the layers of the Model and connect them with each other.
+
     :Global attributes:
         __activations: (Dictionary) Dictionary of activation function so it can be called with a string.
         __loss: (Dictionary) Dictionary of loss function so it can be called with a string.
         __optimizer: (Dictionary) Dictionary of optimizer so it can be called with a string.
     """
     __activations = {
-    'relu': F.relu,
-    'sigmoid': F.sigmoid,
-    'tanh': F.tanh,
-    'softmax': F.softmax
+    'relu': nn.ReLU,
+    'sigmoid': nn.Sigmoid,
+    'tanh': nn.Tanh,
+    'softmax': nn.Softmax
     }
 
     __loss = {
@@ -42,9 +46,33 @@ class Net(nn.Module):
         'sgd': optim.SGD,
         'adam': optim.Adam
     }
+
+    __pooling = {
+        'maxPool2d': nn.MaxPool2d,
+        'avgPool2d' : nn.AvgPool2d
+    }
     
     def __init__(self, input_dim = [1], layers = []):
         super(Net, self).__init__()
+        self.layer_settings = collections.OrderedDict()
+        self.model = nn.Sequential()
+
+        self.layer_settings, self.model = Net.__init_model(self, input_dim, layers)
+
+    
+    def __init_model(self, input_dim, layers):
+        """
+        Private Method: Creates Layers for the model and the necessary settings as a dict.
+        Returns a tuple of collections.OrderedDict with the settings for each layer and a nn.Sequential within a collections.OrderedDict for the nn.Sequential model.
+
+        :Parameters: 
+        input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
+        layers: (collections.OrderdDict) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
+            
+        """
+        settings_dict =  collections.OrderedDict()
+        model_dict = collections.OrderedDict()
+
         dim_list = []
         if len(input_dim) is 1:
             dim_list.append([input_dim[0], 1, 1])
@@ -52,55 +80,55 @@ class Net(nn.Module):
             dim_list.append([input_dim[0], input_dim[1], 1])
         else:
             dim_list.append([input_dim[0], input_dim[1], input_dim[2]])
-
-        self.layer_settings = collections.OrderedDict()
-
+        
         layer_counter = 0
         for layer in layers:
+            """Adds the layer informations to a settings dictionary for rebuilding the network."""
+            settings_dict["layer_"+ str(layer_counter)] = layer
             if layer["type"] == "conv2d":
-                self.__setattr__("conv2d{0}".format(layer_counter), nn.Conv2d(layer["inChannel"], layer["outChannel"], layer["kernelSize"], layer["stride"], layer["padding"]))
+                """
+                If the layer is a conv 2D-layer.
+                """
+                model_dict["conv2d" + str(layer_counter)] = nn.Conv2d(layer["inChannel"], layer["outChannel"], layer["kernelSize"], layer["stride"], layer["padding"])
 
+                """ computation of the new input dimension """
                 new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
                 new_height = np.floor( ( ( (dim_list[layer_counter][1] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
                 dim_list.append([new_width, new_height, layer["outChannel"]])
-
-                self.layer_settings["layer_"+ str(layer_counter)] = layer
             
-            elif layer["type"] == "maxPool2d":
-                self.__setattr__("maxPool2d{0}".format(layer_counter), nn.MaxPool2d(layer["kernelSize"], stride = layer["stride"]))
+            elif "Pool" in layer["type"]:
+                """
+                If the layer is a Pooling Layer.
+                """
+                pooling = Net.__pooling[layer["type"]]
+                model_dict[str(layer["type"]) + str(layer_counter)] = pooling(layer["kernelSize"], stride = layer["stride"])
 
+                """ computation of the new input dimension """
                 new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
                 new_height = np.floor( ( ( (dim_list[layer_counter][1] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
                 dim_list.append([new_width, new_height, dim_list[layer_counter][2]])
-
-                self.layer_settings["layer_"+ str(layer_counter)] = layer
-
+            
             elif layer["type"] == "linear":
-                self.__setattr__("linear{0}".format(layer_counter), nn.Linear(int(np.prod(dim_list[layer_counter])), layer["outChannel"]))
+                """
+                If the layer is a linear-layer.
+                """
+                model_dict[str(layer["type"]) + str(layer_counter)] = nn.Linear(int(np.prod(dim_list[layer_counter])), layer["outChannel"])
 
                 dim_list.append([layer["outChannel"], 1, 1])
 
-                self.layer_settings["layer_"+ str(layer_counter)] = layer
+            if layer["activation"] != "none":
+                """
+                If there is an activation add it.
+                """
+                activation = Net.__activations[layer["activation"]]
+                model_dict[layer["activation"] + str(layer_counter)] = activation()
             
             layer_counter += 1
+                
+        return settings_dict, nn.Sequential(model_dict)
 
     def forward(self, x):
-        layer_counter = 0
-        is_linear = False
-        # x = x.view(-1, 1, 28, 28) is it necessary?
-        for layer in self.layer_settings:
-            if self.layer_settings[layer]["type"] == "linear" and not is_linear:
-                x = x.view(x.shape[0], -1)
-                is_linear = True
-            if self.layer_settings[layer]["activation"] != "none":
-                activation = Net.__activations[self.layer_settings[layer]["activation"]]
-                x = activation(self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x))
-            else:
-                x = self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x)
-
-            layer_counter += 1
-        
-        return x
+        return self.model(x)
 
     def train_start(self, num_epochs, trainloader, loss, opti, l_rate, device = "cpu"):
         """
@@ -309,7 +337,7 @@ def load_model_from_weights(weights_dict, input_dim, epoch = -1):
     for i in range(len(weights_dict[last_epoch])):
         layer = "layer_" + str(i)
         if not "Pool" in weights_dict[last_epoch][layer]["settings"]["type"]:
-            attribute_name = weights_dict[last_epoch][layer]["settings"]["type"] + str(i)
+            attribute_name = "model." + weights_dict[last_epoch][layer]["settings"]["type"] + str(i)
             ordered_dict[attribute_name + ".weight"] = torch.Tensor(weights_dict[last_epoch][layer]["weights"])
             ordered_dict[attribute_name + ".bias"] = torch.Tensor(weights_dict[last_epoch][layer]["bias"])
         layer_settings_list.append(weights_dict[last_epoch][layer]["settings"])
@@ -327,59 +355,23 @@ def get_device():
     """
     return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# # Test the free-drawing drawing on the ablated network.
-# def test_digit(topology, filename, ko_layers, ko_units):
-    # digit = cv2.imread("static/data/digit/digit.png", cv2.IMREAD_GRAYSCALE)
-    # digit = cv2.resize(digit, (28, 28))
-
-    # digit = digit / 255.0
-    # digit[digit == 0] = -1
-    # digit = torch.from_numpy(digit).float()
-    # digit = digit.view(-1, 28 * 28)
-
-#     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-#     net = Net(28, 28, conv_layers=topology["conv_layers"], layers=topology["layers"])
-#     net.load_state_dict(torch.load("static/data/models/{0}_trained.pt".format(filename)))
-#     net.eval()
-#     criterion = nn.NLLLoss()  # nn.CrossEntropyLoss()
-
-
-#     for i_layer, i_unit in zip(ko_layers, ko_units):
-#         if i_layer < len(topology["conv_layers"]):
-#             print("knockout Conv layer {0}, unit {1}".format(i_layer, i_unit))
-
-#             n_inputs = net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit].shape
-#             net.__getattr__("c{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-#             net.__getattr__("c{0}".format(i_layer)).bias.data[i_unit] = 0
-#         else:
-#             i_layer = i_layer - len(topology["conv_layers"])
-#             print("knockout FC layer {0}, unit {1}".format(i_layer, i_unit))
-
-#             n_inputs = topology["layers"][i_layer-1] if i_layer != 0 else net.h0.in_features
-#             net.__getattr__("h{0}".format(i_layer)).weight.data[i_unit, :] = torch.zeros(n_inputs)
-#             net.__getattr__("h{0}".format(i_layer)).bias.data[i_unit] = 0
-
-
-#     net_out = net.test_net_digit(digit)
-
-#     return net_out, net.nodes_dict
-
 # for testing
 # import mongo_module as mongo
 
 # db_connection = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
 
 # if __name__ == "__main__":
-    # example_layers = [
-    #     {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
-    #     {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
-    #     {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"},
-    #     {"type": "linear", "outChannel": 120, "activation": "none" },
-    #     {"type": "linear", "outChannel": 10, "activation": "none" }
-    # ]
+#     example_layers = [
+#         {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
+#         {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
+#         {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"},
+#         {"type": "linear", "outChannel": 120, "activation": "none" },
+#         {"type": "linear", "outChannel": 10, "activation": "none" }
+#     ]
 
-    # test_model = create_model([28, 28], example_layers)
+#     test_model = create_model([28, 28], example_layers)
+
+#     print(get_weights(test_model))
 
     # for param_tensor in test_model.state_dict():
     #     print(param_tensor, "\t", test_model.state_dict()[param_tensor].size())

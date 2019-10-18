@@ -18,22 +18,18 @@ class Net(nn.Module):
 
     :Parameters: 
         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
-        layers: (collections.OrderdDict) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
+        layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
     
-    :Attributes:
-        layer_settings: (collections.OrderedDict) Holds an orderd Dictionary thats hold the settings of a layer.
-        model: (nn.Sequential) Stores the layers of the Model and connect them with each other.
-
     :Global attributes:
         __activations: (Dictionary) Dictionary of activation function so it can be called with a string.
         __loss: (Dictionary) Dictionary of loss function so it can be called with a string.
         __optimizer: (Dictionary) Dictionary of optimizer so it can be called with a string.
     """
     __activations = {
-    'relu': nn.ReLu,
-    'sigmoid': nn.Sigmoid,
-    'tanh': nn.Tanh,
-    'softmax': nn.Softmax
+    'relu': F.relu,
+    'sigmoid': F.sigmoid,
+    'tanh': F.tanh,
+    'softmax': F.softmax
     }
 
     __loss = {
@@ -58,7 +54,6 @@ class Net(nn.Module):
             dim_list.append([input_dim[0], input_dim[1], input_dim[2]])
 
         self.layer_settings = collections.OrderedDict()
-        self.model = nn.Sequential()
 
         layer_counter = 0
         for layer in layers:
@@ -88,27 +83,6 @@ class Net(nn.Module):
                 self.layer_settings["layer_"+ str(layer_counter)] = layer
             
             layer_counter += 1
-    
-    def __init_model(self, input_dim, layers):
-        """
-        Private Method: Creates Layers for the model and the necessary settings as a dict.
-
-        :Parameters: 
-        input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
-        layers: (collections.OrderdDict) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
-            
-        """
-        settings_dict, model_dict = collections.OrderedDict()
-
-        dim_list = []
-        if len(input_dim) is 1:
-            dim_list.append([input_dim[0], 1, 1])
-        elif len(input_dim) is 2:
-            dim_list.append([input_dim[0], input_dim[1], 1])
-        else:
-            dim_list.append([input_dim[0], input_dim[1], input_dim[2]])
-
-        return setting_dict, model_dict
 
     def forward(self, x):
         layer_counter = 0
