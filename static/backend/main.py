@@ -10,6 +10,7 @@ import datetime
 
 import cv2
 import torch
+import collections
 
 import neural_network_module as neural_network
 
@@ -25,9 +26,9 @@ DEVICE = neural_network.get_device()
 
 # Model and information about it for not loading everytime the weights from db
 ################################################################################
-MODEL = neural_network.Net()
+MODEL = neural_network.Sequential_Net()
 MODEL_DICT = {}
-ABLATED_MODEL = neural_network.Net()
+ABLATED_MODEL = neural_network.Sequential_Net()
 TEST_ABLATED_MODEL = False
 ################################################################################
 
@@ -81,18 +82,21 @@ def createNetwork():
         nnSettings['inputSize']["y"], 
         nnSettings['inputSize']["z"]["value"]
         ]
-    layers = []
+
+    layers = collections.OrderedDict()
+    layers["features"] = []
+    layers["classifier"] = []
 
     for convLayer in nnSettings["convLayers"]:
         if "Pool" in convLayer["type"]:
-            layers.append({
+            layers["features"].append({
                 "type": convLayer["type"],
                 "kernelSize": convLayer["kernelSize"],
                 "stride": convLayer["stride"],
                 "activation": convLayer["activation"]
             })
         else:
-            layers.append({
+            layers["features"].append({
                 "type": convLayer["type"],
                 "inChannel": convLayer['inChannel']['value'],
                 "outChannel": convLayer['outChannel']['value'],
@@ -103,7 +107,7 @@ def createNetwork():
             })
     
     for denseLayer in nnSettings["denseLayers"]:
-        layers.append({
+        layers["classifier"].append({
             "type": denseLayer["type"],
             "outChannel": denseLayer["size"],
             "activation": denseLayer["activation"]

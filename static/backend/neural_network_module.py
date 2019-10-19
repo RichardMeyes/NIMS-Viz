@@ -2,19 +2,23 @@ import torch
 import torchvision
 import json
 
+import re
+
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 import torch.nn.functional as F
+
 import numpy as np
+
 import collections
 
 from torch.autograd import Variable
 
 
-class Net(nn.Module):
+class Sequential_Net(nn.Module):
     """
-    Neural Network that can be user definable.
+    Neural Network that can be user definable. Layers are stored in Sequential Containars.
 
     :Parameters: 
         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
@@ -52,35 +56,37 @@ class Net(nn.Module):
         'avgPool2d' : nn.AvgPool2d
     }
     
-    def __init__(self, input_dim = [1], layers = []):
-        super(Net, self).__init__()
+    def __init__(self, input_dim = [1], layers = collections.OrderedDict()):
+        super(Sequential_Net, self).__init__()
         self.layer_settings = collections.OrderedDict()
-        self.model = nn.Sequential()
 
-        self.layer_settings, self.model = Net.__init_model(self, input_dim, layers)
+        self.dimension = ()
 
-    
-    def __init_model(self, input_dim, layers):
+        if len(input_dim) is 1:
+            self.dimension = (input_dim[0], 1, 1)
+        elif len(input_dim) is 2:
+            self.dimension = (input_dim[0], input_dim[1], 1)
+        else:
+            self.dimension = (input_dim[0], input_dim[1], input_dim[2])
+
+        for container in layers:
+            settings, model = Sequential_Net.__init_model(self, layers[container])
+
+            self.layer_settings.update({container: settings})
+            self.__setattr__(container, model)
+
+    def __init_model(self, layers):
         """
         Private Method: Creates Layers for the model and the necessary settings as a dict.
         Returns a tuple of collections.OrderedDict with the settings for each layer and a nn.Sequential within a collections.OrderedDict for the nn.Sequential model.
 
         :Parameters: 
-        input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
         layers: (collections.OrderdDict) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0, "activation": "relu"}
             
         """
         settings_dict =  collections.OrderedDict()
         model_dict = collections.OrderedDict()
 
-        dim_list = []
-        if len(input_dim) is 1:
-            dim_list.append([input_dim[0], 1, 1])
-        elif len(input_dim) is 2:
-            dim_list.append([input_dim[0], input_dim[1], 1])
-        else:
-            dim_list.append([input_dim[0], input_dim[1], input_dim[2]])
-        
         layer_counter = 0
         for layer in layers:
             """Adds the layer informations to a settings dictionary for rebuilding the network."""
@@ -92,35 +98,36 @@ class Net(nn.Module):
                 model_dict["conv2d" + str(layer_counter)] = nn.Conv2d(layer["inChannel"], layer["outChannel"], layer["kernelSize"], layer["stride"], layer["padding"])
 
                 """ computation of the new input dimension """
-                new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
-                new_height = np.floor( ( ( (dim_list[layer_counter][1] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
-                dim_list.append([new_width, new_height, layer["outChannel"]])
+                new_width = np.floor( ( ( (self.dimension[0] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
+                new_height = np.floor( ( ( (self.dimension[1] - layer["kernelSize"]) + (2 * layer["padding"]) ) / layer["stride"] ) + 1 )
+  
+                self.dimension = (new_width, new_height, layer["outChannel"])
             
             elif "Pool" in layer["type"]:
                 """
                 If the layer is a Pooling Layer.
                 """
-                pooling = Net.__pooling[layer["type"]]
+                pooling = Sequential_Net.__pooling[layer["type"]]
                 model_dict[str(layer["type"]) + str(layer_counter)] = pooling(layer["kernelSize"], stride = layer["stride"])
 
                 """ computation of the new input dimension """
-                new_width = np.floor( ( ( (dim_list[layer_counter][0] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
-                new_height = np.floor( ( ( (dim_list[layer_counter][1] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
-                dim_list.append([new_width, new_height, dim_list[layer_counter][2]])
+                new_width = np.floor( ( ( (self.dimension[0] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
+                new_height = np.floor( ( ( (self.dimension[1] - layer["kernelSize"])  ) / layer["stride"] ) + 1 )
+                self.dimension = (new_width, new_height, self.dimension[2])
             
             elif layer["type"] == "linear":
                 """
                 If the layer is a linear-layer.
                 """
-                model_dict[str(layer["type"]) + str(layer_counter)] = nn.Linear(int(np.prod(dim_list[layer_counter])), layer["outChannel"])
-
-                dim_list.append([layer["outChannel"], 1, 1])
+                model_dict[str(layer["type"]) + str(layer_counter)] = nn.Linear(int(np.prod(self.dimension)), layer["outChannel"])
+                
+                self.dimension = (layer["outChannel"], 1, 1)
 
             if layer["activation"] != "none":
                 """
                 If there is an activation add it.
                 """
-                activation = Net.__activations[layer["activation"]]
+                activation = Sequential_Net.__activations[layer["activation"]]
                 model_dict[layer["activation"] + str(layer_counter)] = activation()
             
             layer_counter += 1
@@ -128,7 +135,14 @@ class Net(nn.Module):
         return settings_dict, nn.Sequential(model_dict)
 
     def forward(self, x):
-        return self.model(x)
+        for container in self.layer_settings:
+            if self.layer_settings[container]["layer_0"]["type"] == "linear":
+                """
+                If the model is linear reshape the input.
+                """
+                x = x.view(x.shape[0], -1)
+            x = self.__getattr__(container)(x)
+        return x
 
     def train_start(self, num_epochs, trainloader, loss, opti, l_rate, device = "cpu"):
         """
@@ -144,9 +158,9 @@ class Net(nn.Module):
         """
         log_interval = 10
 
-        criterion = Net.__loss[loss]()
+        criterion = Sequential_Net.__loss[loss]()
 
-        optimizer = Net.__optimizer[opti](self.parameters(), lr=l_rate)
+        optimizer = Sequential_Net.__optimizer[opti](self.parameters(), lr=l_rate)
 
         # dict for storeing the weights after an epoch
         epoch_weights_list = []
@@ -173,7 +187,7 @@ class Net(nn.Module):
 
     def test_start(self, loss, testloader, device = "cpu"):
         # test the net
-        criterion = Net.__loss[loss]()
+        criterion = Sequential_Net.__loss[loss]()
 
         test_loss = 0
         correct = 0
@@ -227,36 +241,35 @@ class Net(nn.Module):
         """
         feature_dict = collections.OrderedDict()
 
-        layer_counter = 0
-        is_linear = False
-        for layer in self.layer_settings:
-            if self.layer_settings[layer]["type"] == "linear" and not is_linear:
-                x = x.view(x.shape[0], -1)
-                is_linear = True
-            if self.layer_settings[layer]["activation"] != "none":
-                activation = Net.__activations[self.layer_settings[layer]["activation"]]
-                x = activation(self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x))
-            else:
-                x = self.__getattr__(self.layer_settings[layer]["type"] + str(layer_counter))(x)
+        for container in self.layer_settings:
+            layers = self.layer_settings[container]
+            layer_counter = 0
+            is_linear = False
+            for layer in layers:
+                if layers[layer]["type"] == "linear" and not is_linear:
+                    x = x.view(x.shape[0], -1)
+                    is_linear = True
+                if layers[layer]["activation"] != "none":
+                    activation = Sequential_Net.__activations[layers[layer]["activation"]]
+                    x = activation(self.model.__getattr__(layers[layer]["type"] + str(layer_counter))(x))
+                else:
+                    x = self.model.__getattr__(layers[layer]["type"] + str(layer_counter))(x)
             
-            feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
+                feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
 
             layer_counter += 1
         
         return feature_dict
-
-
 
 def create_model(input_dim, layers):
     """
     Creates and Return a neural network model for given input.
 
     :Parameters:
-         input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
+        input_dim: ([Integer]) Input dimension for the neural network as Array. Example: [x], [x, y], [x, y, z]
         layers: ([Dictionary]) List of Dictionarys of layer settings. Example: {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 0 "activation": "relu"}
     """
-    return Net(input_dim, layers)
-
+    return Sequential_Net(input_dim, layers)
 
 def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, l_rate, device = "cpu"):
     """
@@ -275,7 +288,6 @@ def train_model(model, num_epochs, criterion, optimizer, trainset, batchsize, l_
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batchsize, shuffle=True, num_workers=2)
     return model.train_start(num_epochs, trainloader, criterion, optimizer, l_rate, device)
 
-
 def test_model(model, criterion, testset, batchsize, device = "cpu"):
     """
     Test the model and returns usefull values (will be more concrete later)
@@ -290,7 +302,6 @@ def test_model(model, criterion, testset, batchsize, device = "cpu"):
     testloader = torch.utils.data.DataLoader(testset, batch_size=batchsize, shuffle=False, num_workers=2)
     return model.test_start(criterion, testloader, device)
 
-
 def get_weights(model):
     """
     Returns a weights dictionary of the actual weights split in Layers from a given neural network model for saving in a json.
@@ -299,26 +310,25 @@ def get_weights(model):
         model: (Net) Neural network model from getting the weights and bias from.
     """
     weights_dict = collections.OrderedDict()
-    layer_counter = 0
-    for param in model.parameters():
-        current_layer = "layer_" + str(layer_counter)
-        weights_dict.setdefault(current_layer, {})
-        # BIAS have the output size of the CNNs or MLPs and len() is 1,
-        # A Pooling layer as no weights so just save settings for reconstraction
-        if "Pool" in model.layer_settings[current_layer]["type"]:
-            weights_dict[current_layer].update({"settings": model.layer_settings[current_layer]})
-            layer_counter += 1
-            current_layer = "layer_" + str(layer_counter)
-            weights_dict.setdefault(current_layer, {})
-        if len(list(param.data.size())) is 1:
-            weights_dict[current_layer].update({"bias": param.data.tolist()})
-            layer_counter += 1
-        else:
-            weights_dict[current_layer].update({"settings": model.layer_settings[current_layer]})
-            weights_dict[current_layer].update({"weights": param.data.tolist()})
+    
+    for container in model.layer_settings:
+        layers = model.layer_settings[container]
+
+        for layer in layers:
+            if "Pool" in layers[layer]["type"]:
+                weights_dict[layer] = {"settings": layers[layer]}
+            else:
+                layer_number = int(re.findall("\d+", layer)[0])
+                layer_name = layers[layer]["type"] + str(layer_number)
+                weights = model.__getattr__(container).__getattr__(layer_name).state_dict()["weight"].tolist()
+                bias = model.__getattr__(container).__getattr__(layer_name).state_dict()["bias"].tolist()
+                weights_dict[layer] = ({
+                    "settings": layers[layer],
+                    "weights": weights,
+                    "bias": bias
+                    })
 
     return weights_dict
-
 
 def load_model_from_weights(weights_dict, input_dim, epoch = -1):
     """
@@ -330,17 +340,19 @@ def load_model_from_weights(weights_dict, input_dim, epoch = -1):
         epoch: (Integer) Wiche epoch the weights should be loaden from. Default = -1, it loads the leatest epoch.
     """
     ordered_dict = collections.OrderedDict()
-    layer_settings_list = []
+    layer_build_dict = collections.OrderedDict()
     epoch_num = str(weights_dict["epochs"]) if epoch is -1 else str(epoch)
     last_epoch = "epoch_" + epoch_num
     # for every layer in the last epoch of weights_dict it creates a weights and bias tensor and add it to the ordered_dict
-    for i in range(len(weights_dict[last_epoch])):
-        layer = "layer_" + str(i)
-        if not "Pool" in weights_dict[last_epoch][layer]["settings"]["type"]:
-            attribute_name = "model." + weights_dict[last_epoch][layer]["settings"]["type"] + str(i)
-            ordered_dict[attribute_name + ".weight"] = torch.Tensor(weights_dict[last_epoch][layer]["weights"])
-            ordered_dict[attribute_name + ".bias"] = torch.Tensor(weights_dict[last_epoch][layer]["bias"])
-        layer_settings_list.append(weights_dict[last_epoch][layer]["settings"])
+    for container, layers in weights_dict[last_epoch].items():
+        for layer in layers:
+            if not "Pool" in layers[layer]["settings"]["type"]:
+                layer_number = int(re.findall("\d+", layer)[0])
+                attribute_name = container + "." + layers[layer]["settings"]["type"] + str(layer_number) 
+
+                ordered_dict[attribute_name + ".weight"] = torch.Tensor(layers[layer]["weights"])
+                ordered_dict[attribute_name + ".bias"] = torch.Tensor(layers[last_epoch][layer]["bias"])
+            layer_build_dict.setdefault(container, []).append(layers[layer]["settings"])
     
     model = create_model(input_dim, layer_settings_list)
 
@@ -364,36 +376,37 @@ def get_device():
 #     example_layers = [
 #         {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
 #         {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
-#         {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"},
+#         {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"}]
+#     layer_2 = [
 #         {"type": "linear", "outChannel": 120, "activation": "none" },
 #         {"type": "linear", "outChannel": 10, "activation": "none" }
 #     ]
 
-#     test_model = create_model([28, 28], example_layers)
+#     test_model = create_model([28, 28, 1], {"model": example_layers, "model2": layer_2})
+#     print(test_model)
+#     print([i for i in get_weights(test_model)])
 
-#     print(get_weights(test_model))
+#     for param_tensor in test_model.state_dict():
+#         print(param_tensor, "\t", test_model.state_dict()[param_tensor].size())
 
-    # for param_tensor in test_model.state_dict():
-    #     print(param_tensor, "\t", test_model.state_dict()[param_tensor].size())
+#     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
+#     trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
 
-    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-    # trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
+#     criterion = "crossEntropy"
+#     optimizer = "sgd"
+#     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # criterion = nn.CrossEntropyLoss()
-    # optimizer = optim.SGD(test_model.parameters(), lr=0.001, momentum=0.9)
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # train_dict = train_model(test_model, 2, criterion, optimizer, trainset, 64, device)
-    # counter = 0
-    # weights = {}
-    # for ep in train_dict:
-    #     weights["epoch_"+str(counter)] = ep
-    #     counter += 1
+#     train_dict = train_model(test_model, 2, criterion, optimizer, trainset, 64, 0.001, device)
+#     counter = 0
+#     weights = {}
+#     for ep in train_dict:
+#         weights["epoch_"+str(counter)] = ep
+#         counter += 1
     
-    # weights.update({"name": "myName2", "epochs": counter})
-    # weights = db_connection.get_item_by_id("5d7b8d79d3b961d459951f2a")
-    # model = load_model_from_weights(weights, [28,28])
-    # weights = get_weights(model)
-    # db_connection.post_item({"name": "copy", "epoch_0": weights})
+#     weights.update({"name": "myName2", "epochs": counter})
+#     weights = db_connection.get_item_by_id("5d7b8d79d3b961d459951f2a")
+#     model = load_model_from_weights(weights, [28,28])
+#     weights = get_weights(model)
+#     db_connection.post_item({"name": "copy", "epoch_0": weights})
 
-    # print(train_dict)
+#     print(train_dict)
