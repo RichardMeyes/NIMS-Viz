@@ -249,11 +249,8 @@ class Sequential_Net(nn.Module):
                 if layers[layer]["type"] == "linear" and not is_linear:
                     x = x.view(x.shape[0], -1)
                     is_linear = True
-                if layers[layer]["activation"] != "none":
-                    activation = Sequential_Net.__activations[layers[layer]["activation"]]
-                    x = activation(self.model.__getattr__(layers[layer]["type"] + str(layer_counter))(x))
-                else:
-                    x = self.model.__getattr__(layers[layer]["type"] + str(layer_counter))(x)
+
+                x = self.model.__getattr__(container).__getattr__(layers[layer]["type"] + str(layer_counter))(x)
             
                 feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
 
@@ -313,16 +310,16 @@ def get_weights(model):
     
     for container in model.layer_settings:
         layers = model.layer_settings[container]
-
+        weights_dict.setdefault(container, collections.OrderedDict())
         for layer in layers:
             if "Pool" in layers[layer]["type"]:
-                weights_dict[layer] = {"settings": layers[layer]}
+                weights_dict[container][layer] = {"settings": layers[layer]}
             else:
                 layer_number = int(re.findall("\d+", layer)[0])
                 layer_name = layers[layer]["type"] + str(layer_number)
                 weights = model.__getattr__(container).__getattr__(layer_name).state_dict()["weight"].tolist()
                 bias = model.__getattr__(container).__getattr__(layer_name).state_dict()["bias"].tolist()
-                weights_dict[layer] = ({
+                weights_dict[container][layer] = ({
                     "settings": layers[layer],
                     "weights": weights,
                     "bias": bias
@@ -351,10 +348,10 @@ def load_model_from_weights(weights_dict, input_dim, epoch = -1):
                 attribute_name = container + "." + layers[layer]["settings"]["type"] + str(layer_number) 
 
                 ordered_dict[attribute_name + ".weight"] = torch.Tensor(layers[layer]["weights"])
-                ordered_dict[attribute_name + ".bias"] = torch.Tensor(layers[last_epoch][layer]["bias"])
+                ordered_dict[attribute_name + ".bias"] = torch.Tensor(layers[layer]["bias"])
             layer_build_dict.setdefault(container, []).append(layers[layer]["settings"])
     
-    model = create_model(input_dim, layer_settings_list)
+    model = create_model(input_dim, layer_build_dict)
 
     model.load_state_dict(ordered_dict)
     model.eval()
