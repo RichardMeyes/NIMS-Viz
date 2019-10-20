@@ -2,5 +2,6 @@
 export enum ActiveSideMenu {
     None,
     NetworkCreator,
-    NetworkAblator
+    NetworkAblator,
+    NetworkTrainer
 }

@@ -106,6 +106,20 @@ export class NavigationComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleTrainNetwork() {
+    // only works if a network is selected
+    if(this.dataService.selectedNetwork !== undefined) {
+      this.dataService.detachedNodes = [];
+      this.dataService.classifyResult = undefined;
+
+      if (this.dataService.activeSideMenu === ActiveSideMenu.NetworkTrainer) {
+        this.dataService.activeSideMenu = ActiveSideMenu.None;
+      } else {
+        this.dataService.activeSideMenu = ActiveSideMenu.NetworkTrainer;
+      }
+    }
+  }
+
   ngOnDestroy() {
     this.destroyed.next();
   }
