@@ -80,6 +80,8 @@ export class NavigationComponent implements OnInit, OnDestroy {
 
     if (selectedNetwork === undefined) {
       this.eventService.clearAblationCharts.next(true);
+    } else {
+      this.backend.resetAblation().subscribe();
     }
   }
 

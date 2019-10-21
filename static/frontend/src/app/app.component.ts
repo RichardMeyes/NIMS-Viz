@@ -1,5 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+
 import { DataService } from './services/data.service';
+import { BackendCommunicationService } from './backendCommunication/backend-communication.service';
+
 import { ActiveSideMenu } from './models/navigation.model';
 
 @Component({
@@ -7,11 +10,16 @@ import { ActiveSideMenu } from './models/navigation.model';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'frontend';
   activeSideMenu = ActiveSideMenu;
 
   constructor(
-    public dataService: DataService
+    public dataService: DataService,
+    private backend: BackendCommunicationService
   ) { }
+
+  ngOnInit() {
+    this.backend.resetAblation().subscribe();
+  }
 }
