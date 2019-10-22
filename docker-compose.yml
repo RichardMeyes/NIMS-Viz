@@ -13,8 +13,8 @@ services:
       - database
     restart: on-failure
     build:
-      context: ./static/backend
-      dockerfile: Dockerfile
+      context: ./static
+      dockerfile: backend/Dockerfile
     environment:
       - env=prod
     ports:
