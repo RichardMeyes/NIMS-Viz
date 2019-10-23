@@ -32,6 +32,7 @@ class Sequential_Net(nn.Module):
         __activations: (Dictionary) Dictionary of activation function so it can be called with a string.
         __loss: (Dictionary) Dictionary of loss function so it can be called with a string.
         __optimizer: (Dictionary) Dictionary of optimizer so it can be called with a string.
+        __pooling: (Dictionary) Dictionary of pooling layers.
     """
     __activations = {
     'relu': nn.ReLU,
