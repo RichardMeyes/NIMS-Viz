@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnChanges } from '@angular/core';
 
 import { concatMap } from 'rxjs/operators';
 
@@ -16,7 +16,9 @@ import {
   NeuralNetworkSettingsJSON,
   TrainingSettings,
   TrainingSettingsJSON,
-  Dense
+  Dense,
+  Dataset,
+  Channel
 } from '../../models/neural-network.model';
 
 /**
@@ -122,6 +124,7 @@ export class NetworkCreatorComponent implements OnInit {
       learningrate: JSON.parse(JSON.stringify(this._trainingSettings.learningRate)),
       loss: JSON.parse(JSON.stringify(this._trainingSettings.loss)),
       optimizer: JSON.parse(JSON.stringify(this._trainingSettings.optimizer)),
+      dataset: JSON.parse(JSON.stringify(this._trainingSettings.dataset))
     };
 
     this.backend.createNetwork(setup)
