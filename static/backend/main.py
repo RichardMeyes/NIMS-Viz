@@ -17,6 +17,8 @@ import mongo_module as mongo
 
 import ablation
 
+import dataset_loader
+
 
 # creates a communication channel with mongoDB
 DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
@@ -129,17 +131,12 @@ def createNetwork():
 def trainNetwork():
     global MODEL
     global MODEL_DICT
-    # have to be changed!!! trainset has to be variable
-    import torchvision
-    import torchvision.transforms as transforms
 
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
-    # #################################################
     req = request.get_json()
     trainSettings = req["setup"]
     uuid = req["id"]
-    print(trainSettings)
+    
+    trainset = dataset_loader.get_dataset_from_torch(trainSettings["dataset"])
     
     #load model with id if its necessary
     change_model(uuid)
