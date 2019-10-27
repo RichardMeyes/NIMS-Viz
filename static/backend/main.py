@@ -139,6 +139,7 @@ def trainNetwork():
     req = request.get_json()
     trainSettings = req["setup"]
     uuid = req["id"]
+    print(trainSettings)
     
     #load model with id if its necessary
     change_model(uuid)
@@ -267,7 +268,6 @@ def ablateNetwork():
 def resetAblation():
     global TEST_ABLATED_MODEL
     TEST_ABLATED_MODEL = False
-    print("blub")
     return json.dumps("OK")
 
 # Get TSNE Coordinate
