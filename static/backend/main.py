@@ -18,6 +18,8 @@ import mongo_module as mongo
 
 import ablation
 
+import dataset_loader
+
 
 # creates a communication channel with mongoDB
 DB_CONNECTION = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
@@ -133,16 +135,12 @@ def createNetwork():
 def trainNetwork():
     global MODEL
     global MODEL_DICT
-    # have to be changed!!! trainset has to be variable
-    import torchvision
-    import torchvision.transforms as transforms
 
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-    trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
-    # #################################################
     req = request.get_json()
     trainSettings = req["setup"]
     uuid = req["id"]
+    
+    trainset = dataset_loader.get_dataset_from_torch(trainSettings["dataset"])
     
     #load model with id if its necessary
     change_model(uuid)
@@ -168,6 +166,7 @@ def trainNetwork():
     epoch_dict.update({
         "epochs": epoch_counter,
         "loss_function": trainSettings["loss"],
+        "dataset": trainSettings["dataset"],
         "last_modified": datetime.datetime.utcnow().strftime("%Y/%m/%d, %H:%M:%S")
     })
     
@@ -206,14 +205,6 @@ def testNetwork():
     global MODEL_DICT
     global ABLATED_MODEL 
     global TEST_ABLATED_MODEL 
-
-    # have to be changed!!! trainset has to be variable
-    import torchvision
-    import torchvision.transforms as transforms
-
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-    testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
-    # #################################################
     
     req = request.get_json()
     uuid = req["networkID"]
@@ -226,10 +217,12 @@ def testNetwork():
     if TEST_ABLATED_MODEL:
         nn_model = ABLATED_MODEL
     
+    testset = dataset_loader.get_dataset_from_torch(MODEL_DICT["dataset"], False) #False because we want to use the testdataset
+    labels = dataset_loader.get_dataset_classes(testset)
     test_results = neural_network.test_model(nn_model, MODEL_DICT["loss_function"], testset, 64, DEVICE) 
 
     results = {
-        "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        "labels": ["all"] + labels,
         "accuracy": test_results[0],
         "correct_labels": test_results[1].tolist(),
         "accuracy_class": test_results[2].tolist(),
@@ -271,7 +264,6 @@ def ablateNetwork():
 def resetAblation():
     global TEST_ABLATED_MODEL
     TEST_ABLATED_MODEL = False
-    print("blub")
     return json.dumps("OK")
 
 # Get TSNE Coordinate

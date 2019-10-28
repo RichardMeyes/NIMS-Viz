@@ -31,6 +31,15 @@ export enum Activation {
     logSoftmax = 'logSoftmax',
 }
 
+/**
+ * predefined Datasets
+ */
+export enum Dataset {
+    MNIST = "mnist",
+    Fashion_MNIST ="fashion-mnist",
+    kMNIST = "kmnist"
+}
+
 
 /**
  * Channel is a Helping Class that links the number of the channels for the ConvLayers
@@ -88,7 +97,8 @@ export class TrainingSettings {
         public epochs: number = 1,
         public learningRate: number = 0.001,
         public loss: string = 'crossEntropy',
-        public optimizer: string = 'sgd'
+        public optimizer: string = 'sgd',
+        public dataset: Dataset = Dataset.MNIST
     ) { }
 }
 
@@ -242,4 +252,5 @@ export interface TrainingSettingsJSON {
     learningrate: number;
     loss: string;
     optimizer: string;
+    dataset: Dataset
 }
