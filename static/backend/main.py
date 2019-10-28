@@ -162,6 +162,7 @@ def trainNetwork():
     epoch_dict.update({
         "epochs": epoch_counter,
         "loss_function": trainSettings["loss"],
+        "dataset": trainSettings["dataset"],
         "last_modified": datetime.datetime.utcnow().strftime("%Y/%m/%d, %H:%M:%S")
     })
     
@@ -200,14 +201,6 @@ def testNetwork():
     global MODEL_DICT
     global ABLATED_MODEL 
     global TEST_ABLATED_MODEL 
-
-    # have to be changed!!! trainset has to be variable
-    import torchvision
-    import torchvision.transforms as transforms
-
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-    testset = torchvision.datasets.MNIST(root='../data', train=False, download=True, transform=transform)
-    # #################################################
     
     req = request.get_json()
     uuid = req["networkID"]
@@ -220,10 +213,12 @@ def testNetwork():
     if TEST_ABLATED_MODEL:
         nn_model = ABLATED_MODEL
     
+    testset = dataset_loader.get_dataset_from_torch(MODEL_DICT["dataset"], False) #False because we want to use the testdataset
+    labels = dataset_loader.get_dataset_classes(testset)
     test_results = neural_network.test_model(nn_model, MODEL_DICT["loss_function"], testset, 64, DEVICE) 
 
     results = {
-        "labels": ['All', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+        "labels": labels,
         "accuracy": test_results[0],
         "correct_labels": test_results[1].tolist(),
         "accuracy_class": test_results[2].tolist(),
