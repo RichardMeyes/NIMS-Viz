@@ -32,6 +32,7 @@ class Sequential_Net(nn.Module):
         __activations: (Dictionary) Dictionary of activation function so it can be called with a string.
         __loss: (Dictionary) Dictionary of loss function so it can be called with a string.
         __optimizer: (Dictionary) Dictionary of optimizer so it can be called with a string.
+        __pooling: (Dictionary) Dictionary of pooling layers.
     """
     __activations = {
     'relu': nn.ReLU,
@@ -250,7 +251,7 @@ class Sequential_Net(nn.Module):
                     x = x.view(x.shape[0], -1)
                     is_linear = True
 
-                x = self.model.__getattr__(container).__getattr__(layers[layer]["type"] + str(layer_counter))(x)
+                x = self.__getattr__(container).__getattr__(layers[layer]["type"] + str(layer_counter))(x)
             
                 feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
 

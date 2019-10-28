@@ -130,6 +130,7 @@
             <mat-label>Pooling</mat-label>
             <mat-select [(ngModel)]="layer.type">
               <mat-option value="maxPool2d">Max</mat-option>
+              <mat-option value="avgPool2d">Average</mat-option>
             </mat-select>
           </mat-form-field>
         </ng-container>
@@ -196,19 +197,9 @@
           <mat-select [(ngModel)]="layer.activation">
             <mat-option value="none">None</mat-option>
             <mat-option value="relu">Relu</mat-option>
-            <mat-option value="rrelu">RRELU</mat-option>
-            <mat-option value="hardtanh">Hardtanh</mat-option>
             <mat-option value="sigmoid">Sigmoid</mat-option>
             <mat-option value="tanh">TanH</mat-option>
-            <mat-option value="elu">ELU</mat-option>
-            <mat-option value="celu">cELU</mat-option>
-            <mat-option value="selu">sELU</mat-option>
-            <mat-option value="glu">GLU</mat-option>
-            <mat-option value="leakyRelu">leakyRelu</mat-option>
-            <mat-option value="logSigmoid">logSigmoid</mat-option>
-            <mat-option value="softplus">softplus</mat-option>
             <mat-option value="softmax">softmax</mat-option>
-            <mat-option value="logSoftmax">logSoftmax</mat-option>
           </mat-select>
         </mat-form-field>
         <button mat-mini-fab (click)="deleteMLP(layer)"><i class="fas fa-trash-alt"></i></button>

@@ -4,5 +4,6 @@
     <router-outlet></router-outlet>
     <app-network-creator *ngIf="dataService.activeSideMenu === activeSideMenu.NetworkCreator"></app-network-creator>
     <app-network-ablator *ngIf="dataService.activeSideMenu === activeSideMenu.NetworkAblator"></app-network-ablator>
+    <app-training *ngIf="dataService.activeSideMenu === activeSideMenu.NetworkTrainer"></app-training>
   </div>
 </div>
