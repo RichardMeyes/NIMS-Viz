@@ -69,10 +69,11 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
 
           const nodes = [];
           this.dataService.detachedNodes.forEach(detachedNode => {
+            const backendKeys = detachedNode.backendKey.split('-');
             let availableIndex = -1;
 
             nodes.some((node, nodeIndex) => {
-              if (node.layerNumber === +detachedNode.backendKey.split('_')[1]) {
+              if (node.containerName === backendKeys[0] && node.layerNumber === +backendKeys[1].split('_')[1]) {
                 availableIndex = nodeIndex;
                 return true;
               }
@@ -80,7 +81,8 @@ export class AblationAccuracyComponent implements OnInit, OnDestroy {
 
             if (availableIndex === -1) {
               nodes.push({
-                layerNumber: +detachedNode.backendKey.split('_')[1],
+                containerName: backendKeys[0],
+                layerNumber: +backendKeys[1].split('_')[1],
                 ablatedWeights: [detachedNode.unit]
               });
             } else {

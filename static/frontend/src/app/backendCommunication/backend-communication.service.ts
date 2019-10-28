@@ -114,26 +114,28 @@ export class BackendCommunicationService {
             },
             network.name
           );
-          Object.keys(network.epoch_0).forEach(layer => {
-            if (Object.values(Convolution).includes(network.epoch_0[layer].settings.type)) {
-              nnSettings.convLayers.push(new ConvLayer(
-                network.epoch_0[layer].settings.type,
-                new Channel(network.epoch_0[layer].settings.inChannel),
-                new Channel(network.epoch_0[layer].settings.outChannel),
-                network.epoch_0[layer].settings.kernelSize,
-                network.epoch_0[layer].settings.stride,
-                network.epoch_0[layer].settings.padding,
-                network.epoch_0[layer].settings.activation,
-                layer
-              ));
-            } else if (Object.values(Dense).includes(network.epoch_0[layer].settings.type)) {
-              nnSettings.denseLayers.push(new DenseLayer(
-                network.epoch_0[layer].settings.type,
-                network.epoch_0[layer].settings.outChannel,
-                network.epoch_0[layer].settings.activation,
-                layer
-              ));
-            }
+          Object.keys(network.epoch_0).forEach(container => {
+            Object.keys(network.epoch_0[container]).forEach(layer => {
+              if (Object.values(Convolution).includes(network.epoch_0[container][layer].settings.type)) {
+                nnSettings.convLayers.push(new ConvLayer(
+                  network.epoch_0[container][layer].settings.type,
+                  new Channel(network.epoch_0[container][layer].settings.inChannel),
+                  new Channel(network.epoch_0[container][layer].settings.outChannel),
+                  network.epoch_0[container][layer].settings.kernelSize,
+                  network.epoch_0[container][layer].settings.stride,
+                  network.epoch_0[container][layer].settings.padding,
+                  network.epoch_0[container][layer].settings.activation,
+                  `${container}-${layer}`
+                ));
+              } else if (Object.values(Dense).includes(network.epoch_0[container][layer].settings.type)) {
+                nnSettings.denseLayers.push(new DenseLayer(
+                  network.epoch_0[container][layer].settings.type,
+                  network.epoch_0[container][layer].settings.outChannel,
+                  network.epoch_0[container][layer].settings.activation,
+                  `${container}-${layer}`
+                ));
+              }
+            });
           });
 
           const nnWeights = {};
@@ -142,11 +144,13 @@ export class BackendCommunicationService {
               nnWeights[key] = {};
 
               let layerIndex = 0;
-              Object.keys(network[key]).forEach(layer => {
-                if (!Object.values(Pooling).includes(network[key][layer].settings.type)) {
-                  nnWeights[key][`layer_${layerIndex}`] = network[key][layer];
-                  layerIndex++;
-                }
+              Object.keys(network[key]).forEach(container => {
+                Object.keys(network[key][container]).forEach(layer => {
+                  if (!Object.values(Pooling).includes(network[key][container][layer].settings.type)) {
+                    nnWeights[key][`layer_${layerIndex}`] = network[key][container][layer];
+                    layerIndex++;
+                  }
+                });
               });
             }
           });
@@ -166,7 +170,7 @@ export class BackendCommunicationService {
    * @param nodes List of layers and their units to be ablated.
    * @returns The selected file's ID and the list of layers and their units to be ablated.
    */
-  ablateNetwork(fileID: string, nodes: { layerNumber: number, ablatedWeights: number[] }[]): Observable<any> {
+  ablateNetwork(fileID: string, nodes: { containerName: string, layerNumber: number, ablatedWeights: number[] }[]): Observable<any> {
     const body = {
       networkID: fileID,
       nodes
