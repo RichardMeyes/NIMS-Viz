@@ -47,6 +47,7 @@ export class TrainingComponent implements OnInit {
       learningrate: JSON.parse(JSON.stringify(this._trainingSettings.learningRate)),
       loss: JSON.parse(JSON.stringify(this._trainingSettings.loss)),
       optimizer: JSON.parse(JSON.stringify(this._trainingSettings.optimizer)),
+      dataset: JSON.parse(JSON.stringify(this._trainingSettings.dataset))
     };
 
     const id = this._selectedNetwork.id;

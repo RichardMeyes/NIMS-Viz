@@ -252,5 +252,5 @@ export interface TrainingSettingsJSON {
     learningrate: number;
     loss: string;
     optimizer: string;
-    dataset: Dataset
+    dataset: Dataset;
 }
