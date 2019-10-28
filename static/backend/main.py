@@ -218,7 +218,7 @@ def testNetwork():
     test_results = neural_network.test_model(nn_model, MODEL_DICT["loss_function"], testset, 64, DEVICE) 
 
     results = {
-        "labels": labels,
+        "labels": ["all"] + labels,
         "accuracy": test_results[0],
         "correct_labels": test_results[1].tolist(),
         "accuracy_class": test_results[2].tolist(),
