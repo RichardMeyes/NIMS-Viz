@@ -365,46 +365,6 @@ def get_device():
     """
     return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# for testing
-# import mongo_module as mongo
 
-# db_connection = mongo.Mongo("mongodb://localhost:27017/", "networkDB", "networks")
-
-# if __name__ == "__main__":
-#     example_layers = [
-#         {"type": "conv2d", "inChannel": 1, "outChannel": 3, "kernelSize": 3, "stride": 1, "padding": 1, "activation": "relu"},
-#         {"type": "maxPool2d", "kernelSize": 2, "stride": 2, "activation": "none"},
-#         {"type": "conv2d", "inChannel": 3, "outChannel": 6, "kernelSize": 5, "stride": 1, "padding": 0, "activation": "relu"}]
-#     layer_2 = [
-#         {"type": "linear", "outChannel": 120, "activation": "none" },
-#         {"type": "linear", "outChannel": 10, "activation": "none" }
-#     ]
-
-#     test_model = create_model([28, 28, 1], {"model": example_layers, "model2": layer_2})
-#     print(test_model)
-#     print([i for i in get_weights(test_model)])
-
-#     for param_tensor in test_model.state_dict():
-#         print(param_tensor, "\t", test_model.state_dict()[param_tensor].size())
-
-#     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-#     trainset = torchvision.datasets.MNIST(root='../data', train=True, download=True, transform=transform)
-
-#     criterion = "crossEntropy"
-#     optimizer = "sgd"
-#     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-#     train_dict = train_model(test_model, 2, criterion, optimizer, trainset, 64, 0.001, device)
-#     counter = 0
-#     weights = {}
-#     for ep in train_dict:
-#         weights["epoch_"+str(counter)] = ep
-#         counter += 1
-    
-#     weights.update({"name": "myName2", "epochs": counter})
-#     weights = db_connection.get_item_by_id("5d7b8d79d3b961d459951f2a")
-#     model = load_model_from_weights(weights, [28,28])
-#     weights = get_weights(model)
-#     db_connection.post_item({"name": "copy", "epoch_0": weights})
-
-#     print(train_dict)
+if __name__ == "__main__":
+    pass
