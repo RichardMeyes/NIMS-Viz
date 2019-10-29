@@ -46,3 +46,4 @@ __pycache__/
 # image data
 /static/data/processed/*
 /static/data/raw/*
+/static/data/digit/*

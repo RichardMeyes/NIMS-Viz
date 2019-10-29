@@ -308,7 +308,7 @@ def testDigit():
 
     if TEST_ABLATED_MODEL:
         model = ABLATED_MODEL
-        
+
     prediction = model.predict(digit)
     feature_dict = model.visualize_input(digit)
     result = {

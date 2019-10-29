@@ -255,7 +255,7 @@ class Sequential_Net(nn.Module):
             
                 feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
 
-            layer_counter += 1
+                layer_counter += 1
         
         return feature_dict
 
