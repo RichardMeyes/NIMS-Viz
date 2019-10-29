@@ -139,5 +139,5 @@ class Mongo:
         result = self.__collection.update_one({"_id": ObjectId(item_id)}, {"$set": content})
         return result.modified_count
     
-# only for testing the functions
-# m = Mongo("mongodb://localhost:27017/", "customersdb", "customers")
+if __name__ == "__main__":
+    pass
