@@ -46,6 +46,16 @@
             </mat-form-field>
           </div>
           <div class="row center">
+            <mat-form-field class="input-select">
+              <mat-label>Dataset</mat-label>
+              <mat-select [(ngModel)]="_trainingSettings.dataset">
+                <mat-option value="mnist">MNIST</mat-option>
+                <mat-option value="kmnist">kMNIST</mat-option>
+                <mat-option value="fashion-mnist">Fashion-MNIST</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="row center">
               <button mat-raised-button (click)="trainNetwork()">
                 <b style="font-size: 20px">Train Network</b>
               </button>
