@@ -244,15 +244,19 @@ def ablateNetwork():
     uuid = req["networkID"]
     nodes = req["nodes"]
     
+    print(nodes)
     #load model with id if its necessary
     change_model(uuid)
     ABLATED_MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
 
     for node in nodes:
         layer_number = "layer_" + str(node['layerNumber'])
-        layer_name = MODEL_DICT["epoch_0"][layer_number]["settings"]["type"] + str(node['layerNumber'])
+        container = node["containerName"]
+        layer_name = MODEL_DICT["epoch_0"][container][layer_number]["settings"]["type"] + str(node['layerNumber'])
+        layer_key = container + "." + layer_name
+        # the key in the model.state_dict ist container.layer.weight/bias
         for unit in node['ablatedWeights']:
-            ablation.ablate_unit(ABLATED_MODEL, layer_name, unit)
+            ablation.ablate_unit(ABLATED_MODEL, layer_key, unit)
     
     TEST_ABLATED_MODEL = True
 
