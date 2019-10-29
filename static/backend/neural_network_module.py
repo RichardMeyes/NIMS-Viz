@@ -252,8 +252,9 @@ class Sequential_Net(nn.Module):
                     is_linear = True
 
                 x = self.__getattr__(container).__getattr__(layers[layer]["type"] + str(layer_counter))(x)
-            
-                feature_dict["layer_" + str(layer_counter)] = x.data.numpy().tolist()
+                if layers[layer]["activation"] != "none":
+                    x = self.__getattr__(container).__getattr__(layers[layer]["activation"] + str(layer_counter))(x)
+                feature_dict[container] = {"layer_" + str(layer_counter): x.data.numpy().tolist()}
 
                 layer_counter += 1
         
