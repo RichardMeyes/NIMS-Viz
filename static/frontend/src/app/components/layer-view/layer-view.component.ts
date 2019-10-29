@@ -424,18 +424,18 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('fill', this.defaultSettings.color)
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
-    rects.on('mouseover', function (d) {
-      self.selectedUnit = Object.assign({}, d);
-      self.selectedUnit.layer -= 1;
+    // rects.on('mouseover', function (d) {
+    //   self.selectedUnit = Object.assign({}, d);
+    //   self.selectedUnit.layer -= 1;
 
-      if (self.selectedUnit.layer >= 0) {
-        self.setupConvTooltip();
-        self.bindConvTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
-      }
+    //   if (self.selectedUnit.layer >= 0) {
+    //     self.setupConvTooltip();
+    //     self.bindConvTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
+    //   }
 
-      d3.select(this)
-        .classed('focused', true);
-    });
+    //   d3.select(this)
+    //     .classed('focused', true);
+    // });
 
     rects.on('mouseout', function (d) {
       d3.selectAll('.filters-comparison').remove();
