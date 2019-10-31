@@ -246,6 +246,7 @@ class Sequential_Net(nn.Module):
             layers = self.layer_settings[container]
             layer_counter = 0
             is_linear = False
+            feature_dict[container] = {}
             for layer in layers:
                 if layers[layer]["type"] == "linear" and not is_linear:
                     x = x.view(x.shape[0], -1)
