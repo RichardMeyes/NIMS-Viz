@@ -254,7 +254,7 @@ class Sequential_Net(nn.Module):
                 x = self.__getattr__(container).__getattr__(layers[layer]["type"] + str(layer_counter))(x)
                 # if layers[layer]["activation"] != "none":
                 #     x = self.__getattr__(container).__getattr__(layers[layer]["activation"] + str(layer_counter))(x)
-                feature_dict[container] = {"layer_" + str(layer_counter): x.data.numpy().tolist()}
+                feature_dict[container].update({"layer_" + str(layer_counter): x.data.numpy().tolist()})
 
                 layer_counter += 1
         
