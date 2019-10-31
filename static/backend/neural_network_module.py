@@ -201,6 +201,7 @@ class Sequential_Net(nn.Module):
                 data, target = data.to(device), target.to(device)
             # data = data.view(-1, 28 * 28)
             net_out = self(data)
+            print(net_out.size()) 
             # sum up batch loss
             test_loss += criterion(net_out, target).data.item()
             pred = net_out.data.max(1)[1]  # get the index of the max log-probability
@@ -231,7 +232,10 @@ class Sequential_Net(nn.Module):
         :Parameters:
             _input: Input that should give a predictions.
         """
-        return self(_input).tolist()
+        x = self(_input)
+        print(x.size())
+        print("#######################")
+        return self(_input)
     
     def visualize_input(self, x):
         """
@@ -255,9 +259,8 @@ class Sequential_Net(nn.Module):
                 # if layers[layer]["activation"] != "none":
                 #     x = self.__getattr__(container).__getattr__(layers[layer]["activation"] + str(layer_counter))(x)
                 feature_dict[container] = {"layer_" + str(layer_counter): x.data.numpy().tolist()}
-
+                
                 layer_counter += 1
-        
         return feature_dict
 
 def create_model(input_dim, layers):

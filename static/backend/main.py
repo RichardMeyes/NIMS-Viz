@@ -10,6 +10,7 @@ import datetime
 
 import cv2
 import torch
+from torch.nn import Softmax
 import collections
 
 import neural_network_module as neural_network
@@ -52,6 +53,10 @@ def change_model(uuid):
     else:
         MODEL_DICT = DB_CONNECTION.get_item_by_id(uuid)
         MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
+
+def compute_accuracy_from_prediction(x):
+    print(Softmax(dim=x).dim.tolist())
+    return Softmax(dim=x).dim.tolist()
 
 # Updates the mongoDB communication channel if production.
 def create_db_connection():
@@ -244,7 +249,6 @@ def ablateNetwork():
     uuid = req["networkID"]
     nodes = req["nodes"]
     
-    print(nodes)
     #load model with id if its necessary
     change_model(uuid)
     ABLATED_MODEL = neural_network.load_model_from_weights(MODEL_DICT, MODEL_DICT["input_dim"])
@@ -310,9 +314,16 @@ def testDigit():
         model = ABLATED_MODEL
 
     prediction = model.predict(digit)
+    prediction_with_acc = compute_accuracy_from_prediction(prediction)
+
+    testset = dataset_loader.get_dataset_from_torch(MODEL_DICT["dataset"], False) #False because we want to use the testdataset
+    labels = dataset_loader.get_dataset_classes(testset)
+
+    print(list(zip(labels, prediction_with_acc[0])))
+    
     feature_dict = model.visualize_input(digit)
     result = {
-        "netOut": prediction,
+        "netOut": prediction_with_acc,
         "nodesDict": feature_dict
     }
     return json.dumps(result)
