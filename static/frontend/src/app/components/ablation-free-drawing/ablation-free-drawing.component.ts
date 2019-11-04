@@ -65,8 +65,8 @@ export class AblationFreeDrawingComponent implements OnInit, AfterViewInit {
           }),
           concatMap(testResult => {
             testResult.netOut = testResult.netOut.flat();
-            Object.keys(testResult.nodesDict).forEach(layer => {
-              testResult.nodesDict[layer] = testResult.nodesDict[layer].flat();
+            Object.keys(testResult.nodesDict.features).forEach(layer => {
+              testResult.nodesDict.features[layer] = testResult.nodesDict.features[layer].flat();
             });
 
 

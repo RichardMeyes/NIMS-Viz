@@ -424,18 +424,18 @@ export class LayerViewComponent implements OnInit, OnDestroy {
       .attr('fill', this.defaultSettings.color)
       .attr('fill-opacity', this.defaultSettings.nodeOpacity);
 
-    // rects.on('mouseover', function (d) {
-    //   self.selectedUnit = Object.assign({}, d);
-    //   self.selectedUnit.layer -= 1;
+    rects.on('mouseover', function (d) {
+      self.selectedUnit = Object.assign({}, d);
+      self.selectedUnit.layer -= 1;
 
-    //   if (self.selectedUnit.layer >= 0) {
-    //     self.setupConvTooltip();
-    //     self.bindConvTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
-    //   }
+      if (self.selectedUnit.layer >= 0) {
+        self.setupConvTooltip();
+        self.bindConvTooltip(d3.mouse(this)[0], d3.mouse(this)[1]);
+      }
 
-    //   d3.select(this)
-    //     .classed('focused', true);
-    // });
+      d3.select(this)
+        .classed('focused', true);
+    });
 
     rects.on('mouseout', function (d) {
       d3.selectAll('.filters-comparison').remove();
@@ -943,7 +943,8 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     const self = this;
 
     const currEpoch = `epoch_${this.epochSlider.currEpoch}`;
-    const incomingFilters = `layer_${this.selectedUnit.layer}`;
+    const currLayerKey = this.selectedUnit.backendKey.split('-')[1]; // For accessing classification result.
+    const incomingFilters = `layer_${this.selectedUnit.layer}`; // For accessing saved weights.
 
 
     this.tooltipConfig.quadrantAdjustment = {
@@ -1021,7 +1022,7 @@ export class LayerViewComponent implements OnInit, OnDestroy {
     this.tooltipConfig.featureMapData = [];
     if (this.dataService.classifyResult) {
       const classifyResultCloned: TestDigitResult = JSON.parse(JSON.stringify(this.dataService.classifyResult));
-      this.tooltipConfig.featureMapData.push(classifyResultCloned.nodesDict[incomingFilters][this.selectedUnit.unit]);
+      this.tooltipConfig.featureMapData.push(classifyResultCloned.nodesDict.features[currLayerKey][this.selectedUnit.unit]);
       this.tooltipConfig.featureMap = {
         width: this.tooltipConfig.featureMapFrame.width / this.tooltipConfig.featureMapData[0].length,
         height: this.tooltipConfig.featureMapFrame.height / this.tooltipConfig.featureMapData[0].length,
